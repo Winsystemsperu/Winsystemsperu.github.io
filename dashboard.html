@@ -36,7 +36,7 @@
 
         <header class="mb-6 flex flex-wrap justify-between items-center">
             <div class="flex items-center space-x-4">
-                <img src="winsystems_logo.png" alt="Logo de Winsystems" class="h-24">
+                <img src="assets/winsystems_logo.png" alt="Logo de Winsystems" class="h-24">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900">Dashboard de Operaciones</h1>
                     <p class="text-gray-500">Análisis interactivo de la operación.</p>
@@ -151,39 +151,36 @@
         
         const colorPalette = ['rgba(59, 130, 246, 0.7)', 'rgba(239, 68, 68, 0.7)', 'rgba(245, 158, 11, 0.7)', 'rgba(34, 197, 94, 0.7)', 'rgba(139, 92, 246, 0.7)', 'rgba(236, 72, 153, 0.7)', 'rgba(14, 165, 233, 0.7)'];
 
-        // --- SESSION MANAGEMENT ---
+        // --- SESSION MANAGEMENT (CORREGIDO) ---
         async function checkSession() {
-            const userId = localStorage.getItem('winsys_user_id');
-            const sessionId = localStorage.getItem('winsys_session_id');
+            // Usa el método estándar de Supabase para obtener la sesión actual.
+            const { data: { session }, error } = await supabaseClient.auth.getSession();
 
-            if (!userId || !sessionId) {
+            if (error) {
+                console.error("Error al obtener la sesión:", error);
                 logout();
                 return;
             }
 
-            try {
-                const { data, error } = await supabaseClient
-                    .from('tecnicos')
-                    .select('last_session_id')
-                    .eq('id_usuario', userId)
-                    .single();
-
-                if (error || !data || data.last_session_id !== sessionId) {
-                    logout();
-                } else {
-                    initializeDashboard();
-                }
-            } catch (error) {
-                console.error("Error de sesión:", error);
+            // Si no hay sesión (session es null), redirige al login.
+            if (!session) {
                 logout();
+            } else {
+                // Si hay una sesión válida, inicializa el dashboard.
+                initializeDashboard();
             }
         }
 
-        function logout() {
-            localStorage.removeItem('winsys_user_id');
-            localStorage.removeItem('winsys_session_id');
-            // **CORRECCIÓN:** Se usa window.location.origin para una redirección segura.
-            window.location.href = window.location.origin;
+        async function logout() {
+            // Usa el método estándar de Supabase para cerrar la sesión.
+            const { error } = await supabaseClient.auth.signOut();
+            if (error) {
+                console.error("Error al cerrar sesión:", error);
+            }
+            
+            // Redirige a la página de inicio (login).
+            // Usar '/' es más robusto para ir a la raíz del sitio.
+            window.location.href = '/'; 
         }
 
         // --- HELPER & INIT FUNCTIONS ---
@@ -458,6 +455,7 @@
             setTimeout(() => loadingOverlay.style.display = 'none', 300);
         }
 
+        // Se llama a la función de verificación de sesión cuando el DOM está listo.
         document.addEventListener('DOMContentLoaded', checkSession);
     </script>
 </body>
