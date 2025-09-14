@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Operaciones</title>
+    <title>Reporte de Incidencias</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -23,75 +23,115 @@
         .nav-button.active { background-color: #3b82f6; color: white; }
         .nav-button:not(.active) { background-color: #e5e7eb; color: #374151; }
 
-        /* Estilos para la burbuja de información (Tooltip) */
         .tooltip-container { position: relative; display: inline-block; cursor: help; }
-        .tooltip-bubble {
-            visibility: hidden;
-            width: 400px;
-            background-color: #262626;
-            color: #fff;
-            text-align: left;
-            white-space: normal;
-            border-radius: 6px;
-            padding: 8px 12px;
-            position: absolute;
-            z-index: 20;
-            top: 50%;
-            left: 105%; 
-            transform: translateY(-50%);
-            opacity: 0;
-            transition: opacity 0.3s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            font-size: 0.8rem;
-            line-height: 1.4;
-        }
-        .tooltip-bubble::after {
-            content: "";
-            position: absolute;
-            top: 50%;
-            right: 100%;
-            margin-top: -5px;
-            border-width: 5px;
-            border-style: solid;
-            border-color: transparent #262626 transparent transparent;
-        }
-        .tooltip-container:hover .tooltip-bubble {
-            visibility: visible;
-            opacity: 1;
-        }
+        .tooltip-bubble { visibility: hidden; width: 400px; background-color: #262626; color: #fff; text-align: left; white-space: normal; border-radius: 6px; padding: 8px 12px; position: absolute; z-index: 20; bottom: 125%; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-size: 0.8rem; line-height: 1.4; }
+        .tooltip-bubble::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #262626 transparent transparent transparent; }
+        .tooltip-container:hover .tooltip-bubble { visibility: visible; opacity: 1; }
 
-        /* Estilos para tablas */
         .table-header { background-color: #f9fafb; }
         .status-operativo { background-color: #ecfdf5; }
-        .status-inoperativo { background-color: #fffbeb; }
-        .status-pendiente { background-color: #fef2f2; }
+        .status-inoperativo { background-color: #ffb7b7; }
+        .status-pendiente { background-color: #f1c462; }
+        .status-retirado{background-color: #888;}
 
-        /* Estilos para botones de máquinas (para vista de técnico de sala) */
+        /* --- MODIFICADO: Estilos para botones de máquinas (más pequeños y llamativos) --- */
         .machine-button {
-            padding: 12px 16px;
+            padding: 8px 4px;
             border-radius: 8px;
-            background-color: #f3f4f6;
+            width: 7rem;
             border: 1px solid #e5e7eb;
-            text-align: left;
-            transition: all 0.2s;
+            text-align: center;
+            transition: all 0.2s ease-in-out;
             cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            color: #374151;
         }
-        .machine-button:hover {
-            background-color: #e5e7eb;
-            border-color: #d1d5db;
-        }
+         /* --- NUEVO: COLORES DE ESTADO PARA LOS BOTONES --- */
+        .machine-button.status-operativo { 
+            background-color: #f0fdf4; border-color: #bbf7d0; }
+        .machine-button.status-operativo:hover { 
+            background-color: #dcfce7; border-color: #86efac; }
+
+        .machine-button.status-inoperativo { 
+            background-color: #ffa5a5; border-color: #ff0000; }
+        .machine-button.status-inoperativo:hover { 
+            background-color: #fd7878; border-color: #d60000; }
+
+        .machine-button.status-pendiente { 
+            background-color: #fffbeb; border-color: #fde68a; }
+        .machine-button.status-pendiente:hover { 
+            background-color: #fef3c7; border-color: #fcd34d; }
+
+        .machine-button.status-retirado { 
+            background-color: #f1f5f9; border-color: #e2e8f0; color: #64748b;}
+        .machine-button.status-retirado:hover { 
+            background-color: #e2e8f0; border-color: #cbd5e1; }
+
+    /* --- ESTADO SELECCIONADO (Tiene prioridad sobre los demás) --- */
         .machine-button.selected {
-            background-color: #dbeafe;
+            background-color: #2563eb !important; /* !important asegura que siempre sea azul al seleccionar */
+            border-color: #1d4ed8 !important;
+            color: white !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .machine-button.selected .machine-model {
+            color: #dbeafe !important;
+        }
+
+        
+        /* --- MEJORAS PARA LA SECCIÓN DE INCIDENCIAS --- */
+        .incidencia-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .incidencia-header {
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .incidencia-form-group {
+            margin-bottom: 1.5rem;
+        }
+        .incidencia-label {
+            display: block;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+        .incidencia-textarea {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 0.75rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        .incidencia-textarea:focus {
+            outline: none;
             border-color: #3b82f6;
-            color: #1e40af;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
         }
-        .machine-button .machine-serie {
-            font-weight: 600;
-            font-size: 1.1rem;
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
         }
-        .machine-button .machine-model {
+        .history-table th {
+            background-color: #f9fafb;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 500;
             color: #6b7280;
-            font-size: 0.9rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .history-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .history-table tr:last-child td {
+            border-bottom: none;
         }
     </style>
 </head>
@@ -108,10 +148,10 @@
 
         <header class="mb-6 flex flex-wrap justify-between items-center">
             <div class="flex items-center space-x-4">
-                <img src="winsystems_logo.png" alt="Logo de Winsystems" class="w-32 mx-auto mb-2">
+                <img src="https://winsystems.com.pe/wp-content/uploads/2022/01/logo-winsystems-2022.png" alt="Logo de Winsystems" class="h-24">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Dashboard de Operaciones</h1>
-                    <p class="text-gray-500">Análisis interactivo de la operación.</p>
+                    <h1 id="main-title" class="text-3xl font-bold text-gray-900">Dashboard de Operaciones</h1>
+                    <p id="main-subtitle" class="text-gray-500">Análisis interactivo de la operación.</p>
                 </div>
             </div>
             <div class="flex items-center space-x-4 mt-4 md:mt-0">
@@ -127,7 +167,6 @@
             </div>
         </header>
 
-        <!-- SECCIÓN DE FILTROS (PARA ADMINS) -->
         <div id="filters-section" class="bg-white p-4 rounded-xl shadow-md mb-8 flex-wrap items-end gap-4" style="display: none;">
             <div class="flex-grow">
                 <label for="start-date" class="block text-sm font-medium text-gray-700">Fecha Inicio</label>
@@ -153,10 +192,9 @@
             <button id="apply-filters" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 flex items-center gap-2"><i data-lucide="filter" class="w-4 h-4"></i> Aplicar</button>
         </div>
 
-        <!-- DASHBOARD DE MAQUINAS (PARA ADMINS) -->
         <div id="maquinas-dashboard" class="hidden">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div class="card-enter bg-white p-6 rounded-xl shadow-md flex items-center space-x-4"><div class="bg-blue-100 p-3 rounded-full"><i data-lucide="server" class="text-blue-600"></i></div><div><p class="text-gray-500 text-sm">Total de Máquinas</p><p id="total-maquinas" class="text-2xl font-bold">0</p></div></div>
+                <div class="card-enter bg-white p-6 rounded-xl shadow-md flex items-center space-x-4"><div class="bg-blue-100 p-3 rounded-full"><i data-lucide="server" class="text-blue-600"></i></div><div><p class="text-gray-500 text-sm">Total Ruletas/Slot Atendidas</p><p id="total-maquinas" class="text-2xl font-bold">0</p></div></div>
                 <div class="card-enter bg-white p-6 rounded-xl shadow-md flex items-center space-x-4"><div class="bg-green-100 p-3 rounded-full"><i data-lucide="check-circle" class="text-green-600"></i></div><div><p class="text-gray-500 text-sm">Operativas</p><p id="total-operativas" class="text-2xl font-bold">0</p></div></div>
                 <div id="card-inoperativas" class="card-enter bg-white p-6 rounded-xl shadow-md flex items-center space-x-4 hover:bg-red-50 cursor-pointer transition"><div class="bg-red-100 p-3 rounded-full"><i data-lucide="alert-triangle" class="text-red-600"></i></div><div><p class="text-gray-500 text-sm">Inoperativas</p><p id="total-inoperativas" class="text-2xl font-bold">0</p></div></div>
                 <div id="card-pendientes" class="card-enter bg-white p-6 rounded-xl shadow-md flex items-center space-x-4 hover:bg-yellow-50 cursor-pointer transition"><div class="bg-yellow-100 p-3 rounded-full"><i data-lucide="clock" class="text-yellow-600"></i></div><div><p class="text-gray-500 text-sm">Pendientes</p><p id="total-pendientes" class="text-2xl font-bold">0</p></div></div>
@@ -165,9 +203,14 @@
                 <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-md"><h2 class="text-xl font-semibold mb-4">Top 15 Salas Más Visitadas</h2><div class="h-96"><canvas id="topSalasChart"></canvas></div></div>
                 <div class="bg-white p-6 rounded-xl shadow-md"><h2 class="text-xl font-semibold mb-4">Top 5 Tipos de Trabajo</h2><div class="h-96"><canvas id="topTrabajosChart"></canvas></div></div>
             </div>
+            <div id="sala-details-container" class="hidden mt-8">
+            <div class="bg-white p-6 rounded-xl shadow-md">
+                <h2 id="sala-details-title" class="text-xl font-semibold mb-4">Detalles de la Sala</h2>
+                <div id="sala-details-table" class="overflow-x-auto">
+                    </div>
+            </div>
         </div>
 
-        <!-- DASHBOARD DE TÉCNICOS (PARA ADMINS) -->
         <div id="tecnicos-dashboard" class="hidden">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div class="bg-white p-6 rounded-xl shadow-md"><h2 class="text-xl font-semibold mb-4">Horas Trabajadas por Técnico</h2><div class="h-96"><canvas id="horasTecnicoChart"></canvas></div></div>
@@ -176,7 +219,6 @@
             </div>
         </div>
 
-        <!-- DASHBOARD DE REPORTE DETALLADO (PARA ADMINS) -->
         <div id="reporte-dashboard" class="hidden">
             <div class="bg-white p-6 rounded-xl shadow-md">
                 <h2 class="text-xl font-semibold mb-4">Reporte Detallado de Operaciones</h2>
@@ -184,22 +226,21 @@
             </div>
         </div>
 
-        <!-- DASHBOARD PARA REPORTAR INCIDENCIA (PARA TÉCNICOS DE SALA) -->
         <div id="incidencia-dashboard" class="hidden">
-            <div class="bg-white p-6 rounded-xl shadow-md">
-                 <h2 class="text-xl font-semibold mb-6">Reportar Nueva Incidencia</h2>
+            <div class="incidencia-section">
+                <div class="incidencia-header">
+                    <h2 class="text-2xl font-semibold text-gray-800">Control de estado actual de Maquinas y Ruletas</h2>
+                </div>
                  
-                 <!-- Información de la sala asignada -->
-                 <div id="sala-info" class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                   <h3 class="font-semibold text-blue-800">Sala asignada: <span id="sala-nombre">Cargando...</span></h3>
+                 <div id="sala-info" class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200 text-center">
+                   <h3 class="font-semibold text-blue-800">Sala De Juegos <span id="sala-nombre">Cargando...</span></h3>
                    <p class="text-blue-600 text-sm mt-1" id="sala-detalles"></p>
                  </div>
                  
                  <form id="incidencia-form" class="space-y-6">
-                   <!-- Selección de máquina (como botones) -->
-                   <div>
-                       <label class="block text-sm font-medium text-gray-700 mb-3">Seleccione una máquina</label>
-                       <div id="maquinas-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                   <div class="incidencia-form-group">
+                       <label class="incidencia-label">1. Seleccione una Ruleta o Maquina</label>
+                       <div id="maquinas-container" class="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-10 gap-3">
                            <div class="text-center py-8 text-gray-400">
                                <i data-lucide="loader-2" class="animate-spin h-8 w-8 mx-auto"></i>
                                <p class="mt-2">Cargando máquinas...</p>
@@ -210,61 +251,57 @@
                        </p>
                    </div>
                    
-                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
                         <div>
-                            <label for="incidencia-tipo-trabajo" class="block text-sm font-medium text-gray-700">Tipo de Trabajo</label>
-                            <select id="incidencia-tipo-trabajo" name="tipo_trabajo" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                <option value="Reparación" selected>Reparación</option>
-                                <option value="Mantenimiento">Mantenimiento</option>
-                                <option value="Instalación">Instalación</option>
-                                <option value="Revisión">Revisión</option>
+                           <label for="incidencia-tipo-trabajo" class="incidencia-label">Tipo de Trabajo</label>
+                           <select id="incidencia-tipo-trabajo" name="tipo_trabajo" required class="incidencia-textarea">
+                               <option value="Asistencia Remota" selected>Asistencia Remota</option>
+                           </select>
+                       </div>
+                       <div>
+                            <label for="incidencia-estado" class="incidencia-label">Estado Final de la Máquina</label>
+                            <select id="incidencia-estado" name="estado" required class="incidencia-textarea">
+                                <option value="Inoperativo" selected>Inoperativo</option>
                             </select>
-                        </div>
-                        <div>
-                             <label for="incidencia-estado" class="block text-sm font-medium text-gray-700">Estado Final de la Máquina</label>
-                             <select id="incidencia-estado" name="estado" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                 <option value="Operativo">Operativo</option>
-                                 <option value="Inoperativo" selected>Inoperativo</option>
-                                 <option value="Pendiente">Pendiente</option>
-                             </select>
-                        </div>
+                       </div>
                    </div>
-                   <div>
-                       <label for="incidencia-diag" class="block text-sm font-medium text-gray-700">Diagnóstico Inicial</label>
-                       <textarea id="incidencia-diag" name="diag_ini" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Describa el problema o incidencia detectada..." required></textarea>
+                   
+                   <div class="incidencia-form-group">
+                       <label for="incidencia-diag" class="incidencia-label">2. Describa la incidencia</label>
+                       <textarea id="incidencia-diag" name="diag_ini" rows="4" class="incidencia-textarea" placeholder="Describa el problema o incidencia detectada..." required></textarea>
                    </div>
-                   <div class="flex justify-end">
-                       <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 flex items-center gap-2 transition-colors">
-                           <i data-lucide="send" class="w-4 h-4"></i> Enviar Reporte
+                   
+                   <div class="flex justify-end pt-4">
+                       <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 flex items-center gap-2 transition-colors font-medium">
+                           <i data-lucide="send" class="w-5 h-5"></i> Enviar Reporte
                        </button>
                    </div>
                  </form>
+            </div>
 
-                 <div id="incidencia-history-container" class="mt-8">
-                   <h2 class="text-xl font-semibold mb-4">Historial de Incidencias de la Sala</h2>
-                   <div class="bg-gray-50 p-4 rounded-xl shadow-inner overflow-x-auto">
-                       <table class="min-w-full divide-y divide-gray-200">
-                           <thead class="table-header">
-                               <tr>
-                                   <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
-                                   <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Máquina (Serie)</th>
-                                   <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Incidencia</th>
-                                   <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                               </tr>
-                           </thead>
-                           <tbody id="incidencia-history-body" class="bg-white divide-y divide-gray-200">
-                               <tr>
-                                   <td colspan="4" class="px-4 py-4 text-center text-gray-500">Cargando historial...</td>
-                               </tr>
-                           </tbody>
-                       </table>
-                   </div>
-                 </div>
+            <div class="incidencia-section">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">Historial de Incidencias de la Máquina o Ruleta Seleccionada</h2>
+                <div class="bg-gray-50 p-4 rounded-lg overflow-x-auto">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th class="text-left font-medium text-gray-700">Fecha</th>
+                                <th class="text-left font-medium text-gray-700">Tipo de Trabajo</th>
+                                <th class="text-left font-medium text-gray-700">Detalles</th>
+                                <th class="text-left font-medium text-gray-700">Estado Final</th>
+                            </tr>
+                        </thead>
+                        <tbody id="incidencia-history-body">
+                            <tr>
+                                <td colspan="4" class="text-center text-gray-500 py-4">Seleccione una máquina para ver su historial.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL (PARA ADMINS) -->
     <div id="details-modal" class="modal"><div class="modal-content"><div class="flex justify-between items-center mb-4"><h2 id="modal-title" class="text-2xl font-bold">Detalle</h2><button id="modal-close-btn" class="text-gray-500 hover:text-gray-800"><i data-lucide="x" class="w-6 h-6"></i></button></div><div id="modal-body" class="max-h-96 overflow-y-auto"></div></div></div>
 
     <script>
@@ -279,20 +316,14 @@
         const loadingOverlay = document.getElementById('loading-overlay');
         const loadingText = document.getElementById('loading-text');
         const logoutButton = document.getElementById('logout-button');
-
-        // Nav
         const navMaquinasBtn = document.getElementById('nav-maquinas');
         const navTecnicosBtn = document.getElementById('nav-tecnicos');
         const navReporteBtn = document.getElementById('nav-reporte');
         const navIncidenciaBtn = document.getElementById('nav-incidencia');
-        
-        // Dashboards
         const maquinasDashboard = document.getElementById('maquinas-dashboard');
         const tecnicosDashboard = document.getElementById('tecnicos-dashboard');
         const reporteDashboard = document.getElementById('reporte-dashboard');
         const incidenciaDashboard = document.getElementById('incidencia-dashboard');
-        
-        // Admin Filters & Modal
         const filtersSection = document.getElementById('filters-section');
         const startDateInput = document.getElementById('start-date');
         const endDateInput = document.getElementById('end-date');
@@ -319,15 +350,10 @@
         const workTypeFilterBtn = document.getElementById('work-type-filter-btn');
         const workTypeFilterText = document.getElementById('work-type-filter-text');
         const workTypeFilterOptions = document.getElementById('work-type-filter-options');
-        
-        // Sala Technician Form Elements
         const incidenciaForm = document.getElementById('incidencia-form');
-        const incidenciaTipoTrabajoSelect = document.getElementById('incidencia-tipo-trabajo');
-        const incidenciaEstadoSelect = document.getElementById('incidencia-estado');
         const incidenciaDiagTextarea = document.getElementById('incidencia-diag');
         const maquinasContainer = document.getElementById('maquinas-container');
         const noMachinesMessage = document.getElementById('no-machines-message');
-        const salaInfo = document.getElementById('sala-info');
         const salaNombre = document.getElementById('sala-nombre');
         const salaDetalles = document.getElementById('sala-detalles');
         const incidenciaHistoryBody = document.getElementById('incidencia-history-body');
@@ -337,9 +363,37 @@
         let topTrabajosChartInstance, topSalasChartInstance, horasTecnicoChartInstance, avgTimeChartInstance;
         let currentMachineStates = [], allTechnicians = [], allDepartamentos = [], allSalas = [], allWorkTypes = [];
         const colorPalette = ['rgba(59, 130, 246, 0.7)', 'rgba(239, 68, 68, 0.7)', 'rgba(245, 158, 11, 0.7)', 'rgba(34, 197, 94, 0.7)', 'rgba(139, 92, 246, 0.7)', 'rgba(236, 72, 153, 0.7)', 'rgba(14, 165, 233, 0.7)'];
-        // State for Sala Tech view
         let userSalaId = null;
         let selectedMachineId = null;
+        let realtimeSubscription = null;
+
+        // ▼▼▼ AGREGA ESTA FUNCIÓN NUEVA ▼▼▼
+    async function fetchLatestMachineStates(salaId) {
+        const { data, error } = await supabaseClient
+            .from('trabajos')
+            .select('detalle!inner(id_maquina, estado)')
+            .eq('id_sala', salaId)
+            .not('detalle', 'is', 'null')
+            .order('fecha', { ascending: false })
+            .order('id_trabajo', { ascending: false });
+
+        if (error) {
+            console.error("Error fetching machine states:", error);
+            return {};
+        }
+
+        const latestStates = {};
+        data.forEach(trabajo => {
+            trabajo.detalle.forEach(item => {
+                // Como los datos vienen ordenados del más nuevo al más viejo,
+                // la primera vez que veamos una máquina, ese será su último estado.
+                if (item.id_maquina && !latestStates[item.id_maquina]) {
+                    latestStates[item.id_maquina] = item.estado;
+                }
+            });
+        });
+        return latestStates;
+    }
 
         // --- SESSION MANAGEMENT ---
         async function checkSession() {
@@ -353,6 +407,10 @@
         }
 
         async function logout() {
+            if (realtimeSubscription) {
+                supabaseClient.removeChannel(realtimeSubscription);
+                realtimeSubscription = null;
+            }
             await supabaseClient.auth.signOut();
             window.location.href = './index.html'; 
         }
@@ -368,7 +426,7 @@
                 .eq('id_usuario', currentUser.id)
                 .single();
 
-            if (tecnicoError && tecnicoError.code !== 'PGRST116') { // PGRST116 = no rows found
+            if (tecnicoError && tecnicoError.code !== 'PGRST116') {
                 console.error("Error fetching technician data:", tecnicoError);
                 alert("Error al verificar el perfil de usuario.");
                 logout();
@@ -381,7 +439,6 @@
                 await initializeAdminView();
             }
 
-            // Common finalization
             mainContent.classList.remove('opacity-0');
             mainContent.classList.add('opacity-100');
             loadingOverlay.style.opacity = '0';
@@ -390,24 +447,49 @@
         }
 
         // =================================================================
+        // --- REALTIME SUBSCRIPTION LOGIC ---
+        // =================================================================
+        function setupRealtimeSubscription(callback) {
+            if (realtimeSubscription) {
+                supabaseClient.removeChannel(realtimeSubscription);
+            }
+            realtimeSubscription = supabaseClient.channel('public:detalle')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'detalle' }, (payload) => {
+                    console.log('Realtime change received!', payload);
+                    callback(payload); // Pasamos el payload al callback
+                })
+                .subscribe();
+            console.log("Realtime subscription setup complete.");
+        }
+
+
+        // =================================================================
         // --- SALA TECHNICIAN VIEW LOGIC ---
         // =================================================================
         
         async function initializeSalaTechnicianView(tecnicoData) {
-            // 1. Setup UI
-            document.getElementById('main-nav').classList.add('hidden'); // Hide admin nav
-            filtersSection.classList.add('hidden'); // Hide admin filters
-            incidenciaDashboard.classList.remove('hidden'); // Show sala tech dashboard
+            // ▼▼▼ AQUÍ AGREGAS LAS LÍNEAS PARA CAMBIAR EL TÍTULO ▼▼▼
+            document.getElementById('main-title').textContent = 'Reporte de Incidencias de Sala';
+            document.getElementById('main-subtitle').textContent = ''; // Limpiamos el subtítulo
+            // ▲▲▲ FIN DE LA MODIFICACIÓN ▲▲▲
 
-            // 2. Set default form values
-            incidenciaTipoTrabajoSelect.value = 'Reparación';
-            incidenciaEstadoSelect.value = 'Inoperativo';
+            document.getElementById('main-nav').classList.add('hidden');
+            filtersSection.classList.add('hidden');
+            incidenciaDashboard.classList.remove('hidden');
             
-            // 3. Load sala data
             await loadSalaData(tecnicoData.docum);
             
-            // 4. Attach event listeners
             incidenciaForm.addEventListener('submit', handleIncidenciaSubmit);
+
+            // Setup realtime updates
+            setupRealtimeSubscription((payload) => {
+                console.log("Realtime update triggered for Sala view.");
+                // Si hay una máquina seleccionada y el cambio corresponde a ella, actualizamos su historial
+                if (selectedMachineId && payload.new.id_maquina === selectedMachineId) {
+                    console.log(`Updating history for selected machine: ${selectedMachineId}`);
+                    loadHistoryForMachine(selectedMachineId);
+                }
+            });
         }
 
         async function loadSalaData(salaId) {
@@ -425,11 +507,11 @@
                 salaNombre.textContent = salaData.sala_mincetur;
                 salaDetalles.textContent = `${salaData.empresa} - ${salaData.direccion}, ${salaData.departamento}`;
                 
-                // Load machines and history concurrently
-                await Promise.all([
-                    loadMachinesForSala(salaId),
-                    loadIncidentHistoryForSala(salaId)
-                ]);
+                // ▼▼▼ MODIFICACIÓN AQUÍ ▼▼▼
+                // 1. Obtenemos los estados primero
+                const latestStates = await fetchLatestMachineStates(salaId);
+                // 2. Los pasamos al crear las máquinas
+                await loadMachinesForSala(salaId, latestStates);
 
             } catch (error) {
                 console.error('Error al cargar datos de la sala:', error);
@@ -438,8 +520,8 @@
             }
         }
         
-        async function loadMachinesForSala(salaId) {
-            console.log(`[MAQUINAS] Cargando máquinas para sala ID: ${salaId}`); // Log for debugging
+        // ▼▼▼ REEMPLAZA TU FUNCIÓN ENTERA CON ESTA ▼▼▼
+        async function loadMachinesForSala(salaId, latestStates = {}) { // Ahora recibe los estados
             try {
                 const { data: machinesData, error } = await supabaseClient
                     .from('maquinas')
@@ -448,8 +530,6 @@
                     .order('serie');
                 if (error) throw error;
                 
-                console.log('[MAQUINAS] Series recibidas de la BD:', machinesData.map(m => m.serie)); // Log received series
-
                 maquinasContainer.innerHTML = '';
                 
                 if (machinesData.length === 0) {
@@ -462,17 +542,29 @@
                 machinesData.forEach(machine => {
                     const machineButton = document.createElement('button');
                     machineButton.type = 'button';
-                    machineButton.className = 'machine-button';
+                    machineButton.className = 'machine-button'; // Clase base
                     machineButton.dataset.id = machine.id_maquina;
+
+                    // --- LÓGICA PARA APLICAR EL COLOR DE ESTADO ---
+                    const lastStatus = latestStates[machine.id_maquina];
+                    if (lastStatus) {
+                        const statusClass = `status-${lastStatus.toLowerCase()}`;
+                        machineButton.classList.add(statusClass);
+                    }
+                    // --- FIN DE LA LÓGICA DE COLOR ---
+
                     machineButton.innerHTML = `
                         <div class="machine-serie">${machine.serie}</div>
-                        <div class="machine-model">${machine.modelo || 'Sin modelo'} ${machine.gabinete ? `- ${machine.gabinete}` : ''}</div>
+                        <div class="machine-model">${machine.modelo || 'Sin modelo'}</div>
                     `;
                     
                     machineButton.addEventListener('click', () => {
+                        // Limpia el estado 'selected' de cualquier otro botón
                         document.querySelectorAll('.machine-button.selected').forEach(btn => btn.classList.remove('selected'));
+                        // Añade 'selected' al botón clickeado
                         machineButton.classList.add('selected');
                         selectedMachineId = machine.id_maquina;
+                        loadHistoryForMachine(machine.id_maquina);  
                     });
                     
                     maquinasContainer.appendChild(machineButton);
@@ -484,87 +576,56 @@
             }
         }
         
-        async function loadIncidentHistoryForSala(salaId) {
-            console.log(`[HISTORIAL] Cargando historial para sala ID: ${salaId}`);
+        // ▼▼▼ NUEVA FUNCIÓN: Carga el historial para una sola máquina ▼▼▼
+        async function loadHistoryForMachine(machineId) {
+            console.log(`[HISTORIAL] Cargando historial para máquina ID: ${machineId}`);
+            incidenciaHistoryBody.innerHTML = `<tr><td colspan="4" class="px-4 py-4 text-center text-gray-500">Cargando historial...</td></tr>`;
+
             try {
                 const { data, error } = await supabaseClient
-                    .from('trabajos')
+                    .from('detalle')
                     .select(`
-                        fecha,
-                        detalle!inner (
-                            estado, tipo_trabajo, diag_ini, trab_realizado, resul,
-                            maquinas!inner(serie)
-                        )
+                        estado, tipo_trabajo, diag_ini, trab_realizado, resul,
+                        trabajos ( fecha )
                     `)
-                    .eq('id_sala', salaId)
-                    .not('detalle', 'is', 'null')
-                    .order('fecha', { ascending: false })
-                    .order('id_trabajo', { ascending: false });
+                    .eq('id_maquina', machineId)
+                    .order('fecha', { foreignTable: 'trabajos', ascending: false });
 
                 if (error) throw error;
                 
-                console.log('[HISTORIAL] Datos crudos recibidos:', data);
-
-                const latestMachineRecords = {};
-                data.forEach(trabajo => {
-                    trabajo.detalle.forEach(item => {
-                        const machineSerie = item.maquinas?.serie;
-                        if (machineSerie && !latestMachineRecords[machineSerie]) {
-                            latestMachineRecords[machineSerie] = {
-                                ...item,
-                                fecha: trabajo.fecha,
-                            };
-                        }
-                    });
-                });
-
-                const displayData = Object.values(latestMachineRecords);
-                
-                // FIX: Sort the final aggregated data by date
-                displayData.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-
-                console.log('[HISTORIAL] Datos procesados (último por máquina y ordenados):', displayData);
-
                 incidenciaHistoryBody.innerHTML = '';
                 
-                if (displayData.length === 0) {
-                    incidenciaHistoryBody.innerHTML = `<tr><td colspan="4" class="px-4 py-4 text-center text-gray-500">No hay historial reciente</td></tr>`;
+                if (data.length === 0) {
+                    incidenciaHistoryBody.innerHTML = `<tr><td colspan="4" class="px-4 py-4 text-center text-gray-500">No hay historial para esta máquina.</td></tr>`;
                     return;
                 }
                 
-                displayData.forEach(item => {
+                data.forEach(item => {
                     const tr = document.createElement('tr');
                     const estado = item.estado || 'N/A';
                     tr.className = {
                         'Operativo': 'status-operativo',
                         'Inoperativo': 'status-inoperativo',
-                        'Pendiente': 'status-pendiente'
+                        'Pendiente': 'status-pendiente',
+                        'Retirado' : 'status-retirado'
                     }[estado] || '';
                     
-                    const fecha = new Date(item.fecha + 'T00:00:00').toLocaleDateString('es-ES');
-                    const maquinaSerie = item.maquinas?.serie || 'N/A';
+                    const fecha = item.trabajos ? new Date(item.trabajos.fecha + 'T00:00:00').toLocaleDateString('es-ES') : 'N/A';
                     const tipoTrabajo = item.tipo_trabajo || 'N/A';
-                    
-                    const detalleCompleto = [item.diag_ini, item.trab_realizado, item.resul].filter(Boolean).join(' <br> ');
-                    const incidenciaHTML = `
-                        <div class="tooltip-container">
-                            ${tipoTrabajo}
-                            <div class="tooltip-bubble">${detalleCompleto || 'Sin detalles adicionales.'}</div>
-                        </div>`;
+                    const detalleCompleto = [item.diag_ini, item.trab_realizado, item.resul].filter(Boolean).join(' / ');
 
                     tr.innerHTML = `
                         <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${fecha}</td>
-                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${maquinaSerie}</td>
-                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${incidenciaHTML}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${tipoTrabajo}</td>
+                        <td class="px-4 py-4 text-sm text-gray-500">${detalleCompleto || 'Sin detalles.'}</td>
                         <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${estado}</td>
                     `;
                     incidenciaHistoryBody.appendChild(tr);
                 });
                 
             } catch (error) {
-                console.error('Error al cargar historial:', error);
-                console.log('[HISTORIAL] Error en la carga:', error);
-                incidenciaHistoryBody.innerHTML = `<tr><td colspan="4" class="px-4 py-4 text-center text-red-500">Error al cargar el historial</td></tr>`;
+                console.error('Error al cargar historial de la máquina:', error);
+                incidenciaHistoryBody.innerHTML = `<tr><td colspan="4" class="px-4 py-4 text-center text-red-500">Error al cargar el historial.</td></tr>`;
             }
         }
         
@@ -596,13 +657,14 @@
                     .single();
 
                 if (trabajoError) throw trabajoError;
-
+                
+                // ▼▼▼ MODIFICADO: Usar valores por defecto para los campos ocultos ▼▼▼
                 const detalle = {
                     id_trabajo: trabajoData.id_trabajo,
                     id_maquina: selectedMachineId,
-                    tipo_trabajo: incidenciaTipoTrabajoSelect.value,
+                    tipo_trabajo: 'Asistencia Remota', // Valor por defecto
                     diag_ini: incidenciaDiagTextarea.value,
-                    estado: incidenciaEstadoSelect.value,
+                    estado: 'Inoperativo', // Valor por defecto
                 };
 
                 const { error: detalleError } = await supabaseClient.from('detalle').insert(detalle);
@@ -610,12 +672,14 @@
 
                 alert('¡Incidencia reportada con éxito!');
                 
-                console.log('[SUBMIT] Recargando historial de incidencias...');
-                await loadIncidentHistoryForSala(userSalaId);
+                // La subscripción en tiempo real se encargará de actualizar la tabla si es necesario
+                // No es necesario llamar a loadHistoryForMachine manualmente.
                 
                 incidenciaDiagTextarea.value = '';
-                document.querySelectorAll('.machine-button.selected').forEach(btn => btn.classList.remove('selected'));
-                selectedMachineId = null;
+                // Opcional: Deseleccionar la máquina y limpiar la tabla
+                // document.querySelectorAll('.machine-button.selected').forEach(btn => btn.classList.remove('selected'));
+                // selectedMachineId = null;
+                // incidenciaHistoryBody.innerHTML = `<tr><td colspan="4" class="px-4 py-4 text-center text-gray-500">Seleccione una máquina para ver su historial.</td></tr>`;
 
             } catch (error) {
                 console.error('Error al reportar incidencia:', error);
@@ -627,17 +691,147 @@
             }
         }
 
+        // ▼▼▼ AGREGA ESTAS 3 NUEVAS FUNCIONES ▼▼▼
+
+        // Función principal que se activa al hacer clic en una sala
+        async function showDetailsForSala(salaName) {
+            const container = document.getElementById('sala-details-container');
+            const tableDiv = document.getElementById('sala-details-table');
+            const title = document.getElementById('sala-details-title');
+
+            title.textContent = `Detalle de Máquinas Atendidas en: ${salaName}`;
+            tableDiv.innerHTML = '<p class="text-center text-gray-500">Cargando detalles...</p>';
+            container.classList.remove('hidden'); // Muestra el contenedor
+
+            // 1. Llama a la función para buscar los datos en Supabase
+            const detailsData = await fetchDetailsForSala(salaName);
+
+            // 2. Llama a la función para construir la tabla con los datos
+            renderSalaDetailsTable(detailsData);
+        }
+
+        // Función para obtener los datos de la BD
+        async function fetchDetailsForSala(salaName) {
+            const startDate = startDateInput.value;
+            const endDate = endDateInput.value;
+
+            const { data, error } = await supabaseClient
+                .from('detalle')
+                .select(`
+                    trabajos!inner(fecha, sala!inner(sala_mincetur)),
+                    maquinas!inner(serie, gabinete),
+                    estado, tipo_trabajo, diag_ini, trab_realizado, resul
+                `)
+                .eq('trabajos.sala.sala_mincetur', salaName)
+                .gte('trabajos.fecha', startDate)
+                .lte('trabajos.fecha', endDate)
+                .order('fecha', { foreignTable: 'trabajos', ascending: false });
+
+            if (error) {
+                console.error("Error fetching details for sala:", error);
+                return [];
+            }
+            return data;
+        }
+
+        // Función para construir el HTML de la tabla
+        // Función para construir el HTML de la tabla
+        // ▼▼▼ AGREGA ESTA FUNCIÓN NUEVA ▼▼▼
+        /**
+         * Genera un arreglo de colores en degradado de azul.
+         * @param {number} count - El número de colores a generar.
+         * @returns {string[]} Un arreglo de colores en formato 'rgba()'.
+         */
+        function generateBlueGradient(count) {
+            const colors = [];
+            // Definimos el color inicial (oscuro) y final (claro) en RGB
+            const startColor = { r: 37, g: 99, b: 235 };  // Azul oscuro
+            const endColor = { r: 191, g: 219, b: 254 }; // Azul claro
+
+            for (let i = 0; i < count; i++) {
+                const ratio = i / (count - 1);
+                const r = Math.round(startColor.r + ratio * (endColor.r - startColor.r));
+                const g = Math.round(startColor.g + ratio * (endColor.g - startColor.g));
+                const b = Math.round(startColor.b + ratio * (endColor.b - startColor.b));
+                colors.push(`rgba(${r}, ${g}, ${b}, 0.8)`);
+            }
+            return colors;
+        }
+        function renderSalaDetailsTable(data) {
+            const tableDiv = document.getElementById('sala-details-table');
+            if (!data || data.length === 0) {
+                tableDiv.innerHTML = '<p class="text-center text-gray-500">No se encontraron registros para esta sala en el rango de fechas seleccionado.</p>';
+                return;
+            }
+
+            let tableHTML = `
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="table-header">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Serie</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Gabinete</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo de Trabajo</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado Final</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+            `;
+
+            data.forEach(item => {
+                const fecha = new Date(item.trabajos.fecha + 'T00:00:00').toLocaleDateString('es-ES');
+                const serie = item.maquinas?.serie || 'N/A';
+                const gabinete = item.maquinas?.gabinete || 'N/A';
+                const tipoTrabajo = item.tipo_trabajo || 'N/A';
+                const estado = item.estado || 'N/A';
+
+                const detallesCompletos = [
+                    item.diag_ini ? `<b>Diagnóstico:</b> ${item.diag_ini}` : '',
+                    item.trab_realizado ? `<b>Trabajo:</b> ${item.trab_realizado}` : '',
+                    item.resul ? `<b>Resultado:</b> ${item.resul}` : ''
+                ].filter(Boolean).join('<br>');
+
+                // ▼▼▼ 1. OBTENEMOS LA CLASE DEL ESTADO (Igual que en las otras tablas) ▼▼▼
+                const statusClass = {
+                    'Operativo': 'status-operativo',
+                    'Inoperativo': 'status-inoperativo',
+                    'Pendiente': 'status-pendiente',
+                    'Retirado': 'status-retirado'
+                }[estado] || '';
+
+                // ▼▼▼ 2. APLICAMOS LA CLASE A LA FILA <tr> ▼▼▼
+                tableHTML += `
+                    <tr class="${statusClass}">
+                        <td class="px-4 py-4 whitespace-nowrap text-sm">${fecha}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm">${serie}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm">${gabinete}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm">
+                            <div class="tooltip-container">
+                                ${tipoTrabajo}
+                                <div class="tooltip-bubble">${detallesCompletos || 'Sin detalles.'}</div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm">
+                            <div class="tooltip-container">
+                                ${estado}
+                                <div class="tooltip-bubble">${detallesCompletos || 'Sin detalles.'}</div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `</tbody></table>`;
+            tableDiv.innerHTML = tableHTML;
+        }
+
 
         // =================================================================
-        // --- ADMIN VIEW LOGIC ---
+        // --- ADMIN VIEW LOGIC (SIN CAMBIOS) ---
         // =================================================================
-
         async function initializeAdminView() {
-            // 1. Setup UI
             maquinasDashboard.classList.remove('hidden');
             filtersSection.style.display = 'flex';
-
-            // 2. Setup navigation and filters
             function switchView(view) {
                 [maquinasDashboard, tecnicosDashboard, reporteDashboard].forEach(d => d.classList.add('hidden'));
                 [gabineteFilterContainer, tecnicoFilterContainer, departamentoFilterContainer, salaFilterContainer, workTypeFilterContainer].forEach(f => f.style.display = 'none');
@@ -660,11 +854,9 @@
                 }
                 applyFilters();
             }
-
             navMaquinasBtn.addEventListener('click', () => switchView('maquinas'));
             navTecnicosBtn.addEventListener('click', () => switchView('tecnicos'));
             navReporteBtn.addEventListener('click', () => switchView('reporte'));
-
             setDefaultDates();
             loadingText.textContent = 'Cargando filtros...';
             await Promise.all([
@@ -675,10 +867,7 @@
                 populateWorkTypeFilter()
             ]);
             
-            // Initial data load
             await applyFilters(); 
-
-            // 3. Attach event listeners
             applyFiltersBtn.addEventListener('click', applyFilters);
             
             tecnicoFilterBtn.addEventListener('click', () => tecnicoFilterOptions.classList.toggle('hidden'));
@@ -697,22 +886,23 @@
                 if (!salaFilterContainer.contains(e.target)) salaFilterOptions.classList.add('hidden');
                 if (!workTypeFilterContainer.contains(e.target)) workTypeFilterOptions.classList.add('hidden');
             });
-
             document.getElementById('card-inoperativas').addEventListener('click', () => showDetailsModal('Inoperativo'));
             document.getElementById('card-pendientes').addEventListener('click', () => showDetailsModal('Pendiente'));
             modalCloseBtn.addEventListener('click', () => detailsModal.style.display = 'none');
             window.addEventListener('click', (event) => { if (event.target == detailsModal) { detailsModal.style.display = 'none'; } });
+            setupRealtimeSubscription(() => {
+                console.log("Realtime update triggered for Admin view. Re-applying filters.");
+                applyFilters();
+            });
         }
         
         async function applyFilters() {
             loadingOverlay.style.display = 'flex';
             loadingOverlay.style.opacity = '1';
             loadingText.textContent = 'Cargando datos...';
-
             const startDate = startDateInput.value;
             const endDate = endDateInput.value;
             const activeDashboard = document.querySelector('.nav-button.active').id;
-
             try {
                 if (activeDashboard === 'nav-maquinas') {
                     const typeFilter = typeFilterInput.value;
@@ -753,7 +943,6 @@
             }
         }
         
-        // --- ADMIN HELPERS & POPULATORS ---
         function setDefaultDates() {
             const today = new Date();
             const thirtyDaysAgo = new Date();
@@ -761,7 +950,6 @@
             endDateInput.value = today.toISOString().split('T')[0];
             startDateInput.value = thirtyDaysAgo.toISOString().split('T')[0];
         }
-
         function createMultiSelect(options) {
             const { container, items, idField, nameField, checkboxClass, allSelectorId, updateTextFn } = options;
             container.innerHTML = ''; 
@@ -770,7 +958,6 @@
             allOptionLabel.className = 'flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer font-semibold';
             allOptionLabel.innerHTML = `<input type="checkbox" id="${allSelectorId}" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-3"> Todos`;
             container.appendChild(allOptionLabel);
-
             items.forEach(item => {
                 const label = document.createElement('label');
                 label.className = 'flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer';
@@ -798,7 +985,6 @@
                 typeFilterInput.appendChild(option);
             });
         }
-
         async function populateTechnicianFilter() {
             const { data, error } = await supabaseClient.from('tecnicos').select('id_usuario, usuario').order('usuario');
             if (error) { console.error('Error fetching technicians:', error); return; }
@@ -818,7 +1004,6 @@
                 checkboxClass: 'departamento-checkbox', allSelectorId: 'select-all-departamentos', updateTextFn: updateDepartamentoFilterText
             });
         }
-
         async function populateSalaFilter() {
             const { data, error } = await supabaseClient.from('sala').select('id_sala, sala_mincetur').order('sala_mincetur');
             if (error) { console.error('Error fetching salas:', error); return; }
@@ -828,7 +1013,6 @@
                 checkboxClass: 'sala-checkbox', allSelectorId: 'select-all-salas', updateTextFn: updateSalaFilterText
             });
         }
-
         async function populateWorkTypeFilter() {
             const { data, error } = await supabaseClient.from('detalle').select('tipo_trabajo');
             if (error) { console.error('Error fetching work types:', error); return; }
@@ -851,9 +1035,6 @@
         const updateDepartamentoFilterText = () => updateMultiSelectText(departamentoFilterText, getSelectedIds('.departamento-checkbox:checked').length, allDepartamentos.length, 'dpto.', 'dptos.', 'Todos los departamentos');
         const updateSalaFilterText = () => updateMultiSelectText(salaFilterText, getSelectedIds('.sala-checkbox:checked').length, allSalas.length, 'sala', 'salas', 'Todas las salas');
         const updateWorkTypeFilterText = () => updateMultiSelectText(workTypeFilterText, getSelectedIds('.work-type-checkbox:checked').length, allWorkTypes.length, 'tipo', 'tipos', 'Todos los tipos');
-
-
-        // --- ADMIN DATA FETCHING ---
         async function fetchTopSalas(startDate, endDate, typeFilter) {
             let query = supabaseClient.from('trabajos').select('id_sala, detalle!inner(maquinas!inner(gabinete))').gte('fecha', startDate).lte('fecha', endDate);
             if (typeFilter !== 'Todos') { query = query.eq('detalle.maquinas.gabinete', typeFilter); }
@@ -868,7 +1049,6 @@
             const salaMap = salasData.reduce((acc, sala) => { acc[sala.id_sala] = sala.sala_mincetur; return acc; }, {});
             return Object.entries(salaVisits).map(([id_sala, visitas]) => ({ nombre_sala: salaMap[id_sala] || `Sala ID ${id_sala}`, visitas: visitas })).sort((a, b) => b.visitas - a.visitas).slice(0, 15);
         }
-
         async function fetchMachineStates(startDate, endDate, typeFilter) {
             const { data: trabajosData, error: trabajosError } = await supabaseClient.from('trabajos').select('id_trabajo, fecha, hora_fin, id_sala').gte('fecha', startDate).lte('fecha', endDate);
             if (trabajosError) throw trabajosError; if (!trabajosData || trabajosData.length === 0) return [];
@@ -915,7 +1095,6 @@
             }, {});
             return Object.entries(workTypeCounts).map(([tipo, count]) => ({ tipo, count })).sort((a, b) => b.count - a.count).slice(0, 5);
         }
-
         async function fetchReportData(startDate, endDate, departamentos, salas, workTypes) {
             let query = supabaseClient
                 .from('detalle')
@@ -930,34 +1109,63 @@
                 `)
                 .gte('trabajos.fecha', startDate)
                 .lte('trabajos.fecha', endDate);
-
             if (departamentos.length > 0) query = query.in('trabajos.sala.departamento', departamentos);
             if (salas.length > 0) query = query.in('trabajos.sala.id_sala', salas);
             if (workTypes.length > 0) query = query.in('tipo_trabajo', workTypes);
-
             query = query.order('fecha', { foreignTable: 'trabajos', ascending: false });
-
             const { data, error } = await query;
             if (error) { console.error("Error fetching report data:", error); throw error; }
             return data;
         }
-
-        // --- ADMIN UI UPDATES ---
         function updateMachineStatesUI(data) {
             document.getElementById('total-maquinas').textContent = data.length;
             document.getElementById('total-operativas').textContent = data.filter(m => m.estado === 'Operativo').length;
             document.getElementById('total-inoperativas').textContent = data.filter(m => m.estado === 'Inoperativo').length;
             document.getElementById('total-pendientes').textContent = data.filter(m => m.estado === 'Pendiente').length;
         }
-
         function updateTopSalasUI(data) {
             const labels = data.map(s => s.nombre_sala);
             const visitas = data.map(s => s.visitas);
             const ctx = document.getElementById('topSalasChart').getContext('2d');
             if (topSalasChartInstance) topSalasChartInstance.destroy();
-            topSalasChartInstance = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'Número de Visitas', data: visitas, backgroundColor: colorPalette }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'end', color: '#1f2937', font: { weight: 'bold' } } }, scales: { x: { beginAtZero: true } } } });
-        }
+            
+            // ▼▼▼ 1. LLAMAMOS A LA NUEVA FUNCIÓN PARA CREAR EL DEGRADADO ▼▼▼
+            const gradientColors = generateBlueGradient(data.length);
 
+            topSalasChartInstance = new Chart(ctx, { 
+                type: 'bar', 
+                data: { 
+                    labels: labels, 
+                    datasets: [{ 
+                        label: 'Número de Visitas', 
+                        data: visitas, 
+                        // ▼▼▼ 2. USAMOS LOS COLORES GENERADOS ▼▼▼
+                        backgroundColor: gradientColors
+                    }] 
+                }, 
+                options: { 
+                    indexAxis: 'y', 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { display: false }, 
+                        datalabels: { anchor: 'end', align: 'end', color: '#1f2937', font: { weight: 'bold' } } 
+                    }, 
+                    scales: { x: { beginAtZero: true } },
+                    onHover: (event, chartElement) => {
+                        event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
+                    },
+                    onClick: (event) => {
+                        const points = topSalasChartInstance.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
+                        if (points.length) {
+                            const firstPoint = points[0];
+                            const label = topSalasChartInstance.data.labels[firstPoint.index];
+                            showDetailsForSala(label); 
+                        }
+                    }
+                } 
+            });
+        }
         function updateTopTrabajosUI(data) {
             const labels = data.map(d => d.tipo);
             const counts = data.map(d => d.count);
@@ -965,7 +1173,6 @@
             if (topTrabajosChartInstance) topTrabajosChartInstance.destroy();
             topTrabajosChartInstance = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'Cantidad de Trabajos', data: counts, backgroundColor: colorPalette.slice().reverse() }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { anchor: 'center', align: 'center', color: 'white', font: { weight: 'bold' } } }, scales: { x: { beginAtZero: true } } } });
         }
-
         function updateReportTableUI(data) {
             const tableBody = document.getElementById('report-table-body');
             tableBody.innerHTML = '';
@@ -973,7 +1180,6 @@
                 tableBody.innerHTML = `<tr><td colspan="9" class="text-center text-gray-500 py-4">No se encontraron datos para los filtros seleccionados.</td></tr>`;
                 return;
             }
-
             const latestRecords = Object.values(data.reduce((acc, record) => {
                 const serie = record.maquinas?.serie;
                 if (serie) {
@@ -985,8 +1191,6 @@
             }, {}));
             
             latestRecords.sort((a,b) => new Date(b.trabajos.fecha) - new Date(a.trabajos.fecha));
-
-
             latestRecords.forEach(item => {
                 const tr = document.createElement('tr');
                 const estado = item.estado || 'N/A';
@@ -1011,7 +1215,6 @@
                 const tecnico = item.trabajos.tecnicos?.usuario || 'N/A';
                 const razonSocial = item.trabajos.sala?.empresa || 'N/A';
                 const ubicacion = [item.trabajos.sala?.departamento, item.trabajos.sala?.provincia, item.trabajos.sala?.distrito].filter(Boolean).join(', ');
-
                 tr.innerHTML = `
                     <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${fecha}</td>
                     <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${modeloGabinete}</td>
@@ -1026,7 +1229,6 @@
                 tableBody.appendChild(tr);
             });
         }
-
         function showDetailsModal(status) {
             const filteredMachines = currentMachineStates.filter(m => m.estado === status);
             filteredMachines.sort((a, b) => b.fecha - a.fecha);
@@ -1046,7 +1248,6 @@
             }
             detailsModal.style.display = 'block';
         }
-
         function updateTechniciansUI(hoursData, avgTimeData, visitsData) {
             const horasCtx = document.getElementById('horasTecnicoChart').getContext('2d');
             if (horasTecnicoChartInstance) horasTecnicoChartInstance.destroy();
@@ -1076,5 +1277,3 @@
     </script>
 </body>
 </html>
-
-
