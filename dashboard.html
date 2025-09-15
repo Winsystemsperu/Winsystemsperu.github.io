@@ -38,7 +38,7 @@
         .machine-button {
             padding: 8px 4px;
             border-radius: 8px;
-            width: 5rem;
+            width: 6rem;
             border: 1px solid #e5e7eb;
             text-align: center;
             transition: all 0.2s ease-in-out;
@@ -148,7 +148,7 @@
 
         <header class="mb-6 flex flex-wrap justify-between items-center">
             <div class="flex items-center space-x-4">
-                <img src="winsystems_logo.png" alt="Logo de Winsystems" class="h-24">                
+                <img src="https://winsystems.com.pe/wp-content/uploads/2022/01/logo-winsystems-2022.png" alt="Logo de Winsystems" class="h-24">
                 <div>
                     <h1 id="main-title" class="text-3xl font-bold text-gray-900">Dashboard de Operaciones</h1>
                     <p id="main-subtitle" class="text-gray-500">Análisis interactivo de la operación.</p>
@@ -200,7 +200,15 @@
                 <div id="card-pendientes" class="card-enter bg-white p-6 rounded-xl shadow-md flex items-center space-x-4 hover:bg-yellow-50 cursor-pointer transition"><div class="bg-yellow-100 p-3 rounded-full"><i data-lucide="clock" class="text-yellow-600"></i></div><div><p class="text-gray-500 text-sm">Pendientes</p><p id="total-pendientes" class="text-2xl font-bold">0</p></div></div>
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div id="sala-details-container" class="hidden mt-8">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                <h2 id="sala-details-title" class="text-xl font-semibold mb-4">Detalles de la Sala</h2>
+                <div id="sala-details-table" class="overflow-x-auto">
+                    </div>
+            </div>
+        </div>
                 <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-md"><h2 class="text-xl font-semibold mb-4">Top 15 Salas Más Visitadas</h2><div class="h-96"><canvas id="topSalasChart"></canvas></div></div>
+                
                 <div class="bg-white p-6 rounded-xl shadow-md"><h2 class="text-xl font-semibold mb-4">Top 5 Tipos de Trabajo</h2><div class="h-96"><canvas id="topTrabajosChart"></canvas></div></div>
             </div>
         </div>
@@ -685,6 +693,139 @@
             }
         }
 
+        // ▼▼▼ AGREGA ESTAS 3 NUEVAS FUNCIONES ▼▼▼
+
+        // Función principal que se activa al hacer clic en una sala
+        async function showDetailsForSala(salaName) {
+            const container = document.getElementById('sala-details-container');
+            const tableDiv = document.getElementById('sala-details-table');
+            const title = document.getElementById('sala-details-title');
+
+            title.textContent = `Detalle de Máquinas Atendidas en: ${salaName}`;
+            tableDiv.innerHTML = '<p class="text-center text-gray-500">Cargando detalles...</p>';
+            container.classList.remove('hidden'); // Muestra el contenedor
+
+            // 1. Llama a la función para buscar los datos en Supabase
+            const detailsData = await fetchDetailsForSala(salaName);
+
+            // 2. Llama a la función para construir la tabla con los datos
+            renderSalaDetailsTable(detailsData);
+        }
+
+        // Función para obtener los datos de la BD
+        async function fetchDetailsForSala(salaName) {
+            const startDate = startDateInput.value;
+            const endDate = endDateInput.value;
+
+            const { data, error } = await supabaseClient
+                .from('detalle')
+                .select(`
+                    trabajos!inner(fecha, sala!inner(sala_mincetur)),
+                    maquinas!inner(serie, gabinete),
+                    estado, tipo_trabajo, diag_ini, trab_realizado, resul
+                `)
+                .eq('trabajos.sala.sala_mincetur', salaName)
+                .gte('trabajos.fecha', startDate)
+                .lte('trabajos.fecha', endDate)
+                .order('fecha', { foreignTable: 'trabajos', ascending: false });
+
+            if (error) {
+                console.error("Error fetching details for sala:", error);
+                return [];
+            }
+            return data;
+        }
+        // ▼▼▼ AGREGA ESTA FUNCIÓN NUEVA ▼▼▼
+        /**
+         * Genera un arreglo de colores en degradado de azul.
+         * @param {number} count - El número de colores a generar.
+         * @returns {string[]} Un arreglo de colores en formato 'rgba()'.
+         */
+        function generateBlueGradient(count) {
+            const colors = [];
+            // Definimos el color inicial (oscuro) y final (claro) en RGB
+            const startColor = { r: 37, g: 99, b: 235 };  // Azul oscuro
+            const endColor = { r: 191, g: 219, b: 254 }; // Azul claro
+
+            for (let i = 0; i < count; i++) {
+                const ratio = i / (count - 1);
+                const r = Math.round(startColor.r + ratio * (endColor.r - startColor.r));
+                const g = Math.round(startColor.g + ratio * (endColor.g - startColor.g));
+                const b = Math.round(startColor.b + ratio * (endColor.b - startColor.b));
+                colors.push(`rgba(${r}, ${g}, ${b}, 0.8)`);
+            }
+            return colors;
+        }
+
+        // Función para construir el HTML de la tabla
+        function renderSalaDetailsTable(data) {
+            const tableDiv = document.getElementById('sala-details-table');
+            if (!data || data.length === 0) {
+                tableDiv.innerHTML = '<p class="text-center text-gray-500">No se encontraron registros para esta sala en el rango de fechas seleccionado.</p>';
+                return;
+            }
+
+            let tableHTML = `
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="table-header">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Serie</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Gabinete</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo de Trabajo</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado Final</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+            `;
+
+            data.forEach(item => {
+                const fecha = new Date(item.trabajos.fecha + 'T00:00:00').toLocaleDateString('es-ES');
+                const serie = item.maquinas?.serie || 'N/A';
+                const gabinete = item.maquinas?.gabinete || 'N/A';
+                const tipoTrabajo = item.tipo_trabajo || 'N/A';
+                const estado = item.estado || 'N/A';
+
+                const detallesCompletos = [
+                    item.diag_ini ? `<b>Diagnóstico:</b> ${item.diag_ini}` : '',
+                    item.trab_realizado ? `<b>Trabajo:</b> ${item.trab_realizado}` : '',
+                    item.resul ? `<b>Resultado:</b> ${item.resul}` : ''
+                ].filter(Boolean).join('<br>');
+
+                // ▼▼▼ 1. OBTENEMOS LA CLASE DEL ESTADO (Igual que en las otras tablas) ▼▼▼
+                const statusClass = {
+                    'Operativo': 'status-operativo',
+                    'Inoperativo': 'status-inoperativo',
+                    'Pendiente': 'status-pendiente',
+                    'Retirado': 'status-retirado'
+                }[estado] || '';
+
+                // ▼▼▼ 2. APLICAMOS LA CLASE A LA FILA <tr> ▼▼▼
+                tableHTML += `
+                    <tr class="${statusClass}">
+                        <td class="px-4 py-4 whitespace-nowrap text-sm">${fecha}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm">${serie}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm">${gabinete}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm">
+                            <div class="tooltip-container">
+                                ${tipoTrabajo}
+                                <div class="tooltip-bubble">${detallesCompletos || 'Sin detalles.'}</div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm">
+                            <div class="tooltip-container">
+                                ${estado}
+                                <div class="tooltip-bubble">${detallesCompletos || 'Sin detalles.'}</div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `</tbody></table>`;
+            tableDiv.innerHTML = tableHTML;
+        }
+
 
         // =================================================================
         // --- ADMIN VIEW LOGIC (SIN CAMBIOS) ---
@@ -988,7 +1129,43 @@
             const visitas = data.map(s => s.visitas);
             const ctx = document.getElementById('topSalasChart').getContext('2d');
             if (topSalasChartInstance) topSalasChartInstance.destroy();
-            topSalasChartInstance = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'Número de Visitas', data: visitas, backgroundColor: colorPalette }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'end', color: '#1f2937', font: { weight: 'bold' } } }, scales: { x: { beginAtZero: true } } } });
+            
+            // ▼▼▼ 1. LLAMAMOS A LA NUEVA FUNCIÓN PARA CREAR EL DEGRADADO ▼▼▼
+            const gradientColors = generateBlueGradient(data.length);
+
+            topSalasChartInstance = new Chart(ctx, { 
+                type: 'bar', 
+                data: { 
+                    labels: labels, 
+                    datasets: [{ 
+                        label: 'Número de Visitas', 
+                        data: visitas, 
+                        // ▼▼▼ 2. USAMOS LOS COLORES GENERADOS ▼▼▼
+                        backgroundColor: gradientColors
+                    }] 
+                }, 
+                options: { 
+                    indexAxis: 'y', 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { display: false }, 
+                        datalabels: { anchor: 'end', align: 'end', color: '#1f2937', font: { weight: 'bold' } } 
+                    }, 
+                    scales: { x: { beginAtZero: true } },
+                    onHover: (event, chartElement) => {
+                        event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
+                    },
+                    onClick: (event) => {
+                        const points = topSalasChartInstance.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
+                        if (points.length) {
+                            const firstPoint = points[0];
+                            const label = topSalasChartInstance.data.labels[firstPoint.index];
+                            showDetailsForSala(label); 
+                        }
+                    }
+                } 
+            });
         }
         function updateTopTrabajosUI(data) {
             const labels = data.map(d => d.tipo);
@@ -1101,6 +1278,3 @@
     </script>
 </body>
 </html>
-
-
-
