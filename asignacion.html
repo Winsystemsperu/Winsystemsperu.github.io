@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asignación de Incidencias</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+        }
+
+        .card-enter {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: card-enter-animation 0.5s forwards;
+        }
+
+        @keyframes card-enter-animation {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(240, 242, 245, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.3s;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 24px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 900px;
+            border-radius: 12px;
+            position: relative;
+        }
+
+        .nav-button {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: background-color 0.2s, color 0.2s;
+            cursor: pointer;
+        }
+
+        .nav-button.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .nav-button:not(.active) {
+            background-color: #e5e7eb;
+            color: #374151;
+        }
+
+        .tooltip-container {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+
+        .tooltip-bubble {
+            visibility: hidden;
+            width: 400px;
+            background-color: #262626;
+            color: #fff;
+            text-align: left;
+            white-space: normal;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 20;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .tooltip-bubble::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #262626 transparent transparent transparent;
+        }
+
+        .tooltip-container:hover .tooltip-bubble {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .table-header {
+            background-color: #f9fafb;
+        }
+
+        .status-operativo {
+            background-color: #ecfdf5;
+        }
+
+        .status-inoperativo {
+            background-color: #ffb7b7;
+        }
+
+        .status-pendiente {
+            background-color: #f1c462;
+        }
+
+        .status-retirado {
+            background-color: #888;
+        }
+
+        /* --- MODIFICADO: Estilos para botones de máquinas (más pequeños y llamativos) --- */
+        .machine-button {
+            padding: 8px 4px;
+            border-radius: 8px;
+            width: 6rem;
+            border: 1px solid #e5e7eb;
+            text-align: center;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            color: #374151;
+        }
+
+        /* --- NUEVO: COLORES DE ESTADO PARA LOS BOTONES --- */
+        .machine-button.status-operativo {
+            background-color: #f0fdf4;
+            border-color: #bbf7d0;
+        }
+
+        .machine-button.status-operativo:hover {
+            background-color: #dcfce7;
+            border-color: #86efac;
+        }
+
+        .machine-button.status-inoperativo {
+            background-color: #ffa5a5;
+            border-color: #ff0000;
+        }
+
+        .machine-button.status-inoperativo:hover {
+            background-color: #fd7878;
+            border-color: #d60000;
+        }
+
+        .machine-button.status-pendiente {
+            background-color: #fffbeb;
+            border-color: #fde68a;
+        }
+
+        .machine-button.status-pendiente:hover {
+            background-color: #fef3c7;
+            border-color: #fcd34d;
+        }
+
+        .machine-button.status-retirado {
+            background-color: #f1f5f9;
+            border-color: #e2e8f0;
+            color: #64748b;
+        }
+
+        .machine-button.status-retirado:hover {
+            background-color: #e2e8f0;
+            border-color: #cbd5e1;
+        }
+
+        /* --- ESTADO SELECCIONADO (Tiene prioridad sobre los demás) --- */
+        .machine-button.selected {
+            background-color: #2563eb !important;
+            /* !important asegura que siempre sea azul al seleccionar */
+            border-color: #1d4ed8 !important;
+            color: white !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .machine-button.selected .machine-model {
+            color: #dbeafe !important;
+        }
+
+
+        /* --- MEJORAS PARA LA SECCIÓN DE INCIDENCIAS --- */
+        .incidencia-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .incidencia-header {
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .incidencia-form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .incidencia-label {
+            display: block;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        .incidencia-textarea {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 0.75rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .incidencia-textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .history-table th {
+            background-color: #f9fafb;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 500;
+            color: #6b7280;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .history-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .history-table tr:last-child td {
+            border-bottom: none;
+        }
+    </style>
+</head>
+
+<body class="text-gray-800">
+
+    <div id="loading-overlay" class="hidden">
+        <p>Cargando...</p>
+    </div>
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="mb-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Asignación de Incidencias</h1>
+                <p class="text-gray-500">Asigna técnicos a los reportes pendientes de las salas.</p>
+            </div>
+            <a href="./dashboard.html" class="text-blue-600 hover:underline flex items-center gap-2">
+                <i data-lucide="arrow-left"></i> Volver al Dashboard
+            </a>
+        </header>
+
+        <main class="space-y-8">
+            <div id="inoperativos-container">
+            </div>
+
+            <div id="pendientes-container">
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- CONFIG & GLOBAL VARS ---
+        const SUPABASE_URL = 'https://qobquktxvhlvtrpeopji.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvYnF1a3R4dmhsdnRycGVvcGppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU2OTc4NDYsImV4cCI6MjA2MTI3Mzg0Nn0.rnubNUWSWEomj5Xwvr65kZLK7Ig_bLC74ajFh9cksFc';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ▼▼▼ AGREGA ESTA NUEVA FUNCIÓN ▼▼▼
+        function getPeruDateTime() {
+            const ahora = new Date();
+            const timeZone = 'America/Lima';
+
+            // --- Obtener Fecha en formato YYYY-MM-DD ---
+            const dateFormatter = new Intl.DateTimeFormat('es-PE', {
+                timeZone,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+            const parts = dateFormatter.formatToParts(ahora);
+            const day = parts.find(p => p.type === 'day').value;
+            const month = parts.find(p => p.type === 'month').value;
+            const year = parts.find(p => p.type === 'year').value;
+            const fecha = `${year}-${month}-${day}`;
+
+            // --- Obtener Hora en formato HH:mm:ss ---
+            const hora = ahora.toLocaleTimeString('es-PE', {
+                timeZone,
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+
+            return { fecha, hora }; // Devuelve un objeto con la fecha y hora correctas
+        }
+
+        let realtimeSubscription = null;
+        // --- LÓGICA DE LA PÁGINA ---
+
+        // 1. VERIFICAR SESIÓN Y ROL
+        async function checkCoordinatorSession() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                window.location.href = './index.html'; // Si no hay sesión, al login
+                return;
+            }
+
+            // Verificamos si el usuario tiene el cargo de 'coordinador'
+            const { data: tecnicoData, error } = await supabaseClient
+                .from('tecnicos')
+                .select('cargo')
+                .eq('id_usuario', session.user.id)
+                .single();
+
+            if (error || !tecnicoData || (tecnicoData.cargo !== 'Coordinador' && tecnicoData.cargo !== 'admin')) { // O el rol que consideres
+                alert('Acceso denegado. No tienes permisos para ver esta página.');
+                window.location.href = './dashboard.html';
+                return;
+            }
+
+            // Si todo está bien, cargamos la página
+            await loadAssignmentPage();
+        }
+        function setupRealtimeSubscription(callback) {
+            if (realtimeSubscription) {
+                supabaseClient.removeChannel(realtimeSubscription);
+            }
+            realtimeSubscription = supabaseClient.channel('public:detalle')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'detalle' }, (payload) => {
+                    console.log('¡Nuevo reporte detectado!', payload);
+                    callback();
+                })
+                .subscribe();
+            console.log("Escuchando cambios en tiempo real...");
+        }
+
+        // 2. FUNCIÓN PRINCIPAL PARA CARGAR LOS DATOS
+        async function loadAssignmentPage() {
+            // Buscamos el div de carga y nos aseguramos de que sea visible
+            const loadingOverlay = document.getElementById('loading-overlay');
+            if (loadingOverlay) loadingOverlay.style.display = 'flex';
+
+            // Obtenemos los datos en paralelo
+            const [pendingIncidents, technicians] = await Promise.all([
+                fetchPendingIncidents(),
+                fetchTechnicians()
+            ]);
+
+            // Mostramos las tarjetas en la página
+            renderIncidents(pendingIncidents, technicians);
+
+            // ▼▼▼ LÍNEA CLAVE Y FINAL ▼▼▼
+            // Una vez que todo terminó, ocultamos el velo de "Cargando..."
+            if (loadingOverlay) loadingOverlay.style.display = 'none';
+        }
+        // 3. OBTENER LAS INCIDENCIAS PENDIENTES
+        // REEMPLAZA TU FUNCIÓN ACTUAL CON ESTA
+        async function fetchPendingIncidents() {
+            try {
+                const { data, error } = await supabaseClient.rpc('get_latest_machine_details');
+
+                // Si Supabase devuelve un error, lo mostramos en consola y devolvemos una lista vacía.
+                if (error) {
+                    console.error("Error al llamar a la función de la base de datos 'get_latest_machine_details':", error);
+                    return [];
+                }
+
+                // Si no hay datos, devolvemos una lista vacía para evitar errores.
+                if (!data) {
+                    return [];
+                }
+
+                // Si todo sale bien, filtramos y devolvemos los resultados.
+                return data.filter(item => item.estado === 'Inoperativo' || item.estado === 'Pendiente');
+
+            } catch (e) {
+                // Si ocurre cualquier otro error inesperado, lo capturamos aquí.
+                console.error("Error inesperado en fetchPendingIncidents:", e);
+                return []; // Devolvemos una lista vacía para que la página no se congele.
+            }
+        }
+
+        // 4. OBTENER LA LISTA DE TÉCNICOS
+        async function fetchTechnicians() {
+            const { data, error } = await supabaseClient
+                .from('tecnicos')
+                .select('id_usuario, usuario')
+                .in('cargo', ['Tecnico', 'Coordinador']) // O los cargos que pueden recibir asignaciones
+                .order('usuario');
+
+            if (error) {
+                console.error("Error fetching technicians:", error);
+                return [];
+            }
+            return data;
+        }
+
+        // 5. MOSTRAR LAS INCIDENCIAS EN LA PÁGINA
+        // ▼▼▼ REEMPLAZA TU FUNCIÓN "renderIncidents" CON ESTAS DOS ▼▼▼
+
+        // NUEVA FUNCIÓN AUXILIAR: Dibuja un grupo de tarjetas (Inoperativos o Pendientes)
+        // NUEVA FUNCIÓN AUXILIAR: Dibuja un grupo de tarjetas (Inoperativos o Pendientes)
+        // NUEVA FUNCIÓN AUXILIAR: Dibuja un grupo de tarjetas (Inoperativos o Pendientes)
+        function renderGroup(title, incidents, technicians, containerId, borderColorClass) {
+            const groupContainer = document.getElementById(containerId);
+            if (!groupContainer) return;
+
+            if (incidents.length === 0) {
+                groupContainer.innerHTML = '';
+                return;
+            }
+
+            let cardsHTML = incidents.map(incident => {
+                const fecha = new Date(incident.fecha + 'T00:00:00').toLocaleDateString('es-ES');
+                let selectOptions = technicians.map(tech => `<option value="${tech.id_usuario}">${tech.usuario}</option>`).join('');
+
+                const detallesConcatenados = [
+                    incident.diag_ini ? `<b>Diag. Inicial:</b> ${incident.diag_ini}` : null,
+                    incident.trab_realizado ? `<b>Trabajo Realizado:</b> ${incident.trab_realizado}` : null,
+                    incident.resul ? `<b>Resultado:</b> ${incident.resul}` : null
+                ].filter(Boolean).join('<br>');
+
+                // ▼▼▼ AQUÍ CONSTRUIMOS EL HTML CON LOS NUEVOS DATOS ▼▼▼
+                return `
+            <div class="incident-card bg-white p-6 rounded-lg shadow-md flex flex-wrap items-center justify-between gap-4">
+                <div class="flex-grow">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-sm text-gray-500">Sala: <span class="font-bold text-gray-800">${incident.sala_mincetur || 'N/A'}</span></p>
+                            <p class="text-xs text-gray-400">${incident.direccion || ''}, ${incident.distrito || ''}</p>
+                        </div>
+                        <p class="text-xs text-right text-gray-400">Reportado por:<br><span class="font-medium text-gray-600">${incident.tecnico_reporta || 'N/A'}</span></p>
+                    </div>
+
+                    <p class="text-lg font-bold mt-2">${incident.modelo || 'Máquina'} (S/N: ${incident.serie})</p>
+                    
+                    <p class="text-sm text-gray-600 mt-2 border-l-2 border-gray-200 pl-3">
+                        ${detallesConcatenados || 'Sin detalles adicionales.'}
+                    </p>
+                    
+                    <p class="text-xs text-gray-400 mt-2">Reportado el ${fecha}</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <select id="tecnico-select-${incident.id_maquina}" class="rounded-md border-gray-300 shadow-sm">
+                        <option value="">Seleccionar técnico...</option>
+                        ${selectOptions}
+                    </select>
+                    <button data-incident='${JSON.stringify(incident)}' class="assign-button bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-semibold flex items-center gap-2">
+                        <i data-lucide="send" class="w-4 h-4"></i> Asignar
+                    </button>
+                </div>
+            </div>
+        `;
+            }).join('');
+
+            groupContainer.innerHTML = `
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 border-l-4 ${borderColorClass} pl-4">${title} (${incidents.length})</h2>
+        <div class="space-y-6">
+            ${cardsHTML}
+        </div>
+    `;
+        }
+        // FUNCIÓN PRINCIPAL DE RENDERIZADO (AHORA MÁS SIMPLE)
+        function renderIncidents(incidents, technicians) {
+            // 1. ORDENAR: Ponemos los incidentes más recientes primero
+            incidents.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+            // 2. AGRUPAR: Separamos la lista en dos grupos
+            const inoperativos = incidents.filter(i => i.estado === 'Inoperativo');
+            const pendientes = incidents.filter(i => i.estado === 'Pendiente');
+
+            // 3. RENDERIZAR CADA GRUPO
+            renderGroup('Inoperativos Urgentes', inoperativos, technicians, 'inoperativos-container', 'border-red-500');
+            renderGroup('Pendientes', pendientes, technicians, 'pendientes-container', 'border-amber-500');
+
+            // Añadimos el listener a todos los botones de "Asignar"
+            document.querySelectorAll('.assign-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    const incidentData = JSON.parse(button.dataset.incident);
+                    const select = document.getElementById(`tecnico-select-${incidentData.id_maquina}`);
+                    const technicianId = select.value;
+
+                    if (!technicianId) {
+                        alert('Por favor, selecciona un técnico.');
+                        return;
+                    }
+                    // Usamos el 'parentNode' para encontrar la tarjeta completa y poder eliminarla
+                    handleAssignment(incidentData, technicianId, button.closest('.incident-card'));
+                });
+            });
+
+            lucide.createIcons();
+        }
+        // 6. MANEJAR LA ASIGNACIÓN (CREAR NUEVOS REGISTROS)
+        async function handleAssignment(incident, technicianId, cardElement) {
+            if (!confirm(`¿Estás seguro de asignar esta tarea al técnico seleccionado?`)) {
+                return;
+            }
+
+            try {
+                // A. Creamos un nuevo registro en 'trabajos' para el técnico asignado
+
+
+                const { data: newTrabajo, error: trabajoError } = await supabaseClient
+                    .from('trabajos')
+                    .insert({
+                        id_sala: incident.id_sala,
+                        id_usuario: technicianId,
+                        fecha: fecha,
+                        hora_inicio: hora
+                    })
+                    .select()
+                    .single();
+
+                if (trabajoError) throw trabajoError;
+
+                // B. Creamos un nuevo 'detalle' vinculado al nuevo trabajo
+                const { error: detalleError } = await supabaseClient
+                    .from('detalle')
+                    .insert({
+                        id_trabajo: newTrabajo.id_trabajo,
+                        id_maquina: incident.id_maquina,
+                        diag_ini: `Asignado por coordinador. Reporte original: ${incident.diag_ini}`,
+                        estado: 'Pendiente', // El técnico ahora lo ve como 'Pendiente'
+                        tipo_trabajo: incident.tipo_trabajo,
+                    });
+
+                if (detalleError) throw detalleError;
+
+                alert('¡Tarea asignada con éxito!');
+                cardElement.remove(); // Quitamos la tarjeta de la lista de pendientes
+
+            } catch (error) {
+                console.error("Error al asignar la tarea:", error);
+                alert(`Hubo un error al asignar la tarea: ${error.message}`);
+            }
+        }
+
+
+        // --- STARTUP ---
+        document.addEventListener('DOMContentLoaded', () => {
+            checkCoordinatorSession(); // Carga la página la primera vez
+
+            // Y después de la carga inicial, nos ponemos a escuchar por nuevos cambios
+            setupRealtimeSubscription(() => {
+                console.log("Recargando la lista de incidencias...");
+                loadAssignmentPage(); // Vuelve a cargar toda la data y la redibuja
+            });
+        });
+    </script>
+</body>
+
+</html>
