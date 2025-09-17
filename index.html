@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión - Dashboard de Operaciones</title>
+    <title>Bienvenido a:</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -22,10 +22,10 @@
     <div class="w-full max-w-md p-8 space-y-8 bg-white rounded-xl shadow-lg">
         
         <div class="text-center">
+            <img src="assets/winsystems_logo.png" alt="Logo de Winsystems" class="w-32 mx-auto mb-2">
             <h2 class="text-2xl font-bold text-gray-900">
-                Bienvenido a:
+                
             </h2>
-            <img src="winsystems_logo.png" alt="Logo de Winsystems" class="w-32 mx-auto mb-2">
             <p class="mt-2 text-sm text-gray-600">
                 Por favor, ingresa tus credenciales.
             </p>
@@ -57,55 +57,76 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://qobquktxvhlvtrpeopji.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvYnF1a3R4dmhsdnRycGVvcGppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU2OTc4NDYsImV4cCI6MjA2MTI3Mzg0Nn0.rnubNUWSWEomj5Xwvr65kZLK7Ig_bLC74ajFh9cksFc';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const SUPABASE_URL = 'https://qobquktxvhlvtrpeopji.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvYnF1a3R4dmhsdnRycGVvcGppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU2OTc4NDYsImV4cCI6MjA2MTI3Mzg0Nn0.rnubNUWSWEomj5Xwvr65kZLK7Ig_bLC74ajFh9cksFc';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // --- MANEJO DE SESIÓN CON onAuthStateChange (MÁS ROBUSTO) ---
-        supabaseClient.auth.onAuthStateChange((event, session) => {
-            // Si el evento es 'SIGNED_IN' o si en la carga inicial ya hay una sesión, redirige.
-            if (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
+    // --- MANEJO DE SESIÓN CON REDIRECCIÓN BASADA EN ROL ---
+    // 1. Convertimos el listener en una función async para poder usar 'await'
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+        if (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
+            
+            // 2. Obtenemos el ID del usuario de la sesión
+            const userId = session.user.id;
+
+            // 3. Consultamos la tabla 'tecnicos' para obtener el cargo
+            const { data: tecnicoData, error } = await supabaseClient
+                .from('tecnicos')
+                .select('cargo')
+                .eq('id_usuario', userId)
+                .single();
+
+            if (error) {
+                console.error("No se pudo obtener el rol del usuario:", error);
+                // Si hay un error, lo enviamos al dashboard general por seguridad
+                window.location.href = './dashboard.html';
+                return;
+            }
+            
+            // 4. Decidimos a dónde redirigir basándonos en el cargo
+            if (tecnicoData && tecnicoData.cargo === 'Coordinador') {
+                // Si es coordinador, va a la página de asignación
+                window.location.href = './asignacion.html';
+            } else {
+                // Para cualquier otro rol (admin, sala, etc.), va al dashboard principal
                 window.location.href = './dashboard.html';
             }
-        });
+        }
+    });
 
-        const loginForm = document.getElementById('login-form');
-        const loginButton = document.getElementById('login-button');
-        const errorMessageContainer = document.getElementById('error-message');
+    // --- Lógica del formulario (esta parte no cambia) ---
+    const loginForm = document.getElementById('login-form');
+    const loginButton = document.getElementById('login-button');
+    const errorMessageContainer = document.getElementById('error-message');
 
-        loginForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
+    loginForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
 
-            loginButton.disabled = true;
-            loginButton.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Ingresando...`;
-            errorMessageContainer.classList.add('hidden');
+        loginButton.disabled = true;
+        loginButton.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Ingresando...`;
+        errorMessageContainer.classList.add('hidden');
 
-            const email = document.getElementById('email-address').value;
-            const password = document.getElementById('password').value;
+        const email = document.getElementById('email-address').value;
+        const password = document.getElementById('password').value;
 
-            try {
-                // Solo intentamos iniciar sesión. El listener onAuthStateChange se encargará de la redirección.
-                const { error } = await supabaseClient.auth.signInWithPassword({
-                    email: email,
-                    password: password,
-                });
+        try {
+            const { error } = await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password,
+            });
+            if (error) throw error;
+            // La redirección ahora es manejada automáticamente por onAuthStateChange
+        } catch (error) {
+            errorMessageContainer.textContent = 'Correo o contraseña incorrectos. Por favor, inténtalo de nuevo.';
+            errorMessageContainer.classList.remove('hidden');
+            
+            loginButton.disabled = false;
+            loginButton.innerHTML = `<span class="absolute left-0 inset-y-0 flex items-center pl-3"><i data-lucide="lock" class="h-5 w-5 text-blue-500 group-hover:text-blue-400" aria-hidden="true"></i></span>Ingresar`;
+            lucide.createIcons();
+        }
+    });
 
-                if (error) throw error;
-                // La redirección ya no es necesaria aquí.
-
-            } catch (error) {
-                errorMessageContainer.textContent = 'Correo o contraseña incorrectos. Por favor, inténtalo de nuevo.';
-                errorMessageContainer.classList.remove('hidden');
-                
-                loginButton.disabled = false;
-                loginButton.innerHTML = `<span class="absolute left-0 inset-y-0 flex items-center pl-3"><i data-lucide="lock" class="h-5 w-5 text-blue-500 group-hover:text-blue-400" aria-hidden="true"></i></span>Ingresar`;
-                lucide.createIcons();
-            }
-        });
-
-        lucide.createIcons();
-    </script>
+    lucide.createIcons();
+</script>
 </body>
 </html>
-
-
