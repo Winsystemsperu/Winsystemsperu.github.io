@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reporte de Incidencias</title>
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -13,26 +14,143 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; }
-        .card-enter { opacity: 0; transform: translateY(20px); animation: card-enter-animation 0.5s forwards; }
-        @keyframes card-enter-animation { to { opacity: 1; transform: translateY(0); } }
-        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(240, 242, 245, 0.8); display: flex; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.3s; }
-        .modal { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); transition: opacity 0.3s ease; }
-        .modal-content { background-color: #fefefe; margin: 10% auto; padding: 24px; border: 1px solid #888; width: 90%; max-width: 900px; border-radius: 12px; position: relative; }
-        .nav-button { padding: 8px 16px; border-radius: 8px; font-weight: 500; transition: background-color 0.2s, color 0.2s; cursor: pointer; }
-        .nav-button.active { background-color: #3b82f6; color: white; }
-        .nav-button:not(.active) { background-color: #e5e7eb; color: #374151; }
 
-        .tooltip-container { position: relative; display: inline-block; cursor: help; }
-        .tooltip-bubble { visibility: hidden; width: 400px; background-color: #262626; color: #fff; text-align: left; white-space: normal; border-radius: 6px; padding: 8px 12px; position: absolute; z-index: 20; bottom: 125%; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-size: 0.8rem; line-height: 1.4; }
-        .tooltip-bubble::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #262626 transparent transparent transparent; }
-        .tooltip-container:hover .tooltip-bubble { visibility: visible; opacity: 1; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+        }
 
-        .table-header { background-color: #f9fafb; }
-        .status-operativo { background-color: #ecfdf5; }
-        .status-inoperativo { background-color: #ffb7b7; }
-        .status-pendiente { background-color: #f1c462; }
-        .status-retirado{background-color: #888;}
+        .card-enter {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: card-enter-animation 0.5s forwards;
+        }
+
+        @keyframes card-enter-animation {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(240, 242, 245, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.3s;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 24px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 900px;
+            border-radius: 12px;
+            position: relative;
+        }
+
+        .nav-button {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: background-color 0.2s, color 0.2s;
+            cursor: pointer;
+        }
+
+        .nav-button.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .nav-button:not(.active) {
+            background-color: #e5e7eb;
+            color: #374151;
+        }
+
+        .tooltip-container {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+
+        .tooltip-bubble {
+            visibility: hidden;
+            width: 400px;
+            background-color: #262626;
+            color: #fff;
+            text-align: left;
+            white-space: normal;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 20;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .tooltip-bubble::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #262626 transparent transparent transparent;
+        }
+
+        .tooltip-container:hover .tooltip-bubble {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .table-header {
+            background-color: #f9fafb;
+        }
+
+        .status-operativo {
+            background-color: #ecfdf5;
+        }
+
+        .status-inoperativo {
+            background-color: #ffb7b7;
+        }
+
+        .status-pendiente {
+            background-color: #f1c462;
+        }
+
+        .status-retirado {
+            background-color: #888;
+        }
 
         /* --- MODIFICADO: Estilos para botones de máquinas (más pequeños y llamativos) --- */
         .machine-button {
@@ -43,42 +161,66 @@
             text-align: center;
             transition: all 0.2s ease-in-out;
             cursor: pointer;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
             color: #374151;
         }
-         /* --- NUEVO: COLORES DE ESTADO PARA LOS BOTONES --- */
-        .machine-button.status-operativo { 
-            background-color: #f0fdf4; border-color: #bbf7d0; }
-        .machine-button.status-operativo:hover { 
-            background-color: #dcfce7; border-color: #86efac; }
 
-        .machine-button.status-inoperativo { 
-            background-color: #ffa5a5; border-color: #ff0000; }
-        .machine-button.status-inoperativo:hover { 
-            background-color: #fd7878; border-color: #d60000; }
+        /* --- NUEVO: COLORES DE ESTADO PARA LOS BOTONES --- */
+        .machine-button.status-operativo {
+            background-color: #f0fdf4;
+            border-color: #bbf7d0;
+        }
 
-        .machine-button.status-pendiente { 
-            background-color: #fffbeb; border-color: #fde68a; }
-        .machine-button.status-pendiente:hover { 
-            background-color: #fef3c7; border-color: #fcd34d; }
+        .machine-button.status-operativo:hover {
+            background-color: #dcfce7;
+            border-color: #86efac;
+        }
 
-        .machine-button.status-retirado { 
-            background-color: #f1f5f9; border-color: #e2e8f0; color: #64748b;}
-        .machine-button.status-retirado:hover { 
-            background-color: #e2e8f0; border-color: #cbd5e1; }
+        .machine-button.status-inoperativo {
+            background-color: #ffa5a5;
+            border-color: #ff0000;
+        }
 
-    /* --- ESTADO SELECCIONADO (Tiene prioridad sobre los demás) --- */
+        .machine-button.status-inoperativo:hover {
+            background-color: #fd7878;
+            border-color: #d60000;
+        }
+
+        .machine-button.status-pendiente {
+            background-color: #fffbeb;
+            border-color: #fde68a;
+        }
+
+        .machine-button.status-pendiente:hover {
+            background-color: #fef3c7;
+            border-color: #fcd34d;
+        }
+
+        .machine-button.status-retirado {
+            background-color: #f1f5f9;
+            border-color: #e2e8f0;
+            color: #64748b;
+        }
+
+        .machine-button.status-retirado:hover {
+            background-color: #e2e8f0;
+            border-color: #cbd5e1;
+        }
+
+        /* --- ESTADO SELECCIONADO (Tiene prioridad sobre los demás) --- */
         .machine-button.selected {
-            background-color: #2563eb !important; /* !important asegura que siempre sea azul al seleccionar */
+            background-color: #2563eb !important;
+            /* !important asegura que siempre sea azul al seleccionar */
             border-color: #1d4ed8 !important;
             color: white !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
+
         .machine-button.selected .machine-model {
             color: #dbeafe !important;
         }
 
-        
+
         /* --- MEJORAS PARA LA SECCIÓN DE INCIDENCIAS --- */
         .incidencia-section {
             background: white;
@@ -87,20 +229,24 @@
             padding: 1.5rem;
             margin-bottom: 1.5rem;
         }
+
         .incidencia-header {
             border-bottom: 1px solid #e5e7eb;
             padding-bottom: 1rem;
             margin-bottom: 1.5rem;
         }
+
         .incidencia-form-group {
             margin-bottom: 1.5rem;
         }
+
         .incidencia-label {
             display: block;
             font-weight: 500;
             color: #374151;
             margin-bottom: 0.5rem;
         }
+
         .incidencia-textarea {
             width: 100%;
             border: 1px solid #d1d5db;
@@ -109,15 +255,18 @@
             font-family: inherit;
             transition: border-color 0.2s;
         }
+
         .incidencia-textarea:focus {
             outline: none;
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
         }
+
         .history-table {
             width: 100%;
             border-collapse: collapse;
         }
+
         .history-table th {
             background-color: #f9fafb;
             padding: 0.75rem;
@@ -126,15 +275,18 @@
             color: #6b7280;
             border-bottom: 1px solid #e5e7eb;
         }
+
         .history-table td {
             padding: 0.75rem;
             border-bottom: 1px solid #e5e7eb;
         }
+
         .history-table tr:last-child td {
             border-bottom: none;
         }
     </style>
 </head>
+
 <body class="text-gray-800">
 
     <div id="loading-overlay">
@@ -148,7 +300,8 @@
 
         <header class="mb-6 flex flex-wrap justify-between items-center">
             <div class="flex items-center space-x-4">
-                <img src=winsystems_logo.png alt="Logo de Winsystems" class="h-24">
+                <img src= winsystems_logo.png
+                    alt="Logo de Winsystems" class="h-24">
                 <div>
                     <h1 id="main-title" class="text-3xl font-bold text-gray-900">Dashboard de Operaciones</h1>
                     <p id="main-subtitle" class="text-gray-500">Análisis interactivo de la operación.</p>
@@ -159,15 +312,18 @@
                     <button id="nav-maquinas" class="nav-button active">Máquinas</button>
                     <button id="nav-tecnicos" class="nav-button">Técnicos</button>
                     <button id="nav-reporte" class="nav-button">Reporte</button>
+                    <a id="nav-asignacion" href="./asignacion.html" class="nav-button hidden">Asignaciones</a>
                     <button id="nav-incidencia" class="nav-button hidden">Reportar Incidencia</button>
                 </div>
-                <button id="logout-button" title="Cerrar Sesión" class="p-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition">
+                <button id="logout-button" title="Cerrar Sesión"
+                    class="p-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition">
                     <i data-lucide="log-out" class="w-5 h-5"></i>
                 </button>
             </div>
         </header>
 
-        <div id="filters-section" class="bg-white p-4 rounded-xl shadow-md mb-8 flex-wrap items-end gap-4" style="display: none;">
+        <div id="filters-section" class="bg-white p-4 rounded-xl shadow-md mb-8 flex-wrap items-end gap-4"
+            style="display: none;">
             <div class="flex-grow">
                 <label for="start-date" class="block text-sm font-medium text-gray-700">Fecha Inicio</label>
                 <input type="date" id="start-date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
@@ -176,135 +332,259 @@
                 <label for="end-date" class="block text-sm font-medium text-gray-700">Fecha Fin</label>
                 <input type="date" id="end-date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
             </div>
-            
+
             <div id="gabinete-filter-container" class="flex-grow">
                 <label for="type-filter" class="block text-sm font-medium text-gray-700">Tipo de Gabinete</label>
-                <select id="type-filter" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option>Todos</option></select>
+                <select id="type-filter" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                    <option>Todos</option>
+                </select>
             </div>
             <div id="tecnico-filter-container" class="flex-grow hidden">
                 <label class="block text-sm font-medium text-gray-700">Técnicos</label>
-                <div class="relative mt-1"><button id="tecnico-filter-btn" class="w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default"><span id="tecnico-filter-text" class="block truncate">Todos los técnicos</span><span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none"><i data-lucide="chevrons-up-down" class="h-5 w-5 text-gray-400"></i></span></button><div id="tecnico-filter-options" class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto"></div></div>
+                <div class="relative mt-1"><button id="tecnico-filter-btn"
+                        class="w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default"><span
+                            id="tecnico-filter-text" class="block truncate">Todos los técnicos</span><span
+                            class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none"><i
+                                data-lucide="chevrons-up-down" class="h-5 w-5 text-gray-400"></i></span></button>
+                    <div id="tecnico-filter-options"
+                        class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto">
+                    </div>
+                </div>
             </div>
-            <div id="departamento-filter-container" class="flex-grow hidden"><label class="block text-sm font-medium text-gray-700">Departamento</label><div class="relative mt-1"><button id="departamento-filter-btn" class="w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default"><span id="departamento-filter-text" class="block truncate">Todos</span></button><div id="departamento-filter-options" class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto"></div></div></div>
-            <div id="sala-filter-container" class="flex-grow hidden"><label class="block text-sm font-medium text-gray-700">Sala</label><div class="relative mt-1"><button id="sala-filter-btn" class="w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default"><span id="sala-filter-text" class="block truncate">Todas</span></button><div id="sala-filter-options" class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto"></div></div></div>
-            <div id="work-type-filter-container" class="flex-grow hidden"><label class="block text-sm font-medium text-gray-700">Tipo de Trabajo</label><div class="relative mt-1"><button id="work-type-filter-btn" class="w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default"><span id="work-type-filter-text" class="block truncate">Todos</span></button><div id="work-type-filter-options" class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto"></div></div></div>
+            <div id="departamento-filter-container" class="flex-grow hidden"><label
+                    class="block text-sm font-medium text-gray-700">Departamento</label>
+                <div class="relative mt-1"><button id="departamento-filter-btn"
+                        class="w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default"><span
+                            id="departamento-filter-text" class="block truncate">Todos</span></button>
+                    <div id="departamento-filter-options"
+                        class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto">
+                    </div>
+                </div>
+            </div>
+            <div id="sala-filter-container" class="flex-grow hidden"><label
+                    class="block text-sm font-medium text-gray-700">Sala</label>
+                <div class="relative mt-1"><button id="sala-filter-btn"
+                        class="w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default"><span
+                            id="sala-filter-text" class="block truncate">Todas</span></button>
+                    <div id="sala-filter-options"
+                        class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto">
+                    </div>
+                </div>
+            </div>
+            <div id="work-type-filter-container" class="flex-grow hidden"><label
+                    class="block text-sm font-medium text-gray-700">Tipo de Trabajo</label>
+                <div class="relative mt-1"><button id="work-type-filter-btn"
+                        class="w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default"><span
+                            id="work-type-filter-text" class="block truncate">Todos</span></button>
+                    <div id="work-type-filter-options"
+                        class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto">
+                    </div>
+                </div>
+            </div>
 
-            <button id="apply-filters" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 flex items-center gap-2"><i data-lucide="filter" class="w-4 h-4"></i> Aplicar</button>
+            <button id="apply-filters"
+                class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 flex items-center gap-2"><i
+                    data-lucide="filter" class="w-4 h-4"></i> Aplicar</button>
         </div>
 
         <div id="maquinas-dashboard" class="hidden">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div class="card-enter bg-white p-6 rounded-xl shadow-md flex items-center space-x-4"><div class="bg-blue-100 p-3 rounded-full"><i data-lucide="server" class="text-blue-600"></i></div><div><p class="text-gray-500 text-sm">Total Ruletas/Slot Atendidas</p><p id="total-maquinas" class="text-2xl font-bold">0</p></div></div>
-                <div class="card-enter bg-white p-6 rounded-xl shadow-md flex items-center space-x-4"><div class="bg-green-100 p-3 rounded-full"><i data-lucide="check-circle" class="text-green-600"></i></div><div><p class="text-gray-500 text-sm">Operativas</p><p id="total-operativas" class="text-2xl font-bold">0</p></div></div>
-                <div id="card-inoperativas" class="card-enter bg-white p-6 rounded-xl shadow-md flex items-center space-x-4 hover:bg-red-50 cursor-pointer transition"><div class="bg-red-100 p-3 rounded-full"><i data-lucide="alert-triangle" class="text-red-600"></i></div><div><p class="text-gray-500 text-sm">Inoperativas</p><p id="total-inoperativas" class="text-2xl font-bold">0</p></div></div>
-                <div id="card-pendientes" class="card-enter bg-white p-6 rounded-xl shadow-md flex items-center space-x-4 hover:bg-yellow-50 cursor-pointer transition"><div class="bg-yellow-100 p-3 rounded-full"><i data-lucide="clock" class="text-yellow-600"></i></div><div><p class="text-gray-500 text-sm">Pendientes</p><p id="total-pendientes" class="text-2xl font-bold">0</p></div></div>
+                <div class="card-enter bg-white p-6 rounded-xl shadow-md flex items-center space-x-4">
+                    <div class="bg-blue-100 p-3 rounded-full"><i data-lucide="server" class="text-blue-600"></i></div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Total Ruletas/Slot Atendidas</p>
+                        <p id="total-maquinas" class="text-2xl font-bold">0</p>
+                    </div>
+                </div>
+                <div class="card-enter bg-white p-6 rounded-xl shadow-md flex items-center space-x-4">
+                    <div class="bg-green-100 p-3 rounded-full"><i data-lucide="check-circle" class="text-green-600"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Operativas</p>
+                        <p id="total-operativas" class="text-2xl font-bold">0</p>
+                    </div>
+                </div>
+                <div id="card-inoperativas"
+                    class="card-enter bg-white p-6 rounded-xl shadow-md flex items-center space-x-4 hover:bg-red-50 cursor-pointer transition">
+                    <div class="bg-red-100 p-3 rounded-full"><i data-lucide="alert-triangle" class="text-red-600"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Inoperativas</p>
+                        <p id="total-inoperativas" class="text-2xl font-bold">0</p>
+                    </div>
+                </div>
+                <div id="card-pendientes"
+                    class="card-enter bg-white p-6 rounded-xl shadow-md flex items-center space-x-4 hover:bg-yellow-50 cursor-pointer transition">
+                    <div class="bg-yellow-100 p-3 rounded-full"><i data-lucide="clock" class="text-yellow-600"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Pendientes</p>
+                        <p id="total-pendientes" class="text-2xl font-bold">0</p>
+                    </div>
+                </div>
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div id="sala-details-container" class="hidden mt-8">
-                <div class="bg-white p-6 rounded-xl shadow-md">
-                <h2 id="sala-details-title" class="text-xl font-semibold mb-4">Detalles de la Sala</h2>
-                <div id="sala-details-table" class="overflow-x-auto">
-                    </div>
-            </div>
-        </div>
-                <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-md"><h2 class="text-xl font-semibold mb-4">Top 15 Salas Más Visitadas</h2><div class="h-96"><canvas id="topSalasChart"></canvas></div></div>
-                
-                <div class="bg-white p-6 rounded-xl shadow-md"><h2 class="text-xl font-semibold mb-4">Top 5 Tipos de Trabajo</h2><div class="h-96"><canvas id="topTrabajosChart"></canvas></div></div>
-            </div>
-        </div>
 
-        <div id="tecnicos-dashboard" class="hidden">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="bg-white p-6 rounded-xl shadow-md"><h2 class="text-xl font-semibold mb-4">Horas Trabajadas por Técnico</h2><div class="h-96"><canvas id="horasTecnicoChart"></canvas></div></div>
-                <div class="bg-white p-6 rounded-xl shadow-md"><h2 class="text-xl font-semibold mb-4">Tiempo Promedio por Tipo de Trabajo (Horas)</h2><div class="h-96"><canvas id="avgTimeChart"></canvas></div></div>
-                <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-md"><h2 class="text-xl font-semibold mb-4">Visitas a Salas por Técnico</h2><div id="visitasTecnicoContainer" class="max-h-96 overflow-y-auto"></div></div>
-            </div>
-        </div>
-
-        <div id="reporte-dashboard" class="hidden">
-            <div class="bg-white p-6 rounded-xl shadow-md">
-                <h2 class="text-xl font-semibold mb-4">Reporte Detallado de Operaciones</h2>
-                <div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="table-header"><tr><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Slot/Ruleta</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Serie</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sala</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Incidencia</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Técnico</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Razón Social</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ubicación</th></tr></thead><tbody id="report-table-body" class="bg-white divide-y divide-gray-200"></tbody></table></div>
-            </div>
-        </div>
-
-        <div id="incidencia-dashboard" class="hidden">
-            <div class="incidencia-section">
-                <div class="incidencia-header">
-                    <h2 class="text-2xl font-semibold text-gray-800">Control de estado actual de Maquinas y Ruletas</h2>
+                <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-xl font-semibold mb-4">Top 15 Salas Más Visitadas</h2>
+                    <div class="h-96"><canvas id="topSalasChart"></canvas></div>
                 </div>
-                 
-                 <div id="sala-info" class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200 text-center">
-                   <h3 class="font-semibold text-blue-800">Sala De Juegos:<span id="sala-nombre">Cargando...</span></h3>
-                   <p class="text-blue-600 text-sm mt-1" id="sala-detalles"></p>
-                 </div>
-                 
-                 <form id="incidencia-form" class="space-y-6">
-                   <div class="incidencia-form-group">
-                       <label class="incidencia-label">1. Seleccione una Ruleta o Maquina</label>
-                       <div id="maquinas-container" class="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-10 gap-3">
-                           <div class="text-center py-8 text-gray-400">
-                               <i data-lucide="loader-2" class="animate-spin h-8 w-8 mx-auto"></i>
-                               <p class="mt-2">Cargando máquinas...</p>
-                           </div>
-                       </div>
-                       <p id="no-machines-message" class="text-center py-4 text-gray-500 hidden">
-                           No hay máquinas registradas en esta sala.
-                       </p>
-                   </div>
-                   
-                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
-                        <div>
-                           <label for="incidencia-tipo-trabajo" class="incidencia-label">Tipo de Trabajo</label>
-                           <select id="incidencia-tipo-trabajo" name="tipo_trabajo" required class="incidencia-textarea">
-                               <option value="Asistencia Remota" selected>Asistencia Remota</option>
-                           </select>
-                       </div>
-                       <div>
-                            <label for="incidencia-estado" class="incidencia-label">Estado Final de la Máquina</label>
-                            <select id="incidencia-estado" name="estado" required class="incidencia-textarea">
-                                <option value="Inoperativo" selected>Inoperativo</option>
-                            </select>
-                       </div>
-                   </div>
-                   
-                   <div class="incidencia-form-group">
-                       <label for="incidencia-diag" class="incidencia-label">2. Describa la incidencia</label>
-                       <textarea id="incidencia-diag" name="diag_ini" rows="4" class="incidencia-textarea" placeholder="Describa el problema o incidencia detectada..." required></textarea>
-                   </div>
-                   
-                   <div class="flex justify-end pt-4">
-                       <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 flex items-center gap-2 transition-colors font-medium">
-                           <i data-lucide="send" class="w-5 h-5"></i> Enviar Reporte
-                       </button>
-                   </div>
-                 </form>
-            </div>
 
-            <div class="incidencia-section">
-                <h2 class="text-xl font-semibold mb-4 text-gray-800">Historial de Incidencias de la Máquina o Seleccionada</h2>
-                <div class="bg-gray-50 p-4 rounded-lg overflow-x-auto">
-                    <table class="history-table">
-                        <thead>
-                            <tr>
-                                <th class="text-left font-medium text-gray-700">Fecha</th>
-                                <th class="text-left font-medium text-gray-700">Tipo de Trabajo</th>
-                                <th class="text-left font-medium text-gray-700">Detalles</th>
-                                <th class="text-left font-medium text-gray-700">Estado Final</th>
-                            </tr>
-                        </thead>
-                        <tbody id="incidencia-history-body">
-                            <tr>
-                                <td colspan="4" class="text-center text-gray-500 py-4">Seleccione una máquina para ver su historial.</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-xl font-semibold mb-4">Top 5 Tipos de Trabajo</h2>
+                    <div class="h-96"><canvas id="topTrabajosChart"></canvas></div>
+                </div>
+            
+            <div id="sala-details-container" class="hidden mt-8">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h2 id="sala-details-title" class="text-xl font-semibold mb-4">Detalles de la Sala</h2>
+                    <div id="sala-details-table" class="overflow-x-auto">
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="details-modal" class="modal"><div class="modal-content"><div class="flex justify-between items-center mb-4"><h2 id="modal-title" class="text-2xl font-bold">Detalle</h2><button id="modal-close-btn" class="text-gray-500 hover:text-gray-800"><i data-lucide="x" class="w-6 h-6"></i></button></div><div id="modal-body" class="max-h-96 overflow-y-auto"></div></div></div>
+    <div id="tecnicos-dashboard" class="hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="bg-white p-6 rounded-xl shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Horas Trabajadas por Técnico</h2>
+                <div class="h-96"><canvas id="horasTecnicoChart"></canvas></div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Tiempo Promedio por Tipo de Trabajo (Horas)</h2>
+                <div class="h-96"><canvas id="avgTimeChart"></canvas></div>
+            </div>
+            <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Visitas a Salas por Técnico</h2>
+                <div id="visitasTecnicoContainer" class="max-h-96 overflow-y-auto"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="reporte-dashboard" class="hidden">
+        <div class="bg-white p-6 rounded-xl shadow-md">
+            <h2 class="text-xl font-semibold mb-4">Reporte Detallado de Operaciones</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="table-header">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Fecha</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Slot/Ruleta</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Serie</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Sala</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Incidencia</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Estado</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Técnico</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Razón Social</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Ubicación</th>
+                        </tr>
+                    </thead>
+                    <tbody id="report-table-body" class="bg-white divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="incidencia-dashboard" class="hidden">
+        <div class="incidencia-section">
+            <div class="incidencia-header">
+                <h2 class="text-2xl font-semibold text-gray-800">Control de estado actual de Maquinas y Ruletas</h2>
+            </div>
+
+            <div id="sala-info" class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200 text-center">
+                <h3 class="font-semibold text-blue-800">Sala De Juegos:<span id="sala-nombre">Cargando...</span>
+                </h3>
+                <p class="text-blue-600 text-sm mt-1" id="sala-detalles"></p>
+            </div>
+
+            <form id="incidencia-form" class="space-y-6">
+                <div class="incidencia-form-group">
+                    <label class="incidencia-label">1. Seleccione una Ruleta o Maquina</label>
+                    <div id="maquinas-container" class="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-10 gap-3">
+                        <div class="text-center py-8 text-gray-400">
+                            <i data-lucide="loader-2" class="animate-spin h-8 w-8 mx-auto"></i>
+                            <p class="mt-2">Cargando máquinas...</p>
+                        </div>
+                    </div>
+                    <p id="no-machines-message" class="text-center py-4 text-gray-500 hidden">
+                        No hay máquinas registradas en esta sala.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
+                    <div>
+                        <label for="incidencia-tipo-trabajo" class="incidencia-label">Tipo de Trabajo</label>
+                        <select id="incidencia-tipo-trabajo" name="tipo_trabajo" required class="incidencia-textarea">
+                            <option value="Asistencia Remota" selected>Asistencia Remota</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="incidencia-estado" class="incidencia-label">Estado Final de la Máquina</label>
+                        <select id="incidencia-estado" name="estado" required class="incidencia-textarea">
+                            <option value="Inoperativo" selected>Inoperativo</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="incidencia-form-group">
+                    <label for="incidencia-diag" class="incidencia-label">2. Describa la incidencia</label>
+                    <textarea id="incidencia-diag" name="diag_ini" rows="4" class="incidencia-textarea"
+                        placeholder="Describa el problema o incidencia detectada..." required></textarea>
+                </div>
+
+                <div class="flex justify-end pt-4">
+                    <button type="submit"
+                        class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 flex items-center gap-2 transition-colors font-medium">
+                        <i data-lucide="send" class="w-5 h-5"></i> Enviar Reporte
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="incidencia-section">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">Historial de Incidencias de la Máquina o
+                Seleccionada</h2>
+            <div class="bg-gray-50 p-4 rounded-lg overflow-x-auto">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th class="text-left font-medium text-gray-700">Fecha</th>
+                            <th class="text-left font-medium text-gray-700">Tipo de Trabajo</th>
+                            <th class="text-left font-medium text-gray-700">Detalles</th>
+                            <th class="text-left font-medium text-gray-700">Estado Final</th>
+                        </tr>
+                    </thead>
+                    <tbody id="incidencia-history-body">
+                        <tr>
+                            <td colspan="4" class="text-center text-gray-500 py-4">Seleccione una máquina para ver
+                                su historial.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <div id="details-modal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="modal-title" class="text-2xl font-bold">Detalle</h2><button id="modal-close-btn"
+                    class="text-gray-500 hover:text-gray-800"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <div id="modal-body" class="max-h-96 overflow-y-auto"></div>
+        </div>
+    </div>
 
     <script>
         // --- CONFIG & GLOBAL VARS ---
@@ -312,6 +592,36 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvYnF1a3R4dmhsdnRycGVvcGppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU2OTc4NDYsImV4cCI6MjA2MTI3Mzg0Nn0.rnubNUWSWEomj5Xwvr65kZLK7Ig_bLC74ajFh9cksFc';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         Chart.register(ChartDataLabels);
+
+        // ▼▼▼ AGREGA ESTA NUEVA FUNCIÓN ▼▼▼
+        function getPeruDateTime() {
+            const ahora = new Date();
+            const timeZone = 'America/Lima';
+
+            // --- Obtener Fecha en formato YYYY-MM-DD ---
+            const dateFormatter = new Intl.DateTimeFormat('es-PE', {
+                timeZone,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+            const parts = dateFormatter.formatToParts(ahora);
+            const day = parts.find(p => p.type === 'day').value;
+            const month = parts.find(p => p.type === 'month').value;
+            const year = parts.find(p => p.type === 'year').value;
+            const fecha = `${year}-${month}-${day}`;
+
+            // --- Obtener Hora en formato HH:mm:ss ---
+            const hora = ahora.toLocaleTimeString('es-PE', {
+                timeZone,
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+
+            return { fecha, hora }; // Devuelve un objeto con la fecha y hora correctas
+        }
 
         // --- DOM ELEMENTS ---
         const mainContent = document.getElementById('main-content');
@@ -370,32 +680,32 @@
         let realtimeSubscription = null;
 
         // ▼▼▼ AGREGA ESTA FUNCIÓN NUEVA ▼▼▼
-    async function fetchLatestMachineStates(salaId) {
-        const { data, error } = await supabaseClient
-            .from('trabajos')
-            .select('detalle!inner(id_maquina, estado)')
-            .eq('id_sala', salaId)
-            .not('detalle', 'is', 'null')
-            .order('fecha', { ascending: false })
-            .order('id_trabajo', { ascending: false });
+        async function fetchLatestMachineStates(salaId) {
+            const { data, error } = await supabaseClient
+                .from('trabajos')
+                .select('detalle!inner(id_maquina, estado)')
+                .eq('id_sala', salaId)
+                .not('detalle', 'is', 'null')
+                .order('fecha', { ascending: false })
+                .order('id_trabajo', { ascending: false });
 
-        if (error) {
-            console.error("Error fetching machine states:", error);
-            return {};
-        }
+            if (error) {
+                console.error("Error fetching machine states:", error);
+                return {};
+            }
 
-        const latestStates = {};
-        data.forEach(trabajo => {
-            trabajo.detalle.forEach(item => {
-                // Como los datos vienen ordenados del más nuevo al más viejo,
-                // la primera vez que veamos una máquina, ese será su último estado.
-                if (item.id_maquina && !latestStates[item.id_maquina]) {
-                    latestStates[item.id_maquina] = item.estado;
-                }
+            const latestStates = {};
+            data.forEach(trabajo => {
+                trabajo.detalle.forEach(item => {
+                    // Como los datos vienen ordenados del más nuevo al más viejo,
+                    // la primera vez que veamos una máquina, ese será su último estado.
+                    if (item.id_maquina && !latestStates[item.id_maquina]) {
+                        latestStates[item.id_maquina] = item.estado;
+                    }
+                });
             });
-        });
-        return latestStates;
-    }
+            return latestStates;
+        }
 
         // --- SESSION MANAGEMENT ---
         async function checkSession() {
@@ -414,7 +724,7 @@
                 realtimeSubscription = null;
             }
             await supabaseClient.auth.signOut();
-            window.location.href = './index.html'; 
+            window.location.href = './index.html';
         }
 
         // --- ROLE-BASED INITIALIZATION ROUTER ---
@@ -428,14 +738,22 @@
                 .eq('id_usuario', currentUser.id)
                 .single();
 
-            if (tecnicoError && tecnicoError.code !== 'PGRST116') {
-                console.error("Error fetching technician data:", tecnicoError);
-                alert("Error al verificar el perfil de usuario.");
+            if (tecnicoError || !tecnicoData) {
+                alert("Tu usuario está autenticado pero no se encuentra registrado. Contacta al administrador.");
                 logout();
                 return;
             }
 
-            if (tecnicoData && tecnicoData.cargo === 'sala') {
+            // ▼▼▼ LÓGICA AÑADIDA PARA MOSTRAR EL BOTÓN ▼▼▼
+            // Verificamos el cargo del usuario para mostrar botones condicionales
+            const userRole = tecnicoData.cargo.toLowerCase();
+            if (userRole === 'coordinador' || userRole === 'admin') {
+                // Si es coordinador o admin, mostramos el botón de Asignaciones
+                document.getElementById('nav-asignacion').classList.remove('hidden');
+            }
+            // ▲▲▲ FIN DE LA LÓGICA AÑADIDA ▲▲▲
+
+            if (userRole === 'sala') {
                 await initializeSalaTechnicianView(tecnicoData);
             } else {
                 await initializeAdminView();
@@ -447,7 +765,6 @@
             setTimeout(() => loadingOverlay.style.display = 'none', 300);
             logoutButton.addEventListener('click', logout);
         }
-
         // =================================================================
         // --- REALTIME SUBSCRIPTION LOGIC ---
         // =================================================================
@@ -468,7 +785,7 @@
         // =================================================================
         // --- SALA TECHNICIAN VIEW LOGIC ---
         // =================================================================
-        
+
         async function initializeSalaTechnicianView(tecnicoData) {
             // ▼▼▼ AQUÍ AGREGAS LAS LÍNEAS PARA CAMBIAR EL TÍTULO ▼▼▼
             document.getElementById('main-title').textContent = 'Reporte de Incidencias de Sala';
@@ -478,9 +795,9 @@
             document.getElementById('main-nav').classList.add('hidden');
             filtersSection.classList.add('hidden');
             incidenciaDashboard.classList.remove('hidden');
-            
+
             await loadSalaData(tecnicoData.docum);
-            
+
             incidenciaForm.addEventListener('submit', handleIncidenciaSubmit);
 
             // Setup realtime updates
@@ -503,12 +820,12 @@
                     .select('id_sala, sala_mincetur, empresa, direccion, departamento')
                     .eq('id_sala', salaId)
                     .single();
-                
+
                 if (salaError) throw salaError;
 
                 salaNombre.textContent = salaData.sala_mincetur;
                 salaDetalles.textContent = `${salaData.empresa} - ${salaData.direccion}, ${salaData.departamento}`;
-                
+
                 // ▼▼▼ MODIFICACIÓN AQUÍ ▼▼▼
                 // 1. Obtenemos los estados primero
                 const latestStates = await fetchLatestMachineStates(salaId);
@@ -521,7 +838,7 @@
                 logout();
             }
         }
-        
+
         // ▼▼▼ REEMPLAZA TU FUNCIÓN ENTERA CON ESTA ▼▼▼
         async function loadMachinesForSala(salaId, latestStates = {}) { // Ahora recibe los estados
             try {
@@ -531,16 +848,16 @@
                     .eq('id_sala', salaId)
                     .order('serie');
                 if (error) throw error;
-                
+
                 maquinasContainer.innerHTML = '';
-                
+
                 if (machinesData.length === 0) {
                     noMachinesMessage.classList.remove('hidden');
                     return;
                 }
-                
+
                 noMachinesMessage.classList.add('hidden');
-                
+
                 machinesData.forEach(machine => {
                     const machineButton = document.createElement('button');
                     machineButton.type = 'button';
@@ -559,16 +876,16 @@
                         <div class="machine-serie">${machine.serie}</div>
                         <div class="machine-model">${machine.modelo || 'Sin modelo'}</div>
                     `;
-                    
+
                     machineButton.addEventListener('click', () => {
                         // Limpia el estado 'selected' de cualquier otro botón
                         document.querySelectorAll('.machine-button.selected').forEach(btn => btn.classList.remove('selected'));
                         // Añade 'selected' al botón clickeado
                         machineButton.classList.add('selected');
                         selectedMachineId = machine.id_maquina;
-                        loadHistoryForMachine(machine.id_maquina);  
+                        loadHistoryForMachine(machine.id_maquina);
                     });
-                    
+
                     maquinasContainer.appendChild(machineButton);
                 });
                 lucide.createIcons();
@@ -577,78 +894,109 @@
                 maquinasContainer.innerHTML = '<p class="text-red-500 col-span-full">Error al cargar las máquinas.</p>';
             }
         }
-        
+
         // ▼▼▼ NUEVA FUNCIÓN: Carga el historial para una sola máquina ▼▼▼
         async function loadHistoryForMachine(machineId) {
-            console.log(`[HISTORIAL] Cargando historial para máquina ID: ${machineId}`);
-            incidenciaHistoryBody.innerHTML = `<tr><td colspan="4" class="px-4 py-4 text-center text-gray-500">Cargando historial...</td></tr>`;
-
             try {
                 const { data, error } = await supabaseClient
                     .from('detalle')
                     .select(`
-                        estado, tipo_trabajo, diag_ini, trab_realizado, resul,
-                        trabajos ( fecha )
-                    `)
+                estado, tipo_trabajo, diag_ini, trab_realizado, resul,
+                trabajos!inner(
+                    fecha,
+                    tecnicos(usuario, correo, cel, cargo)
+                )
+            `)
                     .eq('id_maquina', machineId)
                     .order('fecha', { foreignTable: 'trabajos', ascending: false });
 
                 if (error) throw error;
-                
-                incidenciaHistoryBody.innerHTML = '';
-                
+
+                const historyBody = document.getElementById('incidencia-history-body');
+                historyBody.innerHTML = '';
+
                 if (data.length === 0) {
-                    incidenciaHistoryBody.innerHTML = `<tr><td colspan="4" class="px-4 py-4 text-center text-gray-500">No hay historial para esta máquina.</td></tr>`;
+                    historyBody.innerHTML = `<tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">No hay historial para esta máquina.</td></tr>`;
                     return;
                 }
-                
+
+                // ▼▼▼ ESTA ES LA CORRECCIÓN ▼▼▼
+                // En lugar de buscar en todo el documento, buscamos la cabecera a partir del body de la tabla. Es más seguro.
+                const tableHead = historyBody.previousElementSibling;
+                if (tableHead && tableHead.tagName === 'THEAD') {
+                    tableHead.innerHTML = `
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo de Trabajo</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Detalles</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Técnico Asignado</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado Final</th>
+                </tr>
+            `;
+                }
+
                 data.forEach(item => {
                     const tr = document.createElement('tr');
                     const estado = item.estado || 'N/A';
-                    tr.className = {
-                        'Operativo': 'status-operativo',
-                        'Inoperativo': 'status-inoperativo',
-                        'Pendiente': 'status-pendiente',
-                        'Retirado' : 'status-retirado'
-                    }[estado] || '';
-                    
+                    tr.className = { 'Operativo': 'status-operativo', 'Inoperativo': 'status-inoperativo', 'Pendiente': 'status-pendiente', 'Retirado': 'status-retirado' }[estado] || '';
+
                     const fecha = item.trabajos ? new Date(item.trabajos.fecha + 'T00:00:00').toLocaleDateString('es-ES') : 'N/A';
                     const tipoTrabajo = item.tipo_trabajo || 'N/A';
                     const detalleCompleto = [item.diag_ini, item.trab_realizado, item.resul].filter(Boolean).join(' / ');
 
+                    const tecnico = item.trabajos.tecnicos;
+                    let tecnicoInfoHTML = '<span class="text-xs text-gray-400">No asignado</span>';
+                    if (tecnico && tecnico.cargo.toLowerCase() !== 'sala') {
+                        tecnicoInfoHTML = `
+
+                    <div class="font-medium text-gray-900">${tecnico.usuario}</div>
+                    <div class="text-xs text-gray-500">${tecnico.correo || ''}</div>
+                    <div class="text-xs text-gray-500">${tecnico.cel || ''}</div>
+                `;
+                    }
+
                     tr.innerHTML = `
-                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${fecha}</td>
-                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${tipoTrabajo}</td>
-                        <td class="px-4 py-4 text-sm text-gray-500">${detalleCompleto || 'Sin detalles.'}</td>
-                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${estado}</td>
-                    `;
-                    incidenciaHistoryBody.appendChild(tr);
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${fecha}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${tipoTrabajo}</td>
+                <td class="px-4 py-4 text-sm text-gray-500">${detalleCompleto}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm">${tecnicoInfoHTML}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${estado}</td>
+            `;
+                    historyBody.appendChild(tr);
                 });
-                
+
             } catch (error) {
-                console.error('Error al cargar historial de la máquina:', error);
-                incidenciaHistoryBody.innerHTML = `<tr><td colspan="4" class="px-4 py-4 text-center text-red-500">Error al cargar el historial.</td></tr>`;
+                console.error('Error detallado al cargar historial:', error);
+                const historyBody = document.getElementById('incidencia-history-body');
+                if (historyBody) {
+                    historyBody.innerHTML = `<tr><td colspan="5" class="px-4 py-4 text-center text-red-500">Error al cargar el historial. Revisa la consola.</td></tr>`;
+                }
             }
         }
-        
+
         async function handleIncidenciaSubmit(event) {
             event.preventDefault();
-            
+
             if (!selectedMachineId) {
                 alert('Por favor, seleccione una máquina.');
                 return;
             }
-            
+
             const submitButton = event.target.querySelector('button[type="submit"]');
             submitButton.disabled = true;
             submitButton.innerHTML = '<i data-lucide="loader-2" class="animate-spin w-4 h-4"></i> Enviando...';
             lucide.createIcons();
 
+
+            const { fecha, hora } = getPeruDateTime(); // Llamamos a nuestra nueva función
+
             const trabajo = {
                 id_sala: userSalaId,
                 id_usuario: currentUser.id,
-                fecha: new Date().toISOString().split('T')[0],
-                hora_inicio: new Date().toTimeString().split(' ')[0]
+                fecha: fecha,
+                hora_inicio: hora,
+                hora_fin: hora
+
             };
 
             try {
@@ -659,7 +1007,7 @@
                     .single();
 
                 if (trabajoError) throw trabajoError;
-                
+
                 // ▼▼▼ MODIFICADO: Usar valores por defecto para los campos ocultos ▼▼▼
                 const detalle = {
                     id_trabajo: trabajoData.id_trabajo,
@@ -673,10 +1021,10 @@
                 if (detalleError) throw detalleError;
 
                 alert('¡Incidencia reportada con éxito!');
-                
+
                 // La subscripción en tiempo real se encargará de actualizar la tabla si es necesario
                 // No es necesario llamar a loadHistoryForMachine manualmente.
-                
+
                 incidenciaDiagTextarea.value = '';
                 // Opcional: Deseleccionar la máquina y limpiar la tabla
                 // document.querySelectorAll('.machine-button.selected').forEach(btn => btn.classList.remove('selected'));
@@ -837,7 +1185,7 @@
                 [maquinasDashboard, tecnicosDashboard, reporteDashboard].forEach(d => d.classList.add('hidden'));
                 [gabineteFilterContainer, tecnicoFilterContainer, departamentoFilterContainer, salaFilterContainer, workTypeFilterContainer].forEach(f => f.style.display = 'none');
                 document.querySelectorAll('#main-nav .nav-button').forEach(b => b.classList.remove('active'));
-                
+
                 if (view === 'maquinas') {
                     navMaquinasBtn.classList.add('active');
                     maquinasDashboard.classList.remove('hidden');
@@ -861,27 +1209,27 @@
             setDefaultDates();
             loadingText.textContent = 'Cargando filtros...';
             await Promise.all([
-                populateGabineteFilter(), 
+                populateGabineteFilter(),
                 populateTechnicianFilter(),
                 populateDepartamentoFilter(),
                 populateSalaFilter(),
                 populateWorkTypeFilter()
             ]);
-            
-            await applyFilters(); 
+
+            await applyFilters();
             applyFiltersBtn.addEventListener('click', applyFilters);
-            
+
             tecnicoFilterBtn.addEventListener('click', () => tecnicoFilterOptions.classList.toggle('hidden'));
             departamentoFilterBtn.addEventListener('click', () => departamentoFilterOptions.classList.toggle('hidden'));
             salaFilterBtn.addEventListener('click', () => salaFilterOptions.classList.toggle('hidden'));
             workTypeFilterBtn.addEventListener('click', () => workTypeFilterOptions.classList.toggle('hidden'));
-            
+
             tecnicoFilterOptions.addEventListener('change', updateTechnicianFilterText);
             departamentoFilterOptions.addEventListener('change', updateDepartamentoFilterText);
             salaFilterOptions.addEventListener('change', updateSalaFilterText);
             workTypeFilterOptions.addEventListener('change', updateWorkTypeFilterText);
-            
-            document.addEventListener('click', (e) => { 
+
+            document.addEventListener('click', (e) => {
                 if (!tecnicoFilterContainer.contains(e.target)) tecnicoFilterOptions.classList.add('hidden');
                 if (!departamentoFilterContainer.contains(e.target)) departamentoFilterOptions.classList.add('hidden');
                 if (!salaFilterContainer.contains(e.target)) salaFilterOptions.classList.add('hidden');
@@ -896,7 +1244,7 @@
                 applyFilters();
             });
         }
-        
+
         async function applyFilters() {
             loadingOverlay.style.display = 'flex';
             loadingOverlay.style.opacity = '1';
@@ -943,7 +1291,7 @@
                 setTimeout(() => loadingOverlay.style.display = 'none', 300);
             }
         }
-        
+
         function setDefaultDates() {
             const today = new Date();
             const thirtyDaysAgo = new Date();
@@ -953,8 +1301,8 @@
         }
         function createMultiSelect(options) {
             const { container, items, idField, nameField, checkboxClass, allSelectorId, updateTextFn } = options;
-            container.innerHTML = ''; 
-            
+            container.innerHTML = '';
+
             const allOptionLabel = document.createElement('label');
             allOptionLabel.className = 'flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer font-semibold';
             allOptionLabel.innerHTML = `<input type="checkbox" id="${allSelectorId}" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-3"> Todos`;
@@ -967,13 +1315,13 @@
                 label.innerHTML = `<input type="checkbox" data-id="${id}" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-3 ${checkboxClass}"> ${name}`;
                 container.appendChild(label);
             });
-            
+
             document.getElementById(allSelectorId).addEventListener('change', (e) => {
                 container.querySelectorAll(`.${checkboxClass}`).forEach(cb => cb.checked = e.target.checked);
                 updateTextFn();
             });
         }
-        
+
         async function populateGabineteFilter() {
             const { data, error } = await supabaseClient.from('maquinas').select('gabinete');
             if (error) { console.error('Error fetching gabinetes:', error); return; }
@@ -991,17 +1339,17 @@
             if (error) { console.error('Error fetching technicians:', error); return; }
             allTechnicians = data;
             createMultiSelect({
-                container: tecnicoFilterOptions, items: allTechnicians, idField: 'id_usuario', nameField: 'usuario', 
+                container: tecnicoFilterOptions, items: allTechnicians, idField: 'id_usuario', nameField: 'usuario',
                 checkboxClass: 'technician-checkbox', allSelectorId: 'select-all-technicians', updateTextFn: updateTechnicianFilterText
             });
         }
-        
+
         async function populateDepartamentoFilter() {
             const { data, error } = await supabaseClient.from('sala').select('departamento');
             if (error) { console.error('Error fetching departamentos:', error); return; }
             allDepartamentos = [...new Set(data.map(item => item.departamento).filter(Boolean))].sort().map(d => ({ departamento: d }));
             createMultiSelect({
-                container: departamentoFilterOptions, items: allDepartamentos, idField: 'departamento', nameField: 'departamento', 
+                container: departamentoFilterOptions, items: allDepartamentos, idField: 'departamento', nameField: 'departamento',
                 checkboxClass: 'departamento-checkbox', allSelectorId: 'select-all-departamentos', updateTextFn: updateDepartamentoFilterText
             });
         }
@@ -1010,7 +1358,7 @@
             if (error) { console.error('Error fetching salas:', error); return; }
             allSalas = data;
             createMultiSelect({
-                container: salaFilterOptions, items: allSalas, idField: 'id_sala', nameField: 'sala_mincetur', 
+                container: salaFilterOptions, items: allSalas, idField: 'id_sala', nameField: 'sala_mincetur',
                 checkboxClass: 'sala-checkbox', allSelectorId: 'select-all-salas', updateTextFn: updateSalaFilterText
             });
         }
@@ -1018,12 +1366,12 @@
             const { data, error } = await supabaseClient.from('detalle').select('tipo_trabajo');
             if (error) { console.error('Error fetching work types:', error); return; }
             allWorkTypes = [...new Set(data.map(item => item.tipo_trabajo).filter(Boolean))].sort().map(wt => ({ tipo_trabajo: wt }));
-             createMultiSelect({
-                container: workTypeFilterOptions, items: allWorkTypes, idField: 'tipo_trabajo', nameField: 'tipo_trabajo', 
+            createMultiSelect({
+                container: workTypeFilterOptions, items: allWorkTypes, idField: 'tipo_trabajo', nameField: 'tipo_trabajo',
                 checkboxClass: 'work-type-checkbox', allSelectorId: 'select-all-work-types', updateTextFn: updateWorkTypeFilterText
             });
         }
-        
+
         const getSelectedIds = (selector) => Array.from(document.querySelectorAll(`${selector}`)).map(cb => cb.dataset.id);
         const updateMultiSelectText = (textEl, count, total, singleText, pluralText, allText) => {
             if (count === 0 || count === total) { textEl.textContent = allText; }
@@ -1081,7 +1429,7 @@
             if (maquinasError) throw maquinasError;
             return maquinasData.map(machine => { const details = latestDetails[machine.id_maquina]; return { serie: machine.serie, modelo: machine.modelo, gabinete: machine.gabinete, estado: details.estado, fecha: details.date, sala: salaMap[details.id_sala] || 'Sala desconocida', motivo: details.motivo, descripcion: details.descripcion }; });
         }
-        
+
         async function fetchTopTrabajos(startDate, endDate, typeFilter) {
             let query = supabaseClient.from('trabajos').select('detalle!inner(tipo_trabajo, maquinas!inner(gabinete))').gte('fecha', startDate).lte('fecha', endDate);
             if (typeFilter !== 'Todos') { query = query.eq('detalle.maquinas.gabinete', typeFilter); }
@@ -1104,7 +1452,7 @@
                     maquinas!inner (serie, modelo, gabinete),
                     trabajos!inner (
                         fecha, 
-                        tecnicos(usuario),
+                        tecnicos(usuario, correo, cel),
                         sala!inner(sala_mincetur, empresa, departamento, provincia, distrito)
                     )
                 `)
@@ -1129,29 +1477,29 @@
             const visitas = data.map(s => s.visitas);
             const ctx = document.getElementById('topSalasChart').getContext('2d');
             if (topSalasChartInstance) topSalasChartInstance.destroy();
-            
+
             // ▼▼▼ 1. LLAMAMOS A LA NUEVA FUNCIÓN PARA CREAR EL DEGRADADO ▼▼▼
             const gradientColors = generateBlueGradient(data.length);
 
-            topSalasChartInstance = new Chart(ctx, { 
-                type: 'bar', 
-                data: { 
-                    labels: labels, 
-                    datasets: [{ 
-                        label: 'Número de Visitas', 
-                        data: visitas, 
+            topSalasChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Número de Visitas',
+                        data: visitas,
                         // ▼▼▼ 2. USAMOS LOS COLORES GENERADOS ▼▼▼
                         backgroundColor: gradientColors
-                    }] 
-                }, 
-                options: { 
-                    indexAxis: 'y', 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    plugins: { 
-                        legend: { display: false }, 
-                        datalabels: { anchor: 'end', align: 'end', color: '#1f2937', font: { weight: 'bold' } } 
-                    }, 
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: { anchor: 'end', align: 'end', color: '#1f2937', font: { weight: 'bold' } }
+                    },
                     scales: { x: { beginAtZero: true } },
                     onHover: (event, chartElement) => {
                         event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
@@ -1161,10 +1509,10 @@
                         if (points.length) {
                             const firstPoint = points[0];
                             const label = topSalasChartInstance.data.labels[firstPoint.index];
-                            showDetailsForSala(label); 
+                            showDetailsForSala(label);
                         }
                     }
-                } 
+                }
             });
         }
         function updateTopTrabajosUI(data) {
@@ -1190,8 +1538,8 @@
                 }
                 return acc;
             }, {}));
-            
-            latestRecords.sort((a,b) => new Date(b.trabajos.fecha) - new Date(a.trabajos.fecha));
+
+            latestRecords.sort((a, b) => new Date(b.trabajos.fecha) - new Date(a.trabajos.fecha));
             latestRecords.forEach(item => {
                 const tr = document.createElement('tr');
                 const estado = item.estado || 'N/A';
@@ -1200,7 +1548,9 @@
                     'Inoperativo': 'status-inoperativo',
                     'Pendiente': 'status-pendiente'
                 }[estado] || '';
-                
+
+
+
                 const fecha = new Date(item.trabajos.fecha + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }).replace('.', '');
                 const modeloGabinete = [item.maquinas?.modelo, item.maquinas?.gabinete].filter(Boolean).join(' / ');
                 const serie = item.maquinas?.serie || 'N/A';
@@ -1212,8 +1562,16 @@
                         ${tipoTrabajo}
                         <div class="tooltip-bubble">${detalleCompleto || 'Sin detalles adicionales.'}</div>
                     </div>`;
-                
-                const tecnico = item.trabajos.tecnicos?.usuario || 'N/A';
+
+                const tecnico = item.trabajos.tecnicos;
+                let tecnicoAsignadoHTML = '<span class="text-xs text-gray-400">No asignado</span>';
+                if (tecnico && tecnico.cargo.toLowerCase() !== 'sala') {
+                    tecnicoAsignadoHTML = `
+                <div class="font-medium text-gray-900">${tecnico.usuario}</div>
+                <div class="text-xs text-gray-500">${tecnico.correo || ''}</div>
+                <div class="text-xs text-gray-500">${tecnico.cel || ''}</div>
+            `;
+                }
                 const razonSocial = item.trabajos.sala?.empresa || 'N/A';
                 const ubicacion = [item.trabajos.sala?.departamento, item.trabajos.sala?.provincia, item.trabajos.sala?.distrito].filter(Boolean).join(', ');
                 tr.innerHTML = `
@@ -1223,8 +1581,7 @@
                     <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${sala}</td>
                     <td class="px-4 py-4 text-sm text-gray-500">${incidenciaHTML}</td>
                     <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${estado}</td>
-                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${tecnico}</td>
-                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${razonSocial}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm">${tecnicoAsignadoHTML}</td> <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${razonSocial}</td>
                     <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${ubicacion}</td>
                 `;
                 tableBody.appendChild(tr);
@@ -1272,10 +1629,10 @@
                 }
             }
         }
-        
+
         // --- STARTUP ---
         document.addEventListener('DOMContentLoaded', checkSession);
     </script>
 </body>
-</html>
 
+</html>
