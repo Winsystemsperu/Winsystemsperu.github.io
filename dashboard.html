@@ -300,7 +300,7 @@
 
         <header class="mb-6 flex flex-wrap justify-between items-center">
             <div class="flex items-center space-x-4">
-                <img src= winsystems_logo.png
+                <img src=winsystems-logo.png"
                     alt="Logo de Winsystems" class="h-24">
                 <div>
                     <h1 id="main-title" class="text-3xl font-bold text-gray-900">Dashboard de Operaciones</h1>
@@ -434,146 +434,156 @@
                     <h2 class="text-xl font-semibold mb-4">Top 5 Tipos de Trabajo</h2>
                     <div class="h-96"><canvas id="topTrabajosChart"></canvas></div>
                 </div>
-            
-            <div id="sala-details-container" class="hidden mt-8">
-                <div class="bg-white p-6 rounded-xl shadow-md">
-                    <h2 id="sala-details-title" class="text-xl font-semibold mb-4">Detalles de la Sala</h2>
-                    <div id="sala-details-table" class="overflow-x-auto">
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <div id="tecnicos-dashboard" class="hidden">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div class="bg-white p-6 rounded-xl shadow-md">
-                <h2 class="text-xl font-semibold mb-4">Horas Trabajadas por Técnico</h2>
-                <div class="h-96"><canvas id="horasTecnicoChart"></canvas></div>
-            </div>
-            <div class="bg-white p-6 rounded-xl shadow-md">
-                <h2 class="text-xl font-semibold mb-4">Tiempo Promedio por Tipo de Trabajo (Horas)</h2>
-                <div class="h-96"><canvas id="avgTimeChart"></canvas></div>
-            </div>
-            <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-md">
-                <h2 class="text-xl font-semibold mb-4">Visitas a Salas por Técnico</h2>
-                <div id="visitasTecnicoContainer" class="max-h-96 overflow-y-auto"></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="reporte-dashboard" class="hidden">
-        <div class="bg-white p-6 rounded-xl shadow-md">
-            <h2 class="text-xl font-semibold mb-4">Reporte Detallado de Operaciones</h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="table-header">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Fecha</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Slot/Ruleta</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Serie</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Sala</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Incidencia</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Estado</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Técnico</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Razón Social</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Ubicación</th>
-                        </tr>
-                    </thead>
-                    <tbody id="report-table-body" class="bg-white divide-y divide-gray-200"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div id="incidencia-dashboard" class="hidden">
-        <div class="incidencia-section">
-            <div class="incidencia-header">
-                <h2 class="text-2xl font-semibold text-gray-800">Control de estado actual de Maquinas y Ruletas</h2>
-            </div>
-
-            <div id="sala-info" class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200 text-center">
-                <h3 class="font-semibold text-blue-800">Sala De Juegos:<span id="sala-nombre">Cargando...</span>
-                </h3>
-                <p class="text-blue-600 text-sm mt-1" id="sala-detalles"></p>
-            </div>
-
-            <form id="incidencia-form" class="space-y-6">
-                <div class="incidencia-form-group">
-                    <label class="incidencia-label">1. Seleccione una Ruleta o Maquina</label>
-                    <div id="maquinas-container" class="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-10 gap-3">
-                        <div class="text-center py-8 text-gray-400">
-                            <i data-lucide="loader-2" class="animate-spin h-8 w-8 mx-auto"></i>
-                            <p class="mt-2">Cargando máquinas...</p>
+                <div id="sala-details-container" class="hidden mt-8">
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h2 id="sala-details-title" class="text-xl font-semibold mb-4">Detalles de la Sala</h2>
+                        <div id="sala-details-table" class="overflow-x-auto">
                         </div>
                     </div>
-                    <p id="no-machines-message" class="text-center py-4 text-gray-500 hidden">
-                        No hay máquinas registradas en esta sala.
-                    </p>
                 </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
-                    <div>
-                        <label for="incidencia-tipo-trabajo" class="incidencia-label">Tipo de Trabajo</label>
-                        <select id="incidencia-tipo-trabajo" name="tipo_trabajo" required class="incidencia-textarea">
-                            <option value="Asistencia Remota" selected>Asistencia Remota</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="incidencia-estado" class="incidencia-label">Estado Final de la Máquina</label>
-                        <select id="incidencia-estado" name="estado" required class="incidencia-textarea">
-                            <option value="Inoperativo" selected>Inoperativo</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="incidencia-form-group">
-                    <label for="incidencia-diag" class="incidencia-label">2. Describa la incidencia</label>
-                    <textarea id="incidencia-diag" name="diag_ini" rows="4" class="incidencia-textarea"
-                        placeholder="Describa el problema o incidencia detectada..." required></textarea>
-                </div>
-
-                <div class="flex justify-end pt-4">
-                    <button type="submit"
-                        class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 flex items-center gap-2 transition-colors font-medium">
-                        <i data-lucide="send" class="w-5 h-5"></i> Enviar Reporte
-                    </button>
-                </div>
-            </form>
-        </div>
-
-        <div class="incidencia-section">
-            <h2 class="text-xl font-semibold mb-4 text-gray-800">Historial de Incidencias de la Máquina o
-                Seleccionada</h2>
-            <div class="bg-gray-50 p-4 rounded-lg overflow-x-auto">
-                <table class="history-table">
-                    <thead>
-                        <tr>
-                            <th class="text-left font-medium text-gray-700">Fecha</th>
-                            <th class="text-left font-medium text-gray-700">Tipo de Trabajo</th>
-                            <th class="text-left font-medium text-gray-700">Detalles</th>
-                            <th class="text-left font-medium text-gray-700">Estado Final</th>
-                        </tr>
-                    </thead>
-                    <tbody id="incidencia-history-body">
-                        <tr>
-                            <td colspan="4" class="text-center text-gray-500 py-4">Seleccione una máquina para ver
-                                su historial.</td>
-                        </tr>
-                    </tbody>
-                </table>
             </div>
         </div>
-    </div>
+
+        <div id="tecnicos-dashboard" class="hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-xl font-semibold mb-4">Horas Trabajadas por Técnico</h2>
+                    <div class="h-96"><canvas id="horasTecnicoChart"></canvas></div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-xl font-semibold mb-4">Tiempo Promedio por Tipo de Trabajo (Horas)</h2>
+                    <div class="h-96"><canvas id="avgTimeChart"></canvas></div>
+                </div>
+                <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-xl font-semibold mb-4">Visitas a Salas por Técnico</h2>
+                    <div id="visitasTecnicoContainer" class="max-h-96 overflow-y-auto"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="reporte-dashboard" class="hidden">
+            <div class="bg-white p-6 rounded-xl shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Reporte Detallado de Operaciones</h2>
+                <div class="overflow-x-auto">
+                    <table id="admin-report-table" class="min-w-full divide-y divide-gray-200">
+                        <thead class="table-header">
+                            <tr>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Fecha</th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Slot/Ruleta</th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Serie</th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Sala</th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Incidencia</th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Estado</th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Técnico</th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Razón Social</th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Ubicación</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="incidencia-dashboard" class="hidden">
+            <div class="incidencia-section">
+                <div class="incidencia-header">
+                    <h2 class="text-2xl font-semibold text-gray-800">Control de estado actual de Maquinas y Ruletas</h2>
+                </div>
+
+                <div id="sala-info" class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200 text-center">
+                    <h3 class="font-semibold text-blue-800">Sala De Juegos:<span id="sala-nombre">Cargando...</span>
+                    </h3>
+                    <p class="text-blue-600 text-sm mt-1" id="sala-detalles"></p>
+                </div>
+
+                <form id="incidencia-form" class="space-y-6">
+                    <div class="incidencia-form-group">
+                        <label class="incidencia-label">1. Seleccione una Ruleta o Maquina</label>
+                        <div id="maquinas-container" class="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-10 gap-3">
+                            <div class="text-center py-8 text-gray-400">
+                                <i data-lucide="loader-2" class="animate-spin h-8 w-8 mx-auto"></i>
+                                <p class="mt-2">Cargando máquinas...</p>
+                            </div>
+                        </div>
+                        <p id="no-machines-message" class="text-center py-4 text-gray-500 hidden">
+                            No hay máquinas registradas en esta sala.
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
+                        <div>
+                            <label for="incidencia-tipo-trabajo" class="incidencia-label">Tipo de Trabajo</label>
+                            <select id="incidencia-tipo-trabajo" name="tipo_trabajo" required
+                                class="incidencia-textarea">
+                                <option value="Asistencia Remota" selected>Asistencia Remota</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="incidencia-estado" class="incidencia-label">Estado Final de la Máquina</label>
+                            <select id="incidencia-estado" name="estado" required class="incidencia-textarea">
+                                <option value="Inoperativo" selected>Inoperativo</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="incidencia-form-group">
+                        <label for="incidencia-diag" class="incidencia-label">2. Describa la incidencia</label>
+                        <textarea id="incidencia-diag" name="diag_ini" rows="4" class="incidencia-textarea"
+                            placeholder="Describa el problema o incidencia detectada..." required></textarea>
+                    </div>
+
+                    <div class="flex justify-end pt-4">
+                        <button type="submit"
+                            class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 flex items-center gap-2 transition-colors font-medium">
+                            <i data-lucide="send" class="w-5 h-5"></i> Enviar Reporte
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="incidencia-section">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">Historial de Incidencias de la Máquina o
+                    Seleccionada</h2>
+                <div class="bg-gray-50 p-4 rounded-lg overflow-x-auto">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th class="text-left font-medium text-gray-700">Fecha</th>
+                                <th class="text-left font-medium text-gray-700">Tipo de Trabajo</th>
+                                <th class="text-left font-medium text-gray-700">Detalles</th>
+                                <th class="text-left font-medium text-gray-700">Estado Final</th>
+                            </tr>
+                        </thead>
+                        <tbody id="incidencia-history-body">
+                            <tr>
+                                <td colspan="4" class="text-center text-gray-500 py-4">Seleccione una máquina para ver
+                                    su historial.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div id="details-modal" class="modal">
@@ -918,6 +928,20 @@
                 if (data.length === 0) {
                     historyBody.innerHTML = `<tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">No hay historial para esta máquina.</td></tr>`;
                     return;
+                }
+                const tecnico = item.trabajos.tecnicos;
+                let tecnicoInfoHTML = ''; // Empezamos con un string vacío
+
+                if (tecnico) {
+                    // Si encontramos un técnico/usuario, mostramos sus datos
+                    tecnicoInfoHTML = `
+                    <div class="font-medium text-gray-900">${tecnico.usuario}</div>
+                    <div class="text-xs text-gray-500">${tecnico.correo || ''}</div>
+                    <div class="text-xs text-gray-500">${tecnico.cel || ''}</div>
+                `;
+                } else {
+                    // Si por alguna razón no hay usuario, mostramos un texto genérico
+                    tecnicoInfoHTML = '<span class="text-xs text-gray-400">Usuario no encontrado</span>';
                 }
 
                 // ▼▼▼ ESTA ES LA CORRECCIÓN ▼▼▼
@@ -1452,7 +1476,7 @@
                     maquinas!inner (serie, modelo, gabinete),
                     trabajos!inner (
                         fecha, 
-                        tecnicos(usuario, correo, cel),
+                        tecnicos(usuario, correo, cel, cargo),
                         sala!inner(sala_mincetur, empresa, departamento, provincia, distrito)
                     )
                 `)
@@ -1523,12 +1547,38 @@
             topTrabajosChartInstance = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'Cantidad de Trabajos', data: counts, backgroundColor: colorPalette.slice().reverse() }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { anchor: 'center', align: 'center', color: 'white', font: { weight: 'bold' } } }, scales: { x: { beginAtZero: true } } } });
         }
         function updateReportTableUI(data) {
-            const tableBody = document.getElementById('report-table-body');
-            tableBody.innerHTML = '';
+            const table = document.getElementById('admin-report-table');
+            if (!table) {
+                console.error("No se encontró la tabla de reportes del admin.");
+                return;
+            }
+            const tableHead = table.querySelector('thead');
+            const tableBody = table.querySelector('tbody');
+
+            // 1. LIMPIAMOS LA TABLA UNA SOLA VEZ, ANTES DE EMPEZAR
+            tableHead.innerHTML = '';
+
+
+            // 2. CREAMOS LA CABECERA UNA SOLA VEZ
+            tableHead.innerHTML = `
+        <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Slot/Ruleta</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Serie</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sala</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Incidencia</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Técnico Asignado</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Razón Social</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ubicación</th>
+        </tr>
+    `;
+
             if (!data || data.length === 0) {
                 tableBody.innerHTML = `<tr><td colspan="9" class="text-center text-gray-500 py-4">No se encontraron datos para los filtros seleccionados.</td></tr>`;
                 return;
             }
+
             const latestRecords = Object.values(data.reduce((acc, record) => {
                 const serie = record.maquinas?.serie;
                 if (serie) {
@@ -1540,16 +1590,12 @@
             }, {}));
 
             latestRecords.sort((a, b) => new Date(b.trabajos.fecha) - new Date(a.trabajos.fecha));
+
+            // 3. AHORA SÍ, RECORREMOS LOS REGISTROS Y CREAMOS LAS FILAS
             latestRecords.forEach(item => {
                 const tr = document.createElement('tr');
                 const estado = item.estado || 'N/A';
-                tr.className = {
-                    'Operativo': 'status-operativo',
-                    'Inoperativo': 'status-inoperativo',
-                    'Pendiente': 'status-pendiente'
-                }[estado] || '';
-
-
+                tr.className = { 'Operativo': 'status-operativo', 'Inoperativo': 'status-inoperativo', 'Pendiente': 'status-pendiente' }[estado] || '';
 
                 const fecha = new Date(item.trabajos.fecha + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }).replace('.', '');
                 const modeloGabinete = [item.maquinas?.modelo, item.maquinas?.gabinete].filter(Boolean).join(' / ');
@@ -1557,79 +1603,41 @@
                 const sala = item.trabajos.sala?.sala_mincetur || 'N/A';
                 const tipoTrabajo = item.tipo_trabajo || 'No especificado';
                 const detalleCompleto = [item.diag_ini, item.trab_realizado, item.resul].filter(Boolean).join(' <br> ');
-                const incidenciaHTML = `
-                    <div class="tooltip-container">
-                        ${tipoTrabajo}
-                        <div class="tooltip-bubble">${detalleCompleto || 'Sin detalles adicionales.'}</div>
-                    </div>`;
+                const incidenciaHTML = `<div class="tooltip-container">${tipoTrabajo}<div class="tooltip-bubble">${detalleCompleto || 'Sin detalles.'}</div></div>`;
 
-                const tecnico = item.trabajos.tecnicos;
-                let tecnicoAsignadoHTML = '<span class="text-xs text-gray-400">No asignado</span>';
-                if (tecnico && tecnico.cargo.toLowerCase() !== 'sala') {
-                    tecnicoAsignadoHTML = `
-                <div class="font-medium text-gray-900">${tecnico.usuario}</div>
-                <div class="text-xs text-gray-500">${tecnico.correo || ''}</div>
-                <div class="text-xs text-gray-500">${tecnico.cel || ''}</div>
-            `;
-                }
+
                 const razonSocial = item.trabajos.sala?.empresa || 'N/A';
                 const ubicacion = [item.trabajos.sala?.departamento, item.trabajos.sala?.provincia, item.trabajos.sala?.distrito].filter(Boolean).join(', ');
-                tr.innerHTML = `
-                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${fecha}</td>
-                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${modeloGabinete}</td>
-                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${serie}</td>
-                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${sala}</td>
-                    <td class="px-4 py-4 text-sm text-gray-500">${incidenciaHTML}</td>
-                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${estado}</td>
-                    <td class="px-4 py-4 whitespace-nowrap text-sm">${tecnicoAsignadoHTML}</td> <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${razonSocial}</td>
-                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${ubicacion}</td>
+
+                // ▼▼▼ ESTA ES LA LÓGICA CORREGIDA Y MÁS SEGURA ▼▼▼
+                const tecnico = item.trabajos.tecnicos;
+                let tecnicoAsignadoHTML = '<span class="text-xs text-gray-400">No asignado</span>';
+
+                // Verificamos que 'tecnico' y 'tecnico.cargo' existan ANTES de usarlos
+                if (tecnico && tecnico.cargo) {
+                    if (tecnico.cargo.toLowerCase() !== 'sala') {
+                        tecnicoAsignadoHTML = `
+                    <div class="font-medium text-gray-900">${tecnico.usuario}</div>
+                    <div class="text-xs text-gray-500">${tecnico.correo || ''}</div>
+                    <div class="text-xs text-gray-500">${tecnico.cel || ''}</div>
                 `;
+                    }
+                } 
+
+                tr.innerHTML = `
+            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${fecha}</td>
+            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${modeloGabinete}</td>
+            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${serie}</td>
+            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${sala}</td>
+            <td class="px-4 py-4 text-sm text-gray-500">${incidenciaHTML}</td>
+            <td class="px-4 py-4 whitespace-nowrap text-sm">${tecnicoAsignadoHTML}</td>
+            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${estado}</td>
+            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${razonSocial}</td>
+            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">${ubicacion}</td>
+        `;
                 tableBody.appendChild(tr);
             });
         }
-        function showDetailsModal(status) {
-            const filteredMachines = currentMachineStates.filter(m => m.estado === status);
-            filteredMachines.sort((a, b) => b.fecha - a.fecha);
-            modalTitle.textContent = `Detalle de Máquinas ${status}`;
-            modalBody.innerHTML = '';
-            if (filteredMachines.length === 0) { modalBody.innerHTML = `<p class="text-gray-500">No hay máquinas en estado "${status}".</p>`; } else {
-                const list = document.createElement('ul');
-                list.className = 'space-y-3';
-                filteredMachines.forEach(machine => {
-                    const item = document.createElement('li');
-                    item.className = 'p-3 border-b';
-                    const formattedDate = machine.fecha.toLocaleDateString('es-PE', { year: 'numeric', month: 'long', day: 'numeric' });
-                    item.innerHTML = `<div class="flex justify-between items-start"><div><p class="font-bold text-lg text-gray-800">${machine.serie}</p><p class="text-sm text-gray-600">${machine.modelo || 'Sin modelo'}</p></div><p class="text-sm text-gray-500 flex-shrink-0 ml-4">${formattedDate}</p></div><div class="mt-2 text-sm space-y-1"><p><span class="font-semibold">Sala:</span> ${machine.sala}</p><p><span class="font-semibold">Tipo de Trabajo:</span> ${machine.motivo || 'No especificado'}</p><p><span class="font-semibold">Descripción:</span> ${machine.descripcion || 'No disponible'}</p></div>`;
-                    list.appendChild(item);
-                });
-                modalBody.appendChild(list);
-            }
-            detailsModal.style.display = 'block';
-        }
-        function updateTechniciansUI(hoursData, avgTimeData, visitsData) {
-            const horasCtx = document.getElementById('horasTecnicoChart').getContext('2d');
-            if (horasTecnicoChartInstance) horasTecnicoChartInstance.destroy();
-            const customRound = (value) => parseFloat(value).toFixed(1);
-            horasTecnicoChartInstance = new Chart(horasCtx, { type: 'bar', data: { labels: hoursData.map(d => d.tecnico_nombre), datasets: [{ label: 'Horas Totales', data: hoursData.map(d => parseFloat(d.total_horas)), backgroundColor: colorPalette }] }, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'end', color: '#1f2937', font: { weight: 'bold' }, formatter: customRound } } } });
-            const avgTimeCtx = document.getElementById('avgTimeChart').getContext('2d');
-            if (avgTimeChartInstance) avgTimeChartInstance.destroy();
-            avgTimeChartInstance = new Chart(avgTimeCtx, { type: 'bar', data: { labels: avgTimeData.map(d => d.tipo_trabajo), datasets: [{ label: 'Horas Promedio', data: avgTimeData.map(d => parseFloat(d.avg_minutos) / 60), backgroundColor: colorPalette.slice().reverse() }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'top', color: '#1f2937', font: { weight: 'bold' }, formatter: customRound } } } });
-            const visitsContainer = document.getElementById('visitasTecnicoContainer');
-            visitsContainer.innerHTML = '';
-            const visitsByTechnician = visitsData.reduce((acc, visit) => { if (!acc[visit.tecnico_nombre]) acc[visit.tecnico_nombre] = []; acc[visit.tecnico_nombre].push(visit); return acc; }, {});
-            if (Object.keys(visitsByTechnician).length === 0) { visitsContainer.innerHTML = '<p class="text-gray-500 text-center">No hay datos de visitas.</p>'; } else {
-                for (const tecnico in visitsByTechnician) {
-                    const techDiv = document.createElement('div');
-                    techDiv.className = 'mb-4 p-3 border rounded-lg bg-gray-50';
-                    let listHtml = `<h3 class="font-semibold text-lg mb-2">${tecnico}</h3><ul class="list-disc pl-5 space-y-1">`;
-                    visitsByTechnician[tecnico].forEach(visit => { listHtml += `<li>${visit.sala_nombre}: <span class="font-bold">${visit.visitas} visitas</span></li>`; });
-                    listHtml += '</ul>';
-                    techDiv.innerHTML = listHtml;
-                    visitsContainer.appendChild(techDiv);
-                }
-            }
-        }
-
         // --- STARTUP ---
         document.addEventListener('DOMContentLoaded', checkSession);
     </script>
