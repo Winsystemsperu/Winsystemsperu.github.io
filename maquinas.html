@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Métricas</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; }
+        .nav-button { padding: 8px 16px; border-radius: 8px; font-weight: 500; transition: all 0.2s; cursor: pointer; }
+        .nav-button.active { background-color: #3b82f6; color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .nav-button:not(.active) { background-color: #e5e7eb; color: #374151; }
+        .nav-button:not(.active):hover { background-color: #d1d5db; }
+        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(240, 242, 245, 0.8); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .tooltip-container { position: relative; display: inline-block; }
+        .tooltip-bubble { visibility: hidden; width: 400px; background-color: #262626; color: #fff; text-align: left; white-space: normal; border-radius: 6px; padding: 8px 12px; position: absolute; z-index: 20; bottom: 125%; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .tooltip-bubble::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #262626 transparent transparent transparent; }
+        .tooltip-container:hover .tooltip-bubble { visibility: visible; opacity: 1; }
+        .status-operativo { background-color: #f0fdf4; }
+        .status-inoperativo { background-color: #fef2f2; }
+        .status-pendiente { background-color: #fffbeb; }
+    </style>
+</head>
+
+<body class="text-gray-800">
+
+    <div id="loading-overlay">
+        <div class="text-center">
+            <i data-lucide="loader-2" class="animate-spin h-12 w-12 text-blue-600"></i>
+            <p class="mt-4 text-lg font-semibold text-gray-700">Cargando Métricas...</p>
+        </div>
+    </div>
+
+    <div class="container mx-auto p-4 md:p-8 opacity-0" id="main-content">
+
+        <header class="mb-6 flex flex-wrap justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <img src="winsystems_logo.png" alt="Logo de Winsystems" class="h-24">
+                <div>
+                    <h1 id="main-title" class="text-3xl font-bold text-gray-900">Métricas de Máquinas</h1>
+                    <p id="main-subtitle" class="text-gray-500">Análisis interactivo de la operación.</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4 mt-4 md:mt-0">
+                <a href="./home.html" class="text-blue-600 hover:underline flex items-center gap-2">
+                    <i data-lucide="arrow-left"></i> Volver al Inicio
+                </a>
+                <button id="logout-button" title="Cerrar Sesión" class="p-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </header>
+
+        <div id="filters-section" class="bg-white p-4 rounded-xl shadow-md mb-8 flex flex-wrap items-end gap-4">
+            <div class="flex-grow">
+                <label for="start-date" class="block text-sm font-medium text-gray-700">Fecha Inicio</label>
+                <input type="date" id="start-date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            </div>
+            <div class="flex-grow">
+                <label for="end-date" class="block text-sm font-medium text-gray-700">Fecha Fin</label>
+                <input type="date" id="end-date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            </div>
+            <div id="gabinete-filter-container" class="flex-grow">
+                <label for="type-filter" class="block text-sm font-medium text-gray-700">Tipo de Gabinete</label>
+                <select id="type-filter" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option>Todos</option>
+                </select>
+            </div>
+            <button id="apply-filters" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 flex items-center gap-2">
+                <i data-lucide="filter" class="w-4 h-4"></i> Aplicar
+            </button>
+        </div>
+
+        <div id="maquinas-dashboard">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-xl shadow-md flex items-center space-x-4"><div class="bg-blue-100 p-3 rounded-full"><i data-lucide="server" class="text-blue-600"></i></div><div><p class="text-gray-500 text-sm">Total Atendidas</p><p id="total-maquinas" class="text-2xl font-bold">0</p></div></div>
+                <div class="bg-white p-6 rounded-xl shadow-md flex items-center space-x-4"><div class="bg-green-100 p-3 rounded-full"><i data-lucide="check-circle" class="text-green-600"></i></div><div><p class="text-gray-500 text-sm">Operativas</p><p id="total-operativas" class="text-2xl font-bold">0</p></div></div>
+                <div class="bg-white p-6 rounded-xl shadow-md flex items-center space-x-4"><div class="bg-red-100 p-3 rounded-full"><i data-lucide="alert-triangle" class="text-red-600"></i></div><div><p class="text-gray-500 text-sm">Inoperativas</p><p id="total-inoperativas" class="text-2xl font-bold">0</p></div></div>
+                <div class="bg-white p-6 rounded-xl shadow-md flex items-center space-x-4"><div class="bg-yellow-100 p-3 rounded-full"><i data-lucide="clock" class="text-yellow-600"></i></div><div><p class="text-gray-500 text-sm">Pendientes</p><p id="total-pendientes" class="text-2xl font-bold">0</p></div></div>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-md"><h2 class="text-xl font-semibold mb-4">Top 15 Salas Más Visitadas</h2><div class="h-96"><canvas id="topSalasChart"></canvas></div></div>
+                <div class="bg-white p-6 rounded-xl shadow-md"><h2 class="text-xl font-semibold mb-4">Top 5 Tipos de Trabajo</h2><div class="h-96"><canvas id="topTrabajosChart"></canvas></div></div>
+            </div>
+
+            <div id="sala-details-container" class="hidden mt-8">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h2 id="sala-details-title" class="text-xl font-semibold mb-4">Detalles de la Sala</h2>
+                    <div id="sala-details-table" class="overflow-x-auto"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIG & GLOBAL VARS ---
+        const SUPABASE_URL = 'https://qobquktxvhlvtrpeopji.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvYnF1a3R4dmhsdnRycGVvcGppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU2OTc4NDYsImV4cCI6MjA2MTI3Mzg0Nn0.rnubNUWSWEomj5Xwvr65kZLK7Ig_bLC74ajFh9cksFc';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        Chart.register(ChartDataLabels);
+
+        let topSalasChartInstance, topTrabajosChartInstance;
+        let currentMachineStates = [];
+
+        // --- SESSION MANAGEMENT & INITIALIZATION ---
+        async function checkSession() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                window.location.href = './index.html';
+                return;
+            }
+            
+            const { data: tecnicoData } = await supabaseClient.from('tecnicos').select('cargo').eq('id_usuario', session.user.id).single();
+            const userRole = tecnicoData?.cargo?.toLowerCase();
+            
+            if (userRole === 'sala') {
+                alert('Acceso denegado. Redirigiendo a tu página.');
+                window.location.href = './reportar.html';
+                return;
+            }
+            
+            initializePage();
+        }
+
+        async function logout() {
+            await supabaseClient.auth.signOut();
+            window.location.href = './index.html';
+        }
+
+        async function initializePage() {
+            document.getElementById('logout-button').addEventListener('click', logout);
+            document.getElementById('apply-filters').addEventListener('click', applyFilters);
+            setDefaultDates();
+            await populateGabineteFilter();
+            await applyFilters();
+            
+            document.getElementById('main-content').classList.remove('opacity-0');
+            document.getElementById('loading-overlay').style.display = 'none';
+            lucide.createIcons();
+        }
+
+        // --- FILTERS & DATA FETCHING ---
+        function setDefaultDates() {
+            const endDateInput = document.getElementById('end-date');
+            const startDateInput = document.getElementById('start-date');
+            const today = new Date();
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(today.getDate() - 30);
+            endDateInput.value = today.toISOString().split('T')[0];
+            startDateInput.value = thirtyDaysAgo.toISOString().split('T')[0];
+        }
+
+        async function populateGabineteFilter() {
+            const { data, error } = await supabaseClient.from('maquinas').select('gabinete');
+            if (error) return;
+            const typeFilterInput = document.getElementById('type-filter');
+            const distinctGabinetes = [...new Set(data.map(item => item.gabinete).filter(Boolean))].sort();
+            distinctGabinetes.forEach(g => {
+                const option = document.createElement('option');
+                option.value = g;
+                option.textContent = g;
+                typeFilterInput.appendChild(option);
+            });
+        }
+
+        async function applyFilters() {
+            document.getElementById('loading-overlay').style.display = 'flex';
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            const typeFilter = document.getElementById('type-filter').value;
+
+            try {
+                const [machineStatesData, topSalasData, topTrabajosData] = await Promise.all([
+                    fetchMachineStates(startDate, endDate, typeFilter),
+                    fetchTopSalas(startDate, endDate, typeFilter),
+                    fetchTopTrabajos(startDate, endDate, typeFilter)
+                ]);
+
+                currentMachineStates = machineStatesData;
+                updateMachineStatesUI(machineStatesData);
+                updateTopSalasUI(topSalasData);
+                updateTopTrabajosUI(topTrabajosData);
+                document.getElementById('sala-details-container').classList.add('hidden');
+            } catch (error) {
+                console.error("Error al aplicar filtros:", error);
+                alert("Hubo un error al cargar los datos. Revisa la consola.");
+            } finally {
+                document.getElementById('loading-overlay').style.display = 'none';
+            }
+        }
+        
+        // --- FUNCIONES DE BÚSQUEDA DE DATOS ---
+
+        async function fetchMachineStates(startDate, endDate, typeFilter) {
+            let query = supabaseClient.from('detalle')
+                .select(`estado, tipo_trabajo, diag_ini, trab_realizado, resul, maquinas!inner(id_maquina, serie, modelo, gabinete), trabajos!inner(fecha, id_sala, sala(sala_mincetur))`)
+                .gte('trabajos.fecha', startDate)
+                .lte('trabajos.fecha', endDate);
+            
+            if (typeFilter && typeFilter !== 'Todos') {
+                query = query.eq('maquinas.gabinete', typeFilter);
+            }
+
+            const { data, error } = await query;
+            if (error) {
+                console.error("Error fetching machine states:", error);
+                return [];
+            }
+
+            const latestDetails = {};
+            for (const detail of data) {
+                const machineId = detail.maquinas.id_maquina;
+                if (!latestDetails[machineId] || new Date(detail.trabajos.fecha) > new Date(latestDetails[machineId].trabajos.fecha)) {
+                    latestDetails[machineId] = detail;
+                }
+            }
+            
+            return Object.values(latestDetails).map(detail => {
+                const fullDescription = [detail.diag_ini, detail.trab_realizado, detail.resul].filter(Boolean).join(' / ');
+                return {
+                    serie: detail.maquinas.serie,
+                    modelo: detail.maquinas.modelo,
+                    gabinete: detail.maquinas.gabinete,
+                    estado: detail.estado,
+                    fecha: new Date(detail.trabajos.fecha),
+                    sala: detail.trabajos.sala?.sala_mincetur || 'Sala desconocida',
+                    motivo: detail.tipo_trabajo,
+                    descripcion: fullDescription
+                };
+            });
+        }
+
+        async function fetchTopSalas(startDate, endDate, typeFilter) {
+            let query = supabaseClient.from('trabajos').select('id_sala, sala(sala_mincetur), detalle!inner(maquinas!inner(gabinete))').gte('fecha', startDate).lte('fecha', endDate);
+            if (typeFilter && typeFilter !== 'Todos') { query = query.eq('detalle.maquinas.gabinete', typeFilter); }
+
+            const { data, error } = await query;
+            if (error) { console.error("Error fetching top salas:", error); return []; }
+            
+            const salaVisits = data.reduce((acc, trabajo) => {
+                if (trabajo.sala) {
+                    const salaName = trabajo.sala.sala_mincetur;
+                    acc[salaName] = (acc[salaName] || 0) + 1;
+                }
+                return acc;
+            }, {});
+
+            return Object.entries(salaVisits).map(([nombre_sala, visitas]) => ({ nombre_sala, visitas })).sort((a, b) => b.visitas - a.visitas).slice(0, 15);
+        }
+
+        async function fetchTopTrabajos(startDate, endDate, typeFilter) {
+             let query = supabaseClient.from('detalle').select('tipo_trabajo, maquinas!inner(gabinete), trabajos!inner(fecha)').gte('trabajos.fecha', startDate).lte('trabajos.fecha', endDate);
+             if (typeFilter && typeFilter !== 'Todos') { query = query.eq('maquinas.gabinete', typeFilter); }
+             
+             const { data, error } = await query;
+             if(error) { console.error("Error fetching top trabajos:", error); return []; }
+
+             const workTypeCounts = data.reduce((acc, d) => {
+                 if (d.tipo_trabajo) { acc[d.tipo_trabajo] = (acc[d.tipo_trabajo] || 0) + 1; }
+                 return acc;
+             }, {});
+             
+             return Object.entries(workTypeCounts).map(([tipo, count]) => ({ tipo, count })).sort((a, b) => b.count - a.count).slice(0, 5);
+        }
+
+        async function fetchDetailsForSala(salaName) {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+
+            const { data, error } = await supabaseClient
+                .from('detalle')
+                .select(`trabajos!inner(fecha, sala!inner(sala_mincetur)), maquinas!inner(serie, gabinete), estado, tipo_trabajo, diag_ini, trab_realizado, resul`)
+                .eq('trabajos.sala.sala_mincetur', salaName)
+                .gte('trabajos.fecha', startDate)
+                .lte('trabajos.fecha', endDate)
+                .order('fecha', { foreignTable: 'trabajos', ascending: false });
+
+            if (error) { console.error("Error fetching details for sala:", error); return []; }
+            return data;
+        }
+
+        // --- UI UPDATES & CHARTS ---
+        function updateMachineStatesUI(data) {
+            document.getElementById('total-maquinas').textContent = data.length;
+            document.getElementById('total-operativas').textContent = data.filter(m => m.estado === 'Operativo').length;
+            document.getElementById('total-inoperativas').textContent = data.filter(m => m.estado === 'Inoperativo').length;
+            document.getElementById('total-pendientes').textContent = data.filter(m => m.estado === 'Pendiente').length;
+        }
+
+        function generateBlueGradient(count) {
+            const colors = [];
+            const startColor = { r: 37, g: 99, b: 235 };
+            const endColor = { r: 191, g: 219, b: 254 };
+            for (let i = 0; i < count; i++) {
+                const ratio = count > 1 ? i / (count - 1) : 1;
+                const r = Math.round(startColor.r + ratio * (endColor.r - startColor.r));
+                const g = Math.round(startColor.g + ratio * (endColor.g - startColor.g));
+                const b = Math.round(startColor.b + ratio * (endColor.b - startColor.b));
+                colors.push(`rgba(${r}, ${g}, ${b}, 0.8)`);
+            }
+            return colors;
+        }
+
+        function updateTopSalasUI(data) {
+            const ctx = document.getElementById('topSalasChart').getContext('2d');
+            if (topSalasChartInstance) topSalasChartInstance.destroy();
+            topSalasChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: data.map(s => s.nombre_sala), datasets: [{ label: 'Visitas', data: data.map(s => s.visitas), backgroundColor: generateBlueGradient(data.length) }] },
+                options: {
+                    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                    onHover: (event, chartElement) => { event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default'; },
+                    onClick: (event) => {
+                        const points = topSalasChartInstance.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
+                        if (points.length) {
+                            const label = topSalasChartInstance.data.labels[points[0].index];
+                            showDetailsForSala(label);
+                        }
+                    },
+                    plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'end', color: '#1f2937', font: { weight: 'bold' } } }
+                }
+            });
+        }
+
+        function updateTopTrabajosUI(data) {
+            const ctx = document.getElementById('topTrabajosChart').getContext('2d');
+            if (topTrabajosChartInstance) topTrabajosChartInstance.destroy();
+            topTrabajosChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: data.map(d => d.tipo), datasets: [{ label: 'Cantidad', data: data.map(d => d.count), backgroundColor: ['#3B82F6', '#60A5FA', '#93C5FD', '#BFDBFE', '#E0F2FE'] }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, datalabels: { anchor: 'center', align: 'center', color: 'white', font: { weight: 'bold' } } }
+                }
+            });
+        }
+
+        async function showDetailsForSala(salaName) {
+            const container = document.getElementById('sala-details-container');
+            const tableDiv = document.getElementById('sala-details-table');
+            document.getElementById('sala-details-title').textContent = `Detalle de Máquinas Atendidas en: ${salaName}`;
+            tableDiv.innerHTML = '<p class="text-center text-gray-500">Cargando...</p>';
+            container.classList.remove('hidden');
+            const detailsData = await fetchDetailsForSala(salaName);
+            renderSalaDetailsTable(detailsData);
+        }
+
+        function renderSalaDetailsTable(data) {
+            const tableDiv = document.getElementById('sala-details-table');
+            if (!data || data.length === 0) {
+                tableDiv.innerHTML = '<p class="text-center text-gray-500">No se encontraron registros para esta sala.</p>';
+                return;
+            }
+            let tableHTML = `<table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Serie</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Gabinete</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo de Trabajo</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado Final</th>
+                </tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
+
+            data.forEach(item => {
+                const fecha = new Date(item.trabajos.fecha + 'T00:00:00').toLocaleDateString('es-ES');
+                const detallesCompletos = [item.diag_ini, item.trab_realizado, item.resul].filter(Boolean).join('<br>');
+                tableHTML += `<tr class="${{ 'Operativo': 'status-operativo', 'Inoperativo': 'status-inoperativo', 'Pendiente': 'status-pendiente' }[item.estado] || ''}">
+                    <td class="px-4 py-4">${fecha}</td>
+                    <td class="px-4 py-4">${item.maquinas.serie}</td>
+                    <td class="px-4 py-4">${item.maquinas.gabinete}</td>
+                    <td class="px-4 py-4"><div class="tooltip-container">${item.tipo_trabajo}<div class="tooltip-bubble">${detallesCompletos}</div></div></td>
+                    <td class="px-4 py-4">${item.estado}</td>
+                </tr>`;
+            });
+            tableHTML += `</tbody></table>`;
+            tableDiv.innerHTML = tableHTML;
+        }
+
+        // --- STARTUP ---
+        document.addEventListener('DOMContentLoaded', checkSession);
+    </script>
+</body>
+</html>
+

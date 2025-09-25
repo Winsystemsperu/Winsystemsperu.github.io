@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Inicio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; }
+        .nav-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            border: 1px solid transparent;
+        }
+        .nav-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div id="loading-overlay" class="fixed inset-0 bg-gray-100 bg-opacity-75 flex items-center justify-center z-50">
+        <i data-lucide="loader-2" class="animate-spin h-12 w-12 text-blue-600"></i>
+    </div>
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="mb-8 flex flex-wrap justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <img src="winsystems_logo.png" alt="Logo de Winsystems" class="h-24">
+                <div>
+                    <h1 id="welcome-title" class="text-3xl font-bold text-gray-900">Bienvenido</h1>
+                    <p class="text-gray-500">Selecciona una opción para comenzar.</p>
+                </div>
+            </div>
+            <button id="logout-button" title="Cerrar Sesión" class="p-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition">
+                <i data-lucide="log-out" class="w-5 h-5"></i>
+            </button>
+        </header>
+
+        <main id="nav-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Las tarjetas de navegación se cargarán aquí -->
+        </main>
+    </div>
+
+    <script>
+        // --- CONFIG & GLOBAL VARS ---
+        const SUPABASE_URL = 'https://qobquktxvhlvtrpeopji.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvYnF1a3R4dmhsdnRycGVvcGppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU2OTc4NDYsImV4cCI6MjA2MTI3Mzg0Nn0.rnubNUWSWEomj5Xwvr65kZLK7Ig_bLC74ajFh9cksFc';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // --- SESSION MANAGEMENT ---
+        async function checkSession() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                window.location.href = './index.html';
+            } else {
+                await initializeDashboard(session.user);
+            }
+        }
+
+        async function logout() {
+            await supabaseClient.auth.signOut();
+            window.location.href = './index.html';
+        }
+
+        // --- INICIALIZACIÓN ---
+        async function initializeDashboard(user) {
+            const { data: tecnicoData, error } = await supabaseClient
+                .from('tecnicos')
+                .select('usuario, cargo')
+                .eq('id_usuario', user.id)
+                .single();
+
+            if (error || !tecnicoData || !tecnicoData.cargo) {
+                alert("No se pudo cargar la información del usuario o no tiene un rol asignado. Contacta al administrador.");
+                logout();
+                return;
+            }
+
+            document.getElementById('welcome-title').textContent = `Bienvenido, ${tecnicoData.usuario}`;
+            renderNavigationCards(tecnicoData.cargo);
+            document.getElementById('logout-button').addEventListener('click', logout);
+            document.getElementById('loading-overlay').style.display = 'none';
+            lucide.createIcons();
+        }
+        
+        // --- RENDERIZADO DE TARJETAS ---
+        function renderNavigationCards(role) {
+            const container = document.getElementById('nav-cards-container');
+            container.innerHTML = '';
+            
+            const userRole = role.toLowerCase();
+
+            const allCards = [
+                { id: 'reportar', title: 'Reportar Incidencia', description: 'Crear un nuevo reporte de falla para una máquina.', href: './reportar.html', icon: 'alert-triangle' },
+                { id: 'asignar', title: 'Asignar Incidencias', description: 'Asigna reportes pendientes a los técnicos disponibles.', href: './asignacion.html', icon: 'send' },
+                { id: 'metricas', title: 'Métricas de Máquinas', description: 'Visualiza gráficas y el estado general de las operaciones.', href: './maquinas.html', icon: 'bar-chart-2' },
+                { id: 'reporte_detallado', title: 'Reporte Detallado', description: 'Explora una tabla con todos los trabajos realizados.', href: './reporte.html', icon: 'file-text' },
+                { id: 'gestion_tecnicos', title: 'Gestión de Técnicos', description: 'Analiza el rendimiento y las horas de los técnicos.', href: './tecnicos.html', icon: 'users' }
+            ];
+
+            let accessibleCards = [];
+
+            if (userRole === 'sala') {
+                accessibleCards = allCards.filter(card => card.id === 'reportar');
+            } else if (userRole === 'coordinador') {
+                accessibleCards = allCards.filter(card => 
+                    card.id !== 'reportar'
+                );
+            } else { // Para 'admin', 'tecnico', o cualquier otro rol
+                accessibleCards = allCards.filter(card => 
+                    card.id !== 'reportar' && card.id !== 'asignar'
+                );
+            }
+
+            if (accessibleCards.length === 0) {
+                container.innerHTML = `<p class="col-span-full text-center text-gray-500">No tienes módulos asignados a tu perfil.</p>`;
+                return;
+            }
+
+            accessibleCards.forEach(card => {
+                const cardElement = document.createElement('a');
+                cardElement.href = card.href;
+                cardElement.className = 'nav-card bg-white p-6 rounded-lg shadow-md block';
+                cardElement.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <div class="bg-blue-100 p-3 rounded-full">
+                            <i data-lucide="${card.icon}" class="text-blue-600"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-800">${card.title}</h2>
+                            <p class="text-gray-500 text-sm mt-1">${card.description}</p>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(cardElement);
+            });
+             lucide.createIcons(); // Vuelve a renderizar los iconos después de añadir las tarjetas
+        }
+
+        // --- INICIO ---
+        document.addEventListener('DOMContentLoaded', checkSession);
+    </script>
+</body>
+</html>
+

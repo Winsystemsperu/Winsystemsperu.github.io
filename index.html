@@ -3,43 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bienvenido a:</title>
-    
+    <title>Iniciar Sesión - Dashboard de Operaciones</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display.swap');
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #f0f2f5;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen">
 
     <div class="w-full max-w-md p-8 space-y-8 bg-white rounded-xl shadow-lg">
-        
-        <div class="text-center">            
-            <h2 class="text-2xl font-bold text-gray-900">
-                Bienvenido a:
-            </h2>
+        <div class="text-center">
+            
+            <h2 class="text-2xl font-bold text-gray-900">Bienvenido a:</h2>
             <img src="winsystems_logo.png" alt="Logo de Winsystems" class="w-32 mx-auto mb-2">
-            <p class="mt-2 text-sm text-gray-600">
-                Por favor, ingresa tus credenciales.
-            </p>
+            <p class="mt-2 text-sm text-gray-600">Por favor, ingresa tus credenciales.</p>
         </div>
 
         <form id="login-form" class="mt-8 space-y-6">
             <div class="rounded-md shadow-sm -space-y-px">
                 <div>
                     <label for="email-address" class="sr-only">Correo electrónico</label>
-                    <input id="email-address" name="email" type="email" autocomplete="email" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Correo electrónico">
+                    <input id="email-address" name="email" type="email" autocomplete="email" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Correo electrónico">
                 </div>
                 <div>
                     <label for="password" class="sr-only">Contraseña</label>
-                    <input id="password" name="password" type="password" autocomplete="current-password" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Contraseña">
+                    <input id="password" name="password" type="password" autocomplete="current-password" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Contraseña">
                 </div>
             </div>
 
@@ -48,7 +39,7 @@
             <div>
                 <button type="submit" id="login-button" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                     <span class="absolute left-0 inset-y-0 flex items-center pl-3">
-                        <i data-lucide="lock" class="h-5 w-5 text-blue-500 group-hover:text-blue-400" aria-hidden="true"></i>
+                        <i data-lucide="lock" class="h-5 w-5 text-blue-500 group-hover:text-blue-400"></i>
                     </span>
                     Ingresar
                 </button>
@@ -57,79 +48,43 @@
     </div>
 
     <script>
-    const SUPABASE_URL = 'https://qobquktxvhlvtrpeopji.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvYnF1a3R4dmhsdnRycGVvcGppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU2OTc4NDYsImV4cCI6MjA2MTI3Mzg0Nn0.rnubNUWSWEomj5Xwvr65kZLK7Ig_bLC74ajFh9cksFc';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const SUPABASE_URL = 'https://qobquktxvhlvtrpeopji.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvYnF1a3R4dmhsdnRycGVvcGppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU2OTc4NDYsImV4cCI6MjA2MTI3Mzg0Nn0.rnubNUWSWEomj5Xwvr65kZLK7Ig_bLC74ajFh9cksFc';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // --- MANEJO DE SESIÓN CON REDIRECCIÓN BASADA EN ROL ---
-    // 1. Convertimos el listener en una función async para poder usar 'await'
-    supabaseClient.auth.onAuthStateChange(async (event, session) => {
-        if (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
-            
-            // 2. Obtenemos el ID del usuario de la sesión
-            const userId = session.user.id;
-
-            // 3. Consultamos la tabla 'tecnicos' para obtener el cargo
-            const { data: tecnicoData, error } = await supabaseClient
-                .from('tecnicos')
-                .select('cargo')
-                .eq('id_usuario', userId)
-                .single();
-
-            if (error) {
-                console.error("No se pudo obtener el rol del usuario:", error);
-                // Si hay un error, lo enviamos al dashboard general por seguridad
-                window.location.href = './dashboard.html';
-                return;
+        // Redirige si ya hay una sesión activa
+        supabaseClient.auth.onAuthStateChange(async (event, session) => {
+            if (session) {
+                window.location.href = './home.html';
             }
+        });
+
+        const loginForm = document.getElementById('login-form');
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const loginButton = document.getElementById('login-button');
+            const errorMessageContainer = document.getElementById('error-message');
             
-            // 4. Decidimos a dónde redirigir basándonos en el cargo
-            if (tecnicoData && tecnicoData.cargo === 'Coordinador') {
-                // Si es coordinador, va a la página de asignación
-                window.location.href = './asignacion.html';
-            } else {
-                // Para cualquier otro rol (admin, sala, etc.), va al dashboard principal
-                window.location.href = './dashboard.html';
+            loginButton.disabled = true;
+            loginButton.innerHTML = `Ingresando...`;
+            errorMessageContainer.classList.add('hidden');
+
+            const email = document.getElementById('email-address').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                // La redirección es manejada por onAuthStateChange
+            } catch (error) {
+                errorMessageContainer.textContent = 'Correo o contraseña incorrectos.';
+                errorMessageContainer.classList.remove('hidden');
+                loginButton.disabled = false;
+                loginButton.innerHTML = 'Ingresar';
             }
-        }
-    });
+        });
 
-    // --- Lógica del formulario (esta parte no cambia) ---
-    const loginForm = document.getElementById('login-form');
-    const loginButton = document.getElementById('login-button');
-    const errorMessageContainer = document.getElementById('error-message');
-
-    loginForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-
-        loginButton.disabled = true;
-        loginButton.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Ingresando...`;
-        errorMessageContainer.classList.add('hidden');
-
-        const email = document.getElementById('email-address').value;
-        const password = document.getElementById('password').value;
-
-        try {
-            const { error } = await supabaseClient.auth.signInWithPassword({
-                email: email,
-                password: password,
-            });
-            if (error) throw error;
-            // La redirección ahora es manejada automáticamente por onAuthStateChange
-        } catch (error) {
-            errorMessageContainer.textContent = 'Correo o contraseña incorrectos. Por favor, inténtalo de nuevo.';
-            errorMessageContainer.classList.remove('hidden');
-            
-            loginButton.disabled = false;
-            loginButton.innerHTML = `<span class="absolute left-0 inset-y-0 flex items-center pl-3"><i data-lucide="lock" class="h-5 w-5 text-blue-500 group-hover:text-blue-400" aria-hidden="true"></i></span>Ingresar`;
-            lucide.createIcons();
-        }
-    });
-
-    lucide.createIcons();
-</script>
+        lucide.createIcons();
+    </script>
 </body>
 </html>
-
-
-
