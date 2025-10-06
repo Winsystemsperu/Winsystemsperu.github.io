@@ -1,89 +1,446 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte de Incidencias de Sala</title>
+    <title>Reporte de Incidencias - Winsystems</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; }
-        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(240, 242, 245, 0.8); display: flex; justify-content: center; align-items: center; z-index: 9999; }
-        .machine-button { padding: 8px 4px; border-radius: 8px; width: 7rem; border: 1px solid #e5e7eb; text-align: center; transition: all 0.2s ease-in-out; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .machine-button.status-operativo { background-color: #f0fdf4; border-color: #bbf7d0; }
-        .machine-button.status-inoperativo { background-color: #fef2f2; border-color: #fecaca; }
-        .machine-button.status-pendiente { background-color: #fffbeb; border-color: #fde68a; }
-        .machine-button.selected { background-color: #2563eb !important; border-color: #1d4ed8 !important; color: white !important; }
-        .incidencia-section { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); padding: 1.5rem; margin-bottom: 1.5rem; }
-        .history-table { width: 100%; border-collapse: collapse; }
-        .history-table th, .history-table td { padding: 0.75rem; border-bottom: 1px solid #e5e7eb; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --ws-primary: #1e40af;
+            --ws-secondary: #3b82f6;
+            --ws-accent: #f97316;
+            --ws-light: #f0f7ff;
+            --ws-dark: #1e293b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f0f7ff 0%, #e0f2fe 100%);
+            min-height: 100vh;
+        }
+
+        .stats-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid;
+            background: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--ws-primary), var(--ws-accent));
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .stats-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .machine-card {
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            background: white;
+            position: relative;
+        }
+
+        .machine-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .machine-card.selected {
+            border-color: var(--ws-primary);
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+
+        .status-operativo {
+            background-color: #10b981;
+        }
+
+        .status-inoperativo {
+            background-color: #ef4444;
+        }
+
+        .status-pendiente {
+            background-color: #f59e0b;
+        }
+
+        .status-en-progreso {
+            background-color: #3b82f6;
+        }
+
+        .status-sin-estado {
+            background-color: #6b7280;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loading-dots::after {
+            content: '';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+
+            0%,
+            20% {
+                content: '.';
+            }
+
+            40% {
+                content: '..';
+            }
+
+            60%,
+            100% {
+                content: '...';
+            }
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--ws-primary), var(--ws-secondary));
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .history-item {
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .history-item:hover {
+            background-color: #f8fafc;
+        }
+
+        .history-item.operativo {
+            border-left-color: #10b981;
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+        }
+
+        .history-item.inoperativo {
+            border-left-color: #ef4444;
+            background: linear-gradient(135deg, #fef2f2, #fecaca);
+        }
+
+        .history-item.pendiente {
+            border-left-color: #f59e0b;
+            background: linear-gradient(135deg, #fffbeb, #fde68a);
+        }
+
+        .history-item.en-progreso {
+            border-left-color: #3b82f6;
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+        }
+
+        .form-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+        }
+
+        .sala-info-card {
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border: 1px solid #bfdbfe;
+        }
+
+        /* Notificación Toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.error {
+            background: #ef4444;
+        }
+
+        /* Badge de estado */
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-badge.operativo {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-badge.inoperativo {
+            background: #fecaca;
+            color: #dc2626;
+        }
+
+        .status-badge.pendiente {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .status-badge.en-progreso {
+            background: #dbeafe;
+            color: #1e40af;
+        }
     </style>
 </head>
+
 <body class="text-gray-800">
 
-    <div id="loading-overlay">
-        <div class="text-center">
-            <i data-lucide="loader-2" class="animate-spin h-12 w-12 text-blue-600"></i>
-            <p id="loading-text" class="mt-4 text-lg font-semibold text-gray-700">Verificando sesión...</p>
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden">
+        <div class="flex items-center gap-2">
+            <i data-lucide="check-circle" class="w-5 h-5"></i>
+            <span id="toast-message">Operación completada</span>
         </div>
     </div>
 
-    <div class="container mx-auto p-4 md:p-8 opacity-0" id="main-content">
-        <header class="mb-6 flex flex-wrap justify-between items-center">
-            <div class="flex items-center space-x-4">
-                <img src="winsystems_logo.png" alt="Logo de Winsystems" class="h-24">
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Reporte de Incidencias</h1>
+    <div id="loading-overlay" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center">
+        <div class="text-center">
+            <div class="relative mb-6">
+                <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto">
                 </div>
+                <i data-lucide="alert-circle"
+                    class="w-8 h-8 text-blue-600 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></i>
             </div>
-            <div class="flex items-center space-x-4 mt-4 md:mt-0">
-                <a href="./home.html" class="text-blue-600 hover:underline flex items-center gap-2">
-                    <i data-lucide="arrow-left"></i> Volver al Inicio
-                </a>
-                <button id="logout-button" title="Cerrar Sesión" class="p-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition">
-                    <i data-lucide="log-out" class="w-5 h-5"></i>
-                </button>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">Cargando Reportes</h3>
+            <p id="loading-text" class="text-gray-600">Verificando sesión<span class="loading-dots"></span></p>
+        </div>
+    </div>
+
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl opacity-0" id="main-content">
+        <!-- Header Mejorado -->
+        <header class="mb-8 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="bg-gradient-to-br from-ws-primary to-ws-secondary p-3 rounded-2xl shadow-sm">
+                        <i data-lucide="alert-triangle" class="w-8 h-8 text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Reporte de Incidencias</h1>
+                        <p class="text-gray-600 mt-1">Sistema de reportes técnicos en tiempo real</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2 text-sm text-gray-500">
+                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span>Conectado en tiempo real</span>
+                    </div>
+                    <a href="./home.html"
+                        class="bg-ws-primary text-white px-4 py-2 rounded-lg hover:bg-ws-secondary transition-all duration-300 flex items-center gap-2 group">
+                        <i data-lucide="arrow-left" class="w-4 h-4 group-hover:-translate-x-1 transition-transform"></i>
+                        Volver al Inicio
+                    </a>
+                </div>
             </div>
         </header>
 
-        <div id="incidencia-dashboard">
-            <div class="incidencia-section">
-                <div id="sala-info" class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200 text-center">
-                    <h3 class="font-semibold text-blue-800">Sala de Juegos: <span id="sala-nombre">Cargando...</span></h3>
-                    <p class="text-blue-600 text-sm mt-1" id="sala-detalles"></p>
-                </div>
-                <form id="incidencia-form" class="space-y-6">
-                     <div>
-                        <label class="block font-medium text-gray-700 mb-2">1. Seleccione una Máquina o Ruleta</label>
-                        <div id="maquinas-container" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3"></div>
-                        <p id="no-machines-message" class="text-center py-4 text-gray-500 hidden">No hay máquinas registradas en esta sala.</p>
+        <!-- Información de la Sala -->
+        <div class="sala-info-card rounded-2xl p-6 mb-8 fade-in">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="bg-white p-3 rounded-xl shadow-sm">
+                        <i data-lucide="building" class="w-6 h-6 text-blue-600"></i>
                     </div>
                     <div>
-                        <label for="incidencia-diag" class="block font-medium text-gray-700 mb-2">2. Describa la incidencia</label>
-                        <textarea id="incidencia-diag" rows="4" class="w-full border-gray-300 rounded-md shadow-sm" required></textarea>
+                        <h2 id="sala-nombre" class="text-xl font-bold text-blue-800">Cargando sala...</h2>
+                        <p id="sala-detalles" class="text-blue-600">Información de la sala</p>
                     </div>
-                    <div class="flex justify-end pt-4">
-                        <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 flex items-center gap-2">
-                            <i data-lucide="send" class="w-5 h-5"></i> Enviar Reporte
-                        </button>
-                    </div>
-                </form>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-blue-700">Usuario de Sala</p>
+                    <p class="text-xs text-blue-600">Reportando incidencias</p>
+                </div>
             </div>
-            <div class="incidencia-section">
-                <h2 class="text-xl font-semibold mb-4">Historial de la Máquina Seleccionada</h2>
-                <div class="bg-gray-50 p-4 rounded-lg overflow-x-auto">
-                    <table class="history-table">
-                        <thead></thead>
-                        <tbody id="incidencia-history-body">
-                            <tr><td colspan="5" class="text-center py-4">Seleccione una máquina para ver su historial.</td></tr>
-                        </tbody>
-                    </table>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Sección de Reporte -->
+            <div class="space-y-6">
+                <div class="form-section p-6">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="bg-blue-100 p-2 rounded-lg">
+                            <i data-lucide="cpu" class="w-5 h-5 text-blue-600"></i>
+                        </div>
+                        <h2 class="text-xl font-semibold text-gray-800">1. Seleccione una Máquina</h2>
+                    </div>
+
+                    <div id="maquinas-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
+                        <!-- Máquinas se cargarán aquí -->
+                    </div>
+
+                    <div id="no-machines-message" class="text-center py-8 hidden">
+                        <div class="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i data-lucide="server-off" class="w-8 h-8 text-gray-400"></i>
+                        </div>
+                        <p class="text-gray-500">No hay máquinas registradas en esta sala.</p>
+                    </div>
+
+                    <div id="selected-machine-info"
+                        class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>
+                                <div>
+                                    <p class="font-medium text-blue-800" id="selected-machine-name">Máquina seleccionada
+                                    </p>
+                                    <p class="text-sm text-blue-600" id="selected-machine-status">Estado actual</p>
+                                </div>
+                            </div>
+                            <button onclick="clearSelection()"
+                                class="text-blue-600 hover:text-blue-800 transition-colors">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section p-6">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="bg-orange-100 p-2 rounded-lg">
+                            <i data-lucide="edit-3" class="w-5 h-5 text-orange-600"></i>
+                        </div>
+                        <h2 class="text-xl font-semibold text-gray-800">2. Describa la Incidencia</h2>
+                    </div>
+
+                    <form id="incidencia-form" class="space-y-4">
+                        <div>
+                            <label for="incidencia-diag" class="block text-sm font-medium text-gray-700 mb-2">
+                                Descripción detallada del problema
+                            </label>
+                            <textarea id="incidencia-diag" rows="4"
+                                class="w-full border-gray-300 rounded-lg shadow-sm focus:border-ws-primary focus:ring-ws-primary/20 transition-colors"
+                                placeholder="Describa el problema que está presentando la máquina..."
+                                required></textarea>
+                        </div>
+
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <div class="flex items-start gap-3">
+                                <i data-lucide="info" class="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0"></i>
+                                <div class="text-sm text-yellow-700">
+                                    <p class="font-medium mb-1">Importante</p>
+                                    <p>Al enviar este reporte, la máquina será marcada como <strong>Inoperativa</strong>
+                                        y el equipo técnico será notificado inmediatamente.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end pt-4">
+                            <button type="submit"
+                                class="btn-primary px-8 py-3 rounded-lg font-semibold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled>
+                                <i data-lucide="send" class="w-5 h-5"></i>
+                                Enviar Reporte
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Sección de Historial -->
+            <div class="form-section p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-purple-100 p-2 rounded-lg">
+                            <i data-lucide="history" class="w-5 h-5 text-purple-600"></i>
+                        </div>
+                        <h2 class="text-xl font-semibold text-gray-800">Historial Completo</h2>
+                    </div>
+
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-4 min-h-[400px]">
+                    <div id="incidencia-history-body">
+                        <div class="text-center py-12 text-gray-500">
+                            <i data-lucide="mouse-pointer" class="w-12 h-12 mx-auto mb-3 text-gray-400"></i>
+                            <p>Seleccione una máquina para ver su historial</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Estados Legend -->
+                <div class="mt-6 grid grid-cols-2 gap-2 text-xs">
+                    <div class="flex items-center gap-2">
+                        <span class="status-indicator status-operativo"></span>
+                        <span>Operativo</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="status-indicator status-inoperativo"></span>
+                        <span>Inoperativo</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="status-indicator status-pendiente"></span>
+                        <span>Pendiente</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="status-indicator status-en-progreso"></span>
+                        <span>En Progreso</span>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Modal para Historial Completo -->
+
 
     <script>
         const SUPABASE_URL = 'https://qobquktxvhlvtrpeopji.supabase.co';
@@ -93,8 +450,27 @@
         let currentUser = null;
         let userSalaId = null;
         let selectedMachineId = null;
+        let selectedMachineData = null;
+        let realtimeSubscription = null;
 
-        // --- LÓGICA DE FECHA Y HORA ---
+        // --- FUNCIONES DE UTILIDAD ---
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+
+            toastMessage.textContent = message;
+            toast.className = `toast ${isError ? 'error' : ''} show`;
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function updateLoadingText(text) {
+            const loadingText = document.getElementById('loading-text');
+            if (loadingText) loadingText.textContent = text;
+        }
+
         function getPeruDateTime() {
             const ahora = new Date();
             const timeZone = 'America/Lima';
@@ -108,141 +484,480 @@
             return { fecha, hora };
         }
 
+        function formatDateTime(fecha, hora) {
+            const date = new Date(fecha + 'T' + (hora || '00:00:00'));
+            return date.toLocaleString('es-PE', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // --- CONFIGURACIÓN DE TIEMPO REAL ---
+        function setupRealtimeSubscription() {
+            if (realtimeSubscription) {
+                supabaseClient.removeChannel(realtimeSubscription);
+            }
+
+            // Suscribirse a cambios en la tabla detalle
+            realtimeSubscription = supabaseClient
+                .channel('public:detalle')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'detalle'
+                    },
+                    (payload) => {
+                        console.log('Cambio detectado en tiempo real:', payload);
+                        handleRealtimeUpdate(payload);
+                    }
+                )
+                .subscribe((status) => {
+                    if (status === 'SUBSCRIBED') {
+                        console.log('✅ Suscrito a cambios en tiempo real');
+                    } else {
+                        console.log('❌ Error en suscripción en tiempo real:', status);
+                    }
+                });
+        }
+
+        function handleRealtimeUpdate(payload) {
+            const { eventType, new: newRecord, old: oldRecord } = payload;
+
+            // Si hay una máquina seleccionada y el cambio es relevante
+            if (selectedMachineId && newRecord && newRecord.id_maquina === selectedMachineId) {
+                console.log('Actualizando historial en tiempo real...');
+
+                // Recargar el historial
+                loadHistoryForMachine(selectedMachineId);
+
+                // Mostrar notificación
+                if (eventType === 'INSERT') {
+                    showToast('Nuevo reporte agregado al historial');
+                } else if (eventType === 'UPDATE') {
+                    showToast('Historial actualizado');
+                }
+            }
+
+            // Actualizar estados de las máquinas si es necesario
+            if (userSalaId && (eventType === 'INSERT' || eventType === 'UPDATE')) {
+                refreshMachineStates();
+            }
+        }
+
+        async function refreshMachineStates() {
+            if (!userSalaId) return;
+
+            try {
+                const latestStates = await fetchLatestMachineStates(userSalaId);
+                updateMachineCards(latestStates);
+            } catch (error) {
+                console.error('Error actualizando estados:', error);
+            }
+        }
+
+        function updateMachineCards(latestStates) {
+            const machineCards = document.querySelectorAll('.machine-card');
+            machineCards.forEach(card => {
+                const machineId = card.dataset.id;
+                const lastStatus = latestStates[machineId] || 'Sin Estado';
+                const statusClass = `status-${lastStatus.toLowerCase().replace(' ', '-')}`;
+
+                // Actualizar clases de estado
+                card.classList.remove('status-operativo', 'status-inoperativo', 'status-pendiente', 'status-en-progreso', 'status-sin-estado');
+                card.classList.add(statusClass);
+
+                // Actualizar texto del estado
+                const statusElement = card.querySelector('.capitalize');
+                if (statusElement) {
+                    statusElement.textContent = lastStatus.toLowerCase();
+                }
+
+                // Actualizar indicador visual
+                const statusIndicator = card.querySelector('.status-indicator');
+                if (statusIndicator) {
+                    statusIndicator.className = `status-indicator ${statusClass}`;
+                }
+            });
+        }
+
         // --- SESSION & INICIALIZACIÓN ---
         async function checkSession() {
+            updateLoadingText('Verificando sesión...');
+
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) {
                 window.location.href = './index.html';
                 return;
             }
             currentUser = session.user;
-            const { data: tecnicoData, error } = await supabaseClient.from('tecnicos').select('cargo, docum').eq('id_usuario', currentUser.id).single();
+
+            const { data: tecnicoData, error } = await supabaseClient
+                .from('tecnicos')
+                .select('cargo, docum')
+                .eq('id_usuario', currentUser.id)
+                .single();
 
             if (error || !tecnicoData || tecnicoData.cargo.toLowerCase() !== 'sala') {
                 alert("Acceso denegado. Esta página es solo para usuarios de sala.");
                 window.location.href = './home.html';
                 return;
             }
-            
+
             await loadSalaData(tecnicoData.docum);
+
+            // Configurar suscripción en tiempo real
+            setupRealtimeSubscription();
+
             document.getElementById('main-content').classList.remove('opacity-0');
             document.getElementById('loading-overlay').style.display = 'none';
+            lucide.createIcons();
         }
 
-        async function logout() {
-            await supabaseClient.auth.signOut();
-            window.location.href = './index.html';
-        }
-        
         async function loadSalaData(salaId) {
+            updateLoadingText('Cargando información de la sala...');
+
             userSalaId = salaId;
-            const { data, error } = await supabaseClient.from('sala').select('sala_mincetur, empresa, direccion, departamento').eq('id_sala', salaId).single();
-            if(error) { console.error("Error cargando sala", error); return; }
+            const { data, error } = await supabaseClient
+                .from('sala')
+                .select('sala_mincetur, empresa, direccion, departamento')
+                .eq('id_sala', salaId)
+                .single();
+
+            if (error) {
+                console.error("Error cargando sala", error);
+                return;
+            }
+
             document.getElementById('sala-nombre').textContent = data.sala_mincetur;
             document.getElementById('sala-detalles').textContent = `${data.empresa} - ${data.direccion}, ${data.departamento}`;
+
+            updateLoadingText('Cargando máquinas...');
             const latestStates = await fetchLatestMachineStates(salaId);
             await loadMachinesForSala(salaId, latestStates);
         }
 
         async function fetchLatestMachineStates(salaId) {
-             const { data, error } = await supabaseClient.from('trabajos').select('detalle!inner(id_maquina, estado)').eq('id_sala', salaId).not('detalle', 'is', 'null').order('fecha', { ascending: false }).order('id_trabajo', { ascending: false });
-            if (error) { console.error("Error fetching states:", error); return {}; }
+            const { data, error } = await supabaseClient
+                .from('trabajos')
+                .select('detalle!inner(id_maquina, estado)')
+                .eq('id_sala', salaId)
+                .not('detalle', 'is', 'null')
+                .order('fecha', { ascending: false })
+                .order('id_trabajo', { ascending: false });
+
+            if (error) {
+                console.error("Error fetching states:", error);
+                return {};
+            }
+
             const latestStates = {};
-            data.forEach(t => t.detalle.forEach(d => { if (d.id_maquina && !latestStates[d.id_maquina]) { latestStates[d.id_maquina] = d.estado; } }));
+            data.forEach(t =>
+                t.detalle.forEach(d => {
+                    if (d.id_maquina && !latestStates[d.id_maquina]) {
+                        latestStates[d.id_maquina] = d.estado;
+                    }
+                })
+            );
             return latestStates;
         }
 
         async function loadMachinesForSala(salaId, latestStates = {}) {
-            const { data: machinesData, error } = await supabaseClient.from('maquinas').select('id_maquina, serie, modelo').eq('id_sala', salaId).order('serie');
-            if (error) { console.error('Error al cargar máquinas:', error); return; }
-            const container = document.getElementById('maquinas-container');
-            container.innerHTML = '';
-            if (machinesData.length === 0) {
-                document.getElementById('no-machines-message').classList.remove('hidden');
+            const { data: machinesData, error } = await supabaseClient
+                .from('maquinas')
+                .select('id_maquina, serie, modelo')
+                .eq('id_sala', salaId)
+                .order('serie');
+
+            if (error) {
+                console.error('Error al cargar máquinas:', error);
                 return;
             }
-            machinesData.forEach(machine => {
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = 'machine-button';
-                button.dataset.id = machine.id_maquina;
-                const lastStatus = latestStates[machine.id_maquina];
-                if (lastStatus) button.classList.add(`status-${lastStatus.toLowerCase()}`);
-                button.innerHTML = `<div class="font-semibold">${machine.serie}</div><div class="text-xs">${machine.modelo || ''}</div>`;
-                button.addEventListener('click', () => {
-                    document.querySelectorAll('.machine-button.selected').forEach(btn => btn.classList.remove('selected'));
-                    button.classList.add('selected');
-                    selectedMachineId = machine.id_maquina;
-                    loadHistoryForMachine(machine.id_maquina);
-                });
-                container.appendChild(button);
+
+            const container = document.getElementById('maquinas-container');
+            const noMachinesMsg = document.getElementById('no-machines-message');
+            container.innerHTML = '';
+
+            if (machinesData.length === 0) {
+                noMachinesMsg.classList.remove('hidden');
+                return;
+            }
+
+            noMachinesMsg.classList.add('hidden');
+
+            machinesData.forEach((machine, index) => {
+                setTimeout(() => {
+                    const lastStatus = latestStates[machine.id_maquina] || 'Sin Estado';
+                    const statusClass = `status-${lastStatus.toLowerCase().replace(' ', '-')}`;
+
+                    const machineCard = document.createElement('button');
+                    machineCard.type = 'button';
+                    machineCard.className = `machine-card p-4 rounded-lg text-center fade-in ${statusClass}`;
+                    machineCard.dataset.id = machine.id_maquina;
+                    machineCard.style.animationDelay = `${index * 0.1}s`;
+
+                    machineCard.innerHTML = `
+                        <div class="flex flex-col items-center gap-2">
+                            <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                                <i data-lucide="cpu" class="w-5 h-5 text-gray-600"></i>
+                            </div>
+                            <div class="font-semibold text-gray-800">${machine.serie}</div>
+                            <div class="text-xs text-gray-500 truncate w-full">${machine.modelo || 'Sin modelo'}</div>
+                            <div class="flex items-center gap-1 text-xs">
+                                <span class="status-indicator ${statusClass}"></span>
+                                <span class="capitalize">${lastStatus.toLowerCase()}</span>
+                            </div>
+                        </div>
+                    `;
+
+                    machineCard.addEventListener('click', () => selectMachine(machine, lastStatus));
+                    container.appendChild(machineCard);
+
+                    // Crear íconos después de añadir la tarjeta
+                    setTimeout(() => lucide.createIcons(), 100);
+                }, index * 50);
             });
         }
-        
-        async function loadHistoryForMachine(machineId) {
-            const historyBody = document.getElementById('incidencia-history-body');
-            historyBody.innerHTML = `<tr><td colspan="5" class="text-center py-4">Cargando...</td></tr>`;
-            try {
-                const { data, error } = await supabaseClient.from('detalle').select(`*, trabajos!inner(fecha, tecnicos(usuario, correo, cel, cargo))`).eq('id_maquina', machineId).order('fecha', { foreignTable: 'trabajos', ascending: false });
-                if (error) throw error;
-                const tableHead = historyBody.previousElementSibling;
-                tableHead.innerHTML = `<tr><th class="p-2 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th><th class="p-2 text-left text-xs font-medium text-gray-500 uppercase">Técnico</th><th class="p-2 text-left text-xs font-medium text-gray-500 uppercase">Detalles</th><th class="p-2 text-left text-xs font-medium text-gray-500 uppercase">Estado</th></tr>`;
-                historyBody.innerHTML = '';
-                if(data.length === 0) {
-                     historyBody.innerHTML = `<tr><td colspan="4" class="text-center py-4">No hay historial.</td></tr>`;
-                     return;
-                }
-                data.forEach(item => {
-                    const tr = document.createElement('tr');
-                    tr.className = { 'Operativo': 'status-operativo', 'Inoperativo': 'status-inoperativo', 'Pendiente': 'status-pendiente' }[item.estado] || '';
-                    const fecha = new Date(item.trabajos.fecha + 'T00:00:00').toLocaleDateString('es-ES');
-                    const detalleCompleto = [item.diag_ini, item.trab_realizado, item.resul].filter(Boolean).join(' / ');
-                    const tecnico = item.trabajos.tecnicos;
-                    const tecnicoInfoHTML = tecnico ? `<div class="font-medium">${tecnico.usuario}</div>` : 'N/A';
-                    tr.innerHTML = `<td class="p-2">${fecha}</td><td class="p-2 text-sm">${tecnicoInfoHTML}</td><td class="p-2 text-sm">${detalleCompleto}</td><td class="p-2">${item.estado}</td>`;
-                    historyBody.appendChild(tr);
-                });
-            } catch (error) {
-                console.error('Error al cargar historial:', error);
-                historyBody.innerHTML = `<tr><td colspan="4" class="text-center text-red-500 py-4">Error al cargar.</td></tr>`;
+
+        function selectMachine(machine, status) {
+            // Remover selección anterior
+            document.querySelectorAll('.machine-card.selected').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // Seleccionar nueva máquina
+            const selectedCard = document.querySelector(`[data-id="${machine.id_maquina}"]`);
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
             }
+
+            selectedMachineId = machine.id_maquina;
+            selectedMachineData = machine;
+
+            // Actualizar información de máquina seleccionada
+            const infoDiv = document.getElementById('selected-machine-info');
+            const machineName = document.getElementById('selected-machine-name');
+            const machineStatus = document.getElementById('selected-machine-status');
+
+            machineName.textContent = `${machine.serie} - ${machine.modelo || 'Sin modelo'}`;
+            machineStatus.textContent = `Estado actual: ${status}`;
+            infoDiv.classList.remove('hidden');
+
+            // Habilitar botón de enviar
+            document.querySelector('#incidencia-form button[type="submit"]').disabled = false;
+
+            // Cargar historial
+            loadHistoryForMachine(machine.id_maquina);
         }
 
-        async function handleIncidenciaSubmit(event) {
-            event.preventDefault();
-            if (!selectedMachineId) { alert('Seleccione una máquina.'); return; }
-            const submitButton = event.target.querySelector('button[type="submit"]');
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<i data-lucide="loader-2" class="animate-spin h-5 w-5"></i>';
+        function clearSelection() {
+            selectedMachineId = null;
+            selectedMachineData = null;
+
+            document.querySelectorAll('.machine-card.selected').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            document.getElementById('selected-machine-info').classList.add('hidden');
+            document.querySelector('#incidencia-form button[type="submit"]').disabled = true;
+
+            // Resetear historial
+            const historyBody = document.getElementById('incidencia-history-body');
+            historyBody.innerHTML = `
+                <div class="text-center py-12 text-gray-500">
+                    <i data-lucide="mouse-pointer" class="w-12 h-12 mx-auto mb-3 text-gray-400"></i>
+                    <p>Seleccione una máquina para ver su historial</p>
+                </div>
+            `;
             lucide.createIcons();
-            
-            const { fecha, hora } = getPeruDateTime();
-            const trabajo = { id_sala: userSalaId, id_usuario: currentUser.id, fecha, hora_inicio: hora, hora_fin: hora };
-            
+        }
+
+        async function loadHistoryForMachine(machineId) {
+            const historyBody = document.getElementById('incidencia-history-body');
+            historyBody.innerHTML = `
+        <div class="text-center py-8">
+            <i data-lucide="loader-2" class="animate-spin w-8 h-8 text-blue-600 mx-auto mb-3"></i>
+            <p class="text-gray-600">Cargando historial completo...</p>
+        </div>
+    `;
+            lucide.createIcons();
+
             try {
-                const { data: trabajoData, error: e1 } = await supabaseClient.from('trabajos').insert(trabajo).select().single();
-                if (e1) throw e1;
-                const detalle = { id_trabajo: trabajoData.id_trabajo, id_maquina: selectedMachineId, tipo_trabajo: 'Asistencia Remota', diag_ini: document.getElementById('incidencia-diag').value, estado: 'Inoperativo' };
-                const { error: e2 } = await supabaseClient.from('detalle').insert(detalle);
-                if (e2) throw e2;
-                alert('Incidencia reportada!');
-                document.getElementById('incidencia-diag').value = '';
-                loadHistoryForMachine(selectedMachineId); // Recargar historial
+                // Obtener TODO el historial, incluyendo reportes con técnico asignado
+                const { data, error } = await supabaseClient
+                    .from('detalle')
+                    .select(`*, trabajos!inner(fecha, hora_inicio, tecnicos(usuario, correo, cel, cargo))`)
+                    .eq('id_maquina', machineId)
+                    .order('fecha', { foreignTable: 'trabajos', ascending: false })
+                    .order('hora_inicio', { foreignTable: 'trabajos', ascending: false });
+
+                if (error) throw error;
+
+                if (data.length === 0) {
+                    historyBody.innerHTML = `
+                <div class="text-center py-12 text-gray-500">
+                    <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 text-gray-400"></i>
+                    <p>No hay historial registrado para esta máquina</p>
+                </div>
+            `;
+                    lucide.createIcons();
+                    return;
+                }
+
+                let historyHTML = `
+            <div class="mb-4 p-4 bg-blue-50 rounded-lg">
+                <h4 class="font-semibold text-blue-800">Máquina: ${selectedMachineData.serie} - ${selectedMachineData.modelo || 'Sin modelo'}</h4>
+                <p class="text-sm text-blue-600">Total de registros: ${data.length}</p>
+            </div>
+            <div class="space-y-3">
+        `;
+
+                data.forEach(item => {
+                    const fechaHora = formatDateTime(item.trabajos.fecha, item.trabajos.hora_inicio);
+                    const estado = item.estado || 'Sin estado';
+                    const estadoClass = estado.toLowerCase().replace(' ', '-');
+                    const tecnico = item.trabajos.tecnicos;
+
+                    historyHTML += `
+                <div class="history-item ${estadoClass} bg-white p-4 rounded-lg border border-gray-200">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="status-badge ${estadoClass}">${estado}</span>
+                        </div>
+                        <span class="text-sm text-gray-500">${fechaHora}</span>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <p class="text-sm text-gray-600"><strong>Diagnóstico:</strong> ${item.diag_ini || 'No especificado'}</p>
+                    </div>
+                    
+                    ${item.trab_realizado ? `
+                        <div class="mb-2">
+                            <p class="text-sm text-gray-600"><strong>Trabajo:</strong> ${item.trab_realizado}</p>
+                        </div>
+                    ` : ''}
+                    
+                    ${item.resul ? `
+                        <div class="mb-2">
+                            <p class="text-sm text-gray-600"><strong>Resultado:</strong> ${item.resul}</p>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="flex items-center justify-between text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="${tecnico ? 'user-check' : 'user'}" class="w-3 h-3"></i>
+                            <span>${tecnico ? `Atendido por: ${tecnico.usuario}` : 'Reportado por: Sala'}</span>
+                        </div>
+                        <span>${item.tipo_trabajo || 'No especificado'}</span>
+                    </div>
+                </div>
+            `;
+                });
+
+                historyHTML += '</div>';
+                historyBody.innerHTML = historyHTML;
+                lucide.createIcons();
+
             } catch (error) {
-                alert(`Error: ${error.message}`);
-            } finally {
-                submitButton.disabled = false;
-                submitButton.innerHTML = '<i data-lucide="send" class="w-5 h-5"></i> Enviar Reporte';
+                console.error('Error al cargar historial completo:', error);
+                historyBody.innerHTML = `
+            <div class="text-center py-8 text-red-500">
+                <i data-lucide="alert-circle" class="w-8 h-8 mx-auto mb-3"></i>
+                <p>Error al cargar el historial completo</p>
+            </div>
+        `;
                 lucide.createIcons();
             }
         }
 
-        document.getElementById('logout-button').addEventListener('click', logout);
+        // --- HISTORIAL COMPLETO ---
+
+
+        async function handleIncidenciaSubmit(event) {
+            event.preventDefault();
+
+            if (!selectedMachineId) {
+                showToast('Por favor, seleccione una máquina para reportar.', true);
+                return;
+            }
+
+            const submitButton = event.target.querySelector('button[type="submit"]');
+            const originalText = submitButton.innerHTML;
+
+            // Deshabilitar botón y mostrar loading
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i data-lucide="loader-2" class="animate-spin w-5 h-5"></i> Enviando...';
+            lucide.createIcons();
+
+            const { fecha, hora } = getPeruDateTime();
+            const trabajo = {
+                id_sala: userSalaId,
+                id_usuario: currentUser.id,
+                fecha,
+                hora_inicio: hora,
+                hora_fin: hora
+            };
+
+            try {
+                // Crear trabajo
+                const { data: trabajoData, error: e1 } = await supabaseClient
+                    .from('trabajos')
+                    .insert(trabajo)
+                    .select()
+                    .single();
+
+                if (e1) throw e1;
+
+                // Crear detalle
+                const detalle = {
+                    id_trabajo: trabajoData.id_trabajo,
+                    id_maquina: selectedMachineId,
+                    tipo_trabajo: 'Asistencia Remota',
+                    diag_ini: document.getElementById('incidencia-diag').value,
+                    estado: 'Inoperativo'
+                };
+
+                const { error: e2 } = await supabaseClient
+                    .from('detalle')
+                    .insert(detalle);
+
+                if (e2) throw e2;
+
+                // Éxito
+                showToast('✅ Incidencia reportada exitosamente! El equipo técnico ha sido notificado.');
+                document.getElementById('incidencia-diag').value = '';
+
+                // El historial se actualizará automáticamente vía tiempo real
+
+            } catch (error) {
+                console.error('Error:', error);
+                showToast(`❌ Error al reportar la incidencia: ${error.message}`, true);
+            } finally {
+                // Restaurar botón
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+                lucide.createIcons();
+            }
+        }
+
+        // Inicialización
         document.getElementById('incidencia-form').addEventListener('submit', handleIncidenciaSubmit);
+
         document.addEventListener('DOMContentLoaded', () => {
             checkSession();
-            lucide.createIcons();
+        });
+
+        // Limpiar suscripción al salir
+        window.addEventListener('beforeunload', () => {
+            if (realtimeSubscription) {
+                supabaseClient.removeChannel(realtimeSubscription);
+            }
         });
     </script>
 </body>
+
 </html>
