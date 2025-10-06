@@ -1045,7 +1045,7 @@
                 <div class="flex items-center justify-between cursor-pointer" onclick="toggleIncidentDetails(this)">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <i data-lucide="slot-machine" class="w-5 h-5 text-blue-600"></i>
+                            <i data-lucide="laptop-minimal-check" class="w-5 h-5 text-blue-600"></i>
                         </div>
                         <div>
                             <h3 class="font-bold text-gray-900">${machine.sala_mincetur || 'N/A'}</h3>
@@ -1065,7 +1065,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <div class="col-span-1">
                             <p class="text-sm font-semibold text-gray-500 flex items-center gap-1">
-                                <i data-lucide="slot-machine" class="w-4 h-4 text-blue-600"></i> MÁQUINA
+                                <i data-lucide="laptop-minimal-check" class="w-4 h-4 text-blue-600"></i> MÁQUINA
                             </p>
                             <h3 class="text-lg font-bold text-gray-900">${machine.modelo || 'Máquina Winsystems'}</h3>
                             <p class="text-xs text-gray-500">S/N: ${machine.serie || 'N/A'}</p>
@@ -1130,7 +1130,7 @@
             const urgencyIcon = type === 'inoperativo' ? 'bolt' : 'clock';
             const urgencyClass = type === 'inoperativo' ? 'attention-alert' : '';
             // Icono de Máquina de Slot (Ruleta)
-            const machineIcon = 'slot-machine';
+            const machineIcon = 'laptop-minimal-check';
 
             if (incidents.length === 0) {
                 container.innerHTML = `
@@ -1480,3 +1480,4 @@
 </body>
 
 </html>
+
