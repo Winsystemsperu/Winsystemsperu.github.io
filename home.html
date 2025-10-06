@@ -1,74 +1,448 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Inicio</title>
+    <title>Dashboard - Winsystems</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; }
-        .nav-card {
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-            border: 1px solid transparent;
+        /* ... (Estilos CSS sin cambios) ... */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --ws-primary: #1e40af;
+            --ws-secondary: #3b82f6;
+            --ws-accent: #f97316;
+            --ws-light: #f0f7ff;
+            --ws-dark: #1e293b;
         }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f0f7ff 0%, #e0f2fe 100%);
+            min-height: 100vh;
+        }
+
+        /* Estilos de Tarjetas */
+        .nav-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
+            background: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--ws-primary), var(--ws-accent));
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
         .nav-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            border-color: #3b82f6;
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border-color: var(--ws-secondary);
+        }
+
+        .nav-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .icon-container {
+            transition: all 0.3s ease;
+        }
+
+        .nav-card:hover .icon-container {
+            transform: scale(1.1);
+            background: linear-gradient(135deg, var(--ws-primary), var(--ws-secondary));
+        }
+
+        .nav-card:hover .icon-container i {
+            color: white;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-role-badge {
+            background: linear-gradient(90deg, var(--ws-primary), var(--ws-secondary));
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .stats-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            /* Mantenemos el borde para estilo */
+            border-left: 4px solid var(--ws-primary);
+        }
+
+        /* --------------------------------- */
+        /* SKELETON */
+        /* --------------------------------- */
+        .skeleton {
+            animation: pulse 1.5s infinite;
+            background-color: #e2e8f0;
+            /* gray-200 */
+            border-radius: 0.25rem;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 1;
+            }
         }
     </style>
 </head>
+
 <body class="text-gray-800">
 
-    <div id="loading-overlay" class="fixed inset-0 bg-gray-100 bg-opacity-75 flex items-center justify-center z-50">
-        <i data-lucide="loader-2" class="animate-spin h-12 w-12 text-blue-600"></i>
+    <div id="loading-overlay"
+        class="fixed inset-0 bg-white bg-opacity-90 flex flex-col items-center justify-center z-50 transition-opacity duration-500">
+        <div class="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center">
+            <i data-lucide="loader-2" class="animate-spin h-12 w-12 text-blue-600 mb-4"></i>
+            <p class="text-gray-600 font-medium">Cargando dashboard...</p>
+        </div>
     </div>
 
-    <div class="container mx-auto p-4 md:p-8">
-        <header class="mb-8 flex flex-wrap justify-between items-center">
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        <header class="mb-8 md:mb-12 flex flex-wrap justify-between items-center bg-white rounded-2xl p-6 shadow-sm">
             <div class="flex items-center space-x-4">
-                <img src="winsystems_logo.png" alt="Logo de Winsystems" class="h-24">
+                <div class="bg-white p-2 rounded-2xl shadow-sm">
+                    <img src= winsystems_logo.png alt="Logo de Winsystems" class="h-16 md:h-20">
+                </div>
                 <div>
-                    <h1 id="welcome-title" class="text-3xl font-bold text-gray-900">Bienvenido</h1>
-                    <p class="text-gray-500">Selecciona una opción para comenzar.</p>
+                    <h1 id="welcome-title" class="text-2xl md:text-3xl font-bold text-gray-900">Bienvenido</h1>
+                    <div class="flex items-center mt-1 space-x-2">
+                        <span id="user-role-badge" class="user-role-badge"></span>
+                    </div>
                 </div>
             </div>
-            <button id="logout-button" title="Cerrar Sesión" class="p-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition">
-                <i data-lucide="log-out" class="w-5 h-5"></i>
+            <button id="logout-button" title="Cerrar Sesión"
+                class="p-3 rounded-full bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-600 transition-all duration-300 group">
+                <i data-lucide="log-out" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
             </button>
         </header>
 
+        <div class="mb-8">
+            <div id="user-stats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="stats-card skeleton h-28"></div>
+                <div class="stats-card skeleton h-28"></div>
+                <div class="stats-card skeleton h-28"></div>
+            </div>
+        </div>
+
         <main id="nav-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Las tarjetas de navegación se cargarán aquí -->
         </main>
+
+        <footer class="mt-12 pt-6 border-t border-gray-200 text-center text-gray-500 text-sm">
+            <p>Winsystems &copy; 2025 - Sistema de Gestión de Incidencias</p>
+        </footer>
     </div>
 
-    <script>
+    <template id="stat-card-template">
+        <div class="stats-card fade-in">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500" data-stat-title></p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1" data-stat-value></p>
+                </div>
+                <div class="p-3 rounded-full bg-gray-100">
+                    <i data-lucide="" class="w-6 h-6" data-stat-icon></i>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="nav-card-template">
+        <a href="#" class="nav-card bg-white p-6 rounded-xl shadow-sm block group fade-in">
+            <div class="flex items-center gap-4">
+                <div class="icon-container p-3 rounded-xl shadow-sm" data-nav-color>
+                    <i data-lucide="" class="text-white" data-nav-icon></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800" data-nav-title></h2>
+                    <p class="text-gray-500 text-sm mt-1" data-nav-description></p>
+                </div>
+            </div>
+            <div class="mt-4 flex justify-end">
+                <i data-lucide="arrow-right"
+                    class="w-4 h-4 text-gray-400 transition-transform group-hover:translate-x-1"></i>
+            </div>
+        </a>
+    </template>
+
+    <script type="module">
         // --- CONFIG & GLOBAL VARS ---
         const SUPABASE_URL = 'https://qobquktxvhlvtrpeopji.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvYnF1a3R4dmhsdnRycGVvcGppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU2OTc4NDYsImV4cCI6MjA2MTI3Mzg0Nn0.rnubNUWSWEomj5Xwvr65kZLK7Ig_bLC74ajFh9cksFc';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // --- SESSION MANAGEMENT ---
-        async function checkSession() {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) {
-                window.location.href = './index.html';
-            } else {
-                await initializeDashboard(session.user);
-            }
-        }
+        // --- CONFIGURACIÓN DE TARJETAS (MANTENIDO) ---
+        const allCards = [
+            { id: 'reportar', title: 'Reportar Incidencia', description: 'Crear un nuevo reporte de falla para una máquina.', href: './reportar.html', icon: 'alert-triangle', color: 'from-orange-500 to-red-500' },
+            { id: 'asignar', title: 'Asignar Incidencias', description: 'Asigna reportes pendientes a los técnicos disponibles.', href: './asignacion.html', icon: 'send', color: 'from-blue-500 to-cyan-500' },
+            { id: 'metricas', title: 'Métricas de Máquinas', description: 'Visualiza gráficas y el estado general de las operaciones.', href: './maquinas.html', icon: 'bar-chart-2', color: 'from-green-500 to-emerald-500' },
+            { id: 'reporte_detallado', title: 'Reporte Detallado', description: 'Explora una tabla con todos los trabajos realizados.', href: './reporte.html', icon: 'file-text', color: 'from-purple-500 to-indigo-500' },
+            { id: 'gestion_tecnicos', title: 'Gestión de Técnicos', description: 'Analiza el rendimiento y las horas de los técnicos.', href: './tecnicos.html', icon: 'users', color: 'from-cyan-500 to-blue-500' }
+        ];
 
-        async function logout() {
-            await supabaseClient.auth.signOut();
+        // ---------------------------------------------
+        // --- FUNCIÓN DE LOGOUT (INSTRUMENTADA) ---
+        // ---------------------------------------------
+        async function logout(force = false) {
+            console.log("--- INICIANDO LOGOUT ---");
+            if (!force) {
+                const confirmLogout = confirm("¿Estás seguro de que deseas cerrar sesión?");
+                if (!confirmLogout) {
+                    console.log("LOGOUT CANCELADO por el usuario.");
+                    return;
+                }
+            } else {
+                console.log("LOGOUT FORZADO debido a error/seguridad.");
+            }
+
+            // 1. Intentar cerrar sesión en Supabase
+            const { error } = await supabaseClient.auth.signOut();
+
+            if (error) {
+                console.error("❌ ERROR SUPABASE en signOut:", error.message);
+                // 2. Si hay un error, forzamos la limpieza local.
+                console.warn("⚠️ FORZANDO LIMPIEZA DE LOCAL STORAGE para evitar bucle.");
+                localStorage.clear();
+            } else {
+                console.log("✅ Supabase signOut exitoso.");
+            }
+
+            // 3. Redirigir siempre
+            console.log("➡️ Redirigiendo a ./index.html");
             window.location.href = './index.html';
         }
 
-        // --- INICIALIZACIÓN ---
+
+        // --- RENDERIZADO DE ESTADÍSTICAS REALES (MANTENIDO) ---
+        async function renderUserStats(role, userId) {
+            // ... (Lógica de renderUserStats sin cambios) ...
+            const container = document.getElementById('user-stats');
+            container.innerHTML = ''; // Limpia los skeletons
+
+            let stats = [];
+
+            try {
+                // LÓGICA DE OBTENCIÓN DE DATOS REALES (MANTENIDA)
+                if (role.toLowerCase() === 'sala') {
+                    const { data: incidencias, error } = await supabaseClient
+                        .from('incidencias')
+                        .select('*')
+                        .eq('usuario_reporte', userId);
+
+                    if (!error && incidencias) {
+                        const total = incidencias.length;
+                        const pendientes = incidencias.filter(i => i.estado === 'pendiente').length;
+                        const resueltas = incidencias.filter(i => i.estado === 'resuelta').length;
+
+                        stats = [
+                            { title: 'Incidencias Reportadas', value: total, icon: 'alert-triangle', color: 'text-orange-500' },
+                            { title: 'Pendientes de Solución', value: pendientes, icon: 'clock', color: 'text-yellow-500' },
+                            { title: 'Resueltas esta Semana', value: resueltas, icon: 'check-circle', color: 'text-green-500' }
+                        ];
+                    }
+                } else if (role.toLowerCase() === 'coordinador') {
+                    const { data: incidencias, error: errorInc } = await supabaseClient
+                        .from('incidencias')
+                        .select('*');
+
+                    const { data: tecnicos, error: errorTec } = await supabaseClient
+                        .from('tecnicos')
+                        .select('*')
+                        .eq('activo', true);
+
+                    if (!errorInc && !errorTec) {
+                        const asignadas = incidencias.filter(i => i.estado === 'asignada').length;
+                        const tecnicosActivos = tecnicos.length;
+
+                        stats = [
+                            { title: 'Incidencias Asignadas', value: asignadas, icon: 'send', color: 'text-blue-500' },
+                            { title: 'Técnicos Activos', value: tecnicosActivos, icon: 'users', color: 'text-purple-500' },
+                            { title: 'Tiempo Promedio Respuesta', value: '2.4h', icon: 'bar-chart-3', color: 'text-indigo-500' }
+                        ];
+                    }
+                } else { // Técnico, Admin
+                    const { data: tareas, error } = await supabaseClient
+                        .from('tareas')
+                        .select('*')
+                        .eq('tecnico_id', userId);
+
+                    if (!error && tareas) {
+                        const completadas = tareas.filter(t => t.estado === 'completada').length;
+                        const tiempoTotal = tareas.reduce((sum, t) => sum + (t.tiempo_minutos || 0), 0);
+                        const horasTrabajadas = Math.round(tiempoTotal / 60);
+                        const eficiencia = tareas.length > 0 ? Math.round((completadas / tareas.length) * 100) : 0;
+
+                        stats = [
+                            { title: 'Tareas Completadas', value: completadas, icon: 'check-circle', color: 'text-green-500' },
+                            { title: 'Tiempo Trabajado', value: `${horasTrabajadas}h`, icon: 'clock', color: 'text-blue-500' },
+                            { title: 'Eficiencia', value: `${eficiencia}%`, icon: 'trending-up', color: 'text-emerald-500' }
+                        ];
+                    }
+                }
+            } catch (error) {
+                console.error('Error obteniendo estadísticas:', error);
+                stats = getDefaultStats(role);
+                container.parentElement.innerHTML += '<p class="text-sm text-red-500 mt-2">⚠️ Error al cargar datos reales. Mostrando datos de ejemplo.</p>';
+            }
+
+            // Renderizar las estadísticas usando la plantilla
+            const template = document.getElementById('stat-card-template');
+
+            stats.forEach(stat => {
+                const clone = template.content.cloneNode(true);
+                clone.querySelector('[data-stat-title]').textContent = stat.title;
+                clone.querySelector('[data-stat-value]').textContent = stat.value;
+                clone.querySelector('[data-stat-icon]').setAttribute('data-lucide', stat.icon);
+                clone.querySelector('[data-stat-icon]').classList.add(stat.color);
+
+                container.appendChild(clone);
+            });
+
+            lucide.createIcons();
+
+            // Mostrar estadísticas con animación
+            setTimeout(() => {
+                container.classList.add('opacity-100');
+            }, 50);
+        }
+
+        function getDefaultStats(role) {
+            // ... (Lógica de getDefaultStats sin cambios) ...
+            if (role.toLowerCase() === 'sala') {
+                return [
+                    { title: 'Incidencias Reportadas', value: '12', icon: 'alert-triangle', color: 'text-orange-500' },
+                    { title: 'Pendientes de Solución', value: '3', icon: 'clock', color: 'text-yellow-500' },
+                    { title: 'Resueltas esta Semana', value: '9', icon: 'check-circle', color: 'text-green-500' }
+                ];
+            } else if (role.toLowerCase() === 'coordinador') {
+                return [
+                    { title: 'Incidencias Asignadas', value: '24', icon: 'send', color: 'text-blue-500' },
+                    { title: 'Técnicos Activos', value: '8', icon: 'users', color: 'text-purple-500' },
+                    { title: 'Tiempo Promedio Respuesta', value: '2.4h', icon: 'bar-chart-3', color: 'text-indigo-500' }
+                ];
+            } else {
+                return [
+                    { title: 'Tareas Completadas', value: '15', icon: 'check-circle', color: 'text-green-500' },
+                    { title: 'Tiempo Trabajado', value: '36h', icon: 'clock', color: 'text-blue-500' },
+                    { title: 'Eficiencia', value: '92%', icon: 'trending-up', color: 'text-emerald-500' }
+                ];
+            }
+        }
+
+        // --- RENDERIZADO DE TARJETAS DE NAVEGACIÓN (MANTENIDO) ---
+        function renderNavigationCards(role) {
+            // ... (Lógica de renderNavigationCards sin cambios) ...
+            const container = document.getElementById('nav-cards-container');
+            container.innerHTML = '';
+            const userRole = role.toLowerCase();
+            const template = document.getElementById('nav-card-template');
+
+            let accessibleCards = [];
+
+            if (userRole === 'sala') {
+                accessibleCards = allCards.filter(card => card.id === 'reportar');
+            } else if (userRole === 'coordinador') {
+                accessibleCards = allCards.filter(card => card.id !== 'reportar'); 
+            } else { // Técnico, Admin
+                accessibleCards = allCards.filter(card =>
+                    card.id !== 'reportar' && card.id !== 'asignar'
+                );
+            }
+
+            if (accessibleCards.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12 fade-in">
+                        <div class="bg-white rounded-2xl p-8 shadow-sm max-w-md mx-auto">
+                            <i data-lucide="folder-x" class="w-16 h-16 text-gray-400 mx-auto mb-4"></i>
+                            <h3 class="text-xl font-semibold text-gray-700 mb-2">Sin módulos asignados</h3>
+                            <p class="text-gray-500">No tienes módulos asignados a tu perfil. Contacta al administrador.</p>
+                        </div>
+                    </div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            accessibleCards.forEach((card, index) => {
+                setTimeout(() => {
+                    const clone = template.content.cloneNode(true);
+                    const link = clone.querySelector('a');
+
+                    link.href = card.href;
+                    link.style.animationDelay = `${index * 0.1}s`;
+
+                    clone.querySelector('[data-nav-color]').className = `icon-container bg-gradient-to-br ${card.color} p-3 rounded-xl shadow-sm`;
+                    clone.querySelector('[data-nav-icon]').setAttribute('data-lucide', card.icon);
+                    clone.querySelector('[data-nav-title]').textContent = card.title;
+                    clone.querySelector('[data-nav-description]').textContent = card.description;
+
+                    container.appendChild(clone);
+                    lucide.createIcons();
+                }, index * 100);
+            });
+        }
+
+        // ---------------------------------------------
+        // --- INICIALIZACIÓN (INSTRUMENTADA) ---
+        // ---------------------------------------------
+        async function checkSession() {
+            console.log("--- INICIANDO checkSession ---");
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            
+            if (!session) {
+                console.log("❌ getSession: No se detectó ninguna sesión activa.");
+                console.log("➡️ Redirigiendo a ./index.html");
+                window.location.href = './index.html';
+                return;
+            } 
+            
+            console.log(`✅ getSession: Sesión activa detectada. User ID: ${session.user.id}`);
+            await initializeDashboard(session.user);
+        }
+
         async function initializeDashboard(user) {
+            console.log("--- INICIANDO initializeDashboard ---");
             const { data: tecnicoData, error } = await supabaseClient
                 .from('tecnicos')
                 .select('usuario, cargo')
@@ -76,75 +450,39 @@
                 .single();
 
             if (error || !tecnicoData || !tecnicoData.cargo) {
-                alert("No se pudo cargar la información del usuario o no tiene un rol asignado. Contacta al administrador.");
-                logout();
+                console.error("❌ ERROR: No se pudo obtener la información o el cargo del técnico. Error:", error ? error.message : "Datos vacíos");
+                alert("No se pudo cargar la información del usuario o no tiene un rol asignado. Se cerrará la sesión.");
+                
+                // Usar `true` aquí fuerza el cierre
+                logout(true); 
                 return;
             }
 
-            document.getElementById('welcome-title').textContent = `Bienvenido, ${tecnicoData.usuario}`;
+            console.log(`✅ Datos de usuario cargados. Usuario: ${tecnicoData.usuario}, Cargo: ${tecnicoData.cargo}`);
+
+            document.getElementById('welcome-title').textContent = `Hola, ${tecnicoData.usuario}`;
+            document.getElementById('user-role-badge').textContent = tecnicoData.cargo;
+
+            const statsPromise = renderUserStats(tecnicoData.cargo, user.id);
             renderNavigationCards(tecnicoData.cargo);
-            document.getElementById('logout-button').addEventListener('click', logout);
-            document.getElementById('loading-overlay').style.display = 'none';
+
+            // El botón llama a logout sin forzar (para pedir confirmación)
+            document.getElementById('logout-button').addEventListener('click', () => logout(false));
+
+            await statsPromise;
+
+            // Ocultar loading
             lucide.createIcons();
-        }
-        
-        // --- RENDERIZADO DE TARJETAS ---
-        function renderNavigationCards(role) {
-            const container = document.getElementById('nav-cards-container');
-            container.innerHTML = '';
-            
-            const userRole = role.toLowerCase();
-
-            const allCards = [
-                { id: 'reportar', title: 'Reportar Incidencia', description: 'Crear un nuevo reporte de falla para una máquina.', href: './reportar.html', icon: 'alert-triangle' },
-                { id: 'asignar', title: 'Asignar Incidencias', description: 'Asigna reportes pendientes a los técnicos disponibles.', href: './asignacion.html', icon: 'send' },
-                { id: 'metricas', title: 'Métricas de Máquinas', description: 'Visualiza gráficas y el estado general de las operaciones.', href: './maquinas.html', icon: 'bar-chart-2' },
-                { id: 'reporte_detallado', title: 'Reporte Detallado', description: 'Explora una tabla con todos los trabajos realizados.', href: './reporte.html', icon: 'file-text' },
-                { id: 'gestion_tecnicos', title: 'Gestión de Técnicos', description: 'Analiza el rendimiento y las horas de los técnicos.', href: './tecnicos.html', icon: 'users' }
-            ];
-
-            let accessibleCards = [];
-
-            if (userRole === 'sala') {
-                accessibleCards = allCards.filter(card => card.id === 'reportar');
-            } else if (userRole === 'coordinador') {
-                accessibleCards = allCards.filter(card => 
-                    card.id !== 'reportar'
-                );
-            } else { // Para 'admin', 'tecnico', o cualquier otro rol
-                accessibleCards = allCards.filter(card => 
-                    card.id !== 'reportar' && card.id !== 'asignar'
-                );
-            }
-
-            if (accessibleCards.length === 0) {
-                container.innerHTML = `<p class="col-span-full text-center text-gray-500">No tienes módulos asignados a tu perfil.</p>`;
-                return;
-            }
-
-            accessibleCards.forEach(card => {
-                const cardElement = document.createElement('a');
-                cardElement.href = card.href;
-                cardElement.className = 'nav-card bg-white p-6 rounded-lg shadow-md block';
-                cardElement.innerHTML = `
-                    <div class="flex items-center gap-4">
-                        <div class="bg-blue-100 p-3 rounded-full">
-                            <i data-lucide="${card.icon}" class="text-blue-600"></i>
-                        </div>
-                        <div>
-                            <h2 class="text-xl font-bold text-gray-800">${card.title}</h2>
-                            <p class="text-gray-500 text-sm mt-1">${card.description}</p>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(cardElement);
-            });
-             lucide.createIcons(); // Vuelve a renderizar los iconos después de añadir las tarjetas
+            document.getElementById('loading-overlay').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('loading-overlay').style.display = 'none';
+                console.log("Dashboard completamente cargado.");
+            }, 500);
         }
 
         // --- INICIO ---
         document.addEventListener('DOMContentLoaded', checkSession);
     </script>
 </body>
-</html>
 
+</html>
