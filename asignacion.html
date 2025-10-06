@@ -493,7 +493,20 @@
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             const toastMessage = document.getElementById('toast-message');
+
+            // ✅ CORRECCIÓN 1: Agregar verificación de seguridad
+            if (!toast) {
+                console.error("Error: Elemento #toast no encontrado. El toast no puede mostrarse.");
+                return;
+            }
+
             const toastIcon = toast.querySelector('i');
+
+            // ✅ CORRECCIÓN 2: Verificar el icono
+            if (!toastIcon) {
+                console.error("Error: Elemento <i> dentro de #toast no encontrado.");
+                return;
+            }
 
             if (type === 'error') {
                 toast.classList.remove('bg-green-500');
@@ -724,7 +737,14 @@
             try {
                 const { data, error } = await supabaseClient
                     .from('detalle')
-                    .select(`id_detalle, id_maquina, id_trabajo, diag_ini, estado, tipo_trabajo, trab_realizado, resul, trabajos!inner(id_trabajo, hora_inicio, id_usuario, id_responsable, tecnicos!inner(id_usuario, usuario, cel)), maquinas!inner(id_maquina, serie, modelo, id_sala, sala!inner(id_sala, sala, sala_mincetur, distrito, provincia, departamento))`)
+                    .select(`id_detalle, id_maquina, id_trabajo, diag_ini, estado, tipo_trabajo, trab_realizado, resul, 
+                        trabajos(id_trabajo, hora_inicio, id_usuario, id_responsable, 
+                            tecnicos(id_usuario, usuario, cel)
+                        ), 
+                        maquinas(id_maquina, serie, modelo, id_sala, 
+                            sala(id_sala, sala, sala_mincetur, distrito, provincia, departamento)
+                        )
+                    `) // ⬅️ SE ELIMINÓ EL `!inner`
                     .in('estado', ['En Progreso', 'Asignado'])
                     .order('id_detalle', { ascending: false });
 
@@ -1460,4 +1480,3 @@
 </body>
 
 </html>
-
