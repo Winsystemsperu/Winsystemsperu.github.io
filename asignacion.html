@@ -4,311 +4,451 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asignación de Incidencias</title>
-
+    <title>Asignación de Incidencias - Winsystems</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --ws-primary: #1e40af;
+            /* Blue-700 */
+            --ws-secondary: #3b82f6;
+            /* Blue-500 */
+            --ws-accent: #f97316;
+            /* Orange-600 */
+            --ws-light: #f0f7ff;
+            --ws-dark: #1e293b;
+            --ws-red: #dc2626;
+            /* Red-600 */
+            --ws-amber: #f59e0b;
+            /* Amber-600 */
+        }
+
+        /* FIX FINAL para el indicador de Supabase Realtime (el botón verde) */
+        div[style*="background-color: rgb(34, 197, 94)"][style*="position: fixed"],
+        #supabase-realtime-status-indicator {
+            /* Ocultar completamente, mover fuera del viewport y eliminar espacio */
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            z-index: -9999 !important;
+            /* Asegura que no está sobre nada */
+            width: 0 !important;
+            height: 0 !important;
+            pointer-events: none !important;
+            /* Evita que sea interactivo */
+        }
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5;
+            background: linear-gradient(135deg, var(--ws-light) 0%, #e0f2fe 100%);
+            min-height: 100vh;
         }
 
-        .card-enter {
-            opacity: 0;
-            transform: translateY(20px);
-            animation: card-enter-animation 0.5s forwards;
+        .incident-card {
+            transition: all 0.3s ease;
+            border-left: 6px solid;
+            border-radius: 0.75rem;
+            background-color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            opacity: 1;
+            transform: translateY(0);
         }
 
-        @keyframes card-enter-animation {
-            to {
-                opacity: 1;
-                transform: translateY(0);
+        .incident-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .incident-card.inoperativo {
+            border-left-color: var(--ws-red);
+            background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
+        }
+
+        .incident-card.pendiente {
+            border-left-color: var(--ws-amber);
+            background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
+        }
+
+        .status-badge {
+            font-weight: 700;
+        }
+
+        .attention-alert {
+            animation: subtle-pulse 3s infinite ease-in-out;
+        }
+
+        @keyframes subtle-pulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.2);
+            }
+
+            50% {
+                box-shadow: 0 0 0 6px rgba(220, 38, 38, 0);
             }
         }
 
-        #loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(240, 242, 245, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            transition: opacity 0.3s;
+        .stats-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
         }
 
-        .modal {
-            display: none;
+        .stats-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .technician-select {
+            background: #f9fafb;
+            border: 1px solid #d1d5db;
+            color: #1f2937;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+        }
+
+        .assign-button {
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+        }
+
+        .report-details-box {
+            line-height: 1.4;
+            /* La clase text-left en el HTML lo justifica */
+        }
+
+        .technician-card {
+            transition: all 0.3s ease;
+        }
+
+        .technician-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-dot {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .incident-card.asignada {
+            border-left-color: var(--ws-primary);
+            background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);
+        }
+
+        .incident-card.asignada:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.1);
+        }
+
+        .incident-button {
+            transition: all 0.3s ease;
+            border-left: 6px solid;
+            border-radius: 0.5rem;
+            background-color: white;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .incident-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .incident-button.inoperativo {
+            border-left-color: var(--ws-red);
+        }
+
+        .incident-button.pendiente {
+            border-left-color: var(--ws-amber);
+        }
+
+        .incident-button.asignada {
+            border-left-color: var(--ws-primary);
+        }
+
+        .expand-all-btn {
+            transition: all 0.3s ease;
+        }
+
+        .expand-all-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
             position: fixed;
-            z-index: 10000;
-            left: 0;
             top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background-color: rgba(0, 0, 0, 0.5);
-            transition: opacity 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
         }
 
         .modal-content {
-            background-color: #fefefe;
-            margin: 10% auto;
-            padding: 24px;
-            border: 1px solid #888;
-            width: 90%;
-            max-width: 900px;
-            border-radius: 12px;
-            position: relative;
-        }
-
-        .nav-button {
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 500;
-            transition: background-color 0.2s, color 0.2s;
-            cursor: pointer;
-        }
-
-        .nav-button.active {
-            background-color: #3b82f6;
-            color: white;
-        }
-
-        .nav-button:not(.active) {
-            background-color: #e5e7eb;
-            color: #374151;
-        }
-
-        .tooltip-container {
-            position: relative;
-            display: inline-block;
-            cursor: help;
-        }
-
-        .tooltip-bubble {
-            visibility: hidden;
-            width: 400px;
-            background-color: #262626;
-            color: #fff;
-            text-align: left;
-            white-space: normal;
-            border-radius: 6px;
-            padding: 8px 12px;
-            position: absolute;
-            z-index: 20;
-            bottom: 125%;
-            left: 50%;
-            transform: translateX(-50%);
-            opacity: 0;
-            transition: opacity 0.3s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            font-size: 0.8rem;
-            line-height: 1.4;
-        }
-
-        .tooltip-bubble::after {
-            content: "";
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            margin-left: -5px;
-            border-width: 5px;
-            border-style: solid;
-            border-color: #262626 transparent transparent transparent;
-        }
-
-        .tooltip-container:hover .tooltip-bubble {
-            visibility: visible;
-            opacity: 1;
-        }
-
-        .table-header {
-            background-color: #f9fafb;
-        }
-
-        .status-operativo {
-            background-color: #ecfdf5;
-        }
-
-        .status-inoperativo {
-            background-color: #ffb7b7;
-        }
-
-        .status-pendiente {
-            background-color: #f1c462;
-        }
-
-        .status-retirado {
-            background-color: #888;
-        }
-
-        /* --- MODIFICADO: Estilos para botones de máquinas (más pequeños y llamativos) --- */
-        .machine-button {
-            padding: 8px 4px;
-            border-radius: 8px;
-            width: 6rem;
-            border: 1px solid #e5e7eb;
-            text-align: center;
-            transition: all 0.2s ease-in-out;
-            cursor: pointer;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-            color: #374151;
-        }
-
-        /* --- NUEVO: COLORES DE ESTADO PARA LOS BOTONES --- */
-        .machine-button.status-operativo {
-            background-color: #f0fdf4;
-            border-color: #bbf7d0;
-        }
-
-        .machine-button.status-operativo:hover {
-            background-color: #dcfce7;
-            border-color: #86efac;
-        }
-
-        .machine-button.status-inoperativo {
-            background-color: #ffa5a5;
-            border-color: #ff0000;
-        }
-
-        .machine-button.status-inoperativo:hover {
-            background-color: #fd7878;
-            border-color: #d60000;
-        }
-
-        .machine-button.status-pendiente {
-            background-color: #fffbeb;
-            border-color: #fde68a;
-        }
-
-        .machine-button.status-pendiente:hover {
-            background-color: #fef3c7;
-            border-color: #fcd34d;
-        }
-
-        .machine-button.status-retirado {
-            background-color: #f1f5f9;
-            border-color: #e2e8f0;
-            color: #64748b;
-        }
-
-        .machine-button.status-retirado:hover {
-            background-color: #e2e8f0;
-            border-color: #cbd5e1;
-        }
-
-        /* --- ESTADO SELECCIONADO (Tiene prioridad sobre los demás) --- */
-        .machine-button.selected {
-            background-color: #2563eb !important;
-            /* !important asegura que siempre sea azul al seleccionar */
-            border-color: #1d4ed8 !important;
-            color: white !important;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .machine-button.selected .machine-model {
-            color: #dbeafe !important;
-        }
-
-
-        /* --- MEJORAS PARA LA SECCIÓN DE INCIDENCIAS --- */
-        .incidencia-section {
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .form-group {
             margin-bottom: 1.5rem;
         }
 
-        .incidencia-header {
-            border-bottom: 1px solid #e5e7eb;
-            padding-bottom: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .incidencia-form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .incidencia-label {
+        .form-label {
             display: block;
             font-weight: 500;
-            color: #374151;
             margin-bottom: 0.5rem;
+            color: #374151;
         }
 
-        .incidencia-textarea {
+        .form-input {
             width: 100%;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
             padding: 0.75rem;
-            font-family: inherit;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 1rem;
             transition: border-color 0.2s;
         }
 
-        .incidencia-textarea:focus {
+        .form-input:focus {
             outline: none;
             border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 
-        .history-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .history-table th {
-            background-color: #f9fafb;
-            padding: 0.75rem;
-            text-align: left;
-            font-weight: 500;
-            color: #6b7280;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .history-table td {
-            padding: 0.75rem;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .history-table tr:last-child td {
-            border-bottom: none;
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
         }
     </style>
 </head>
 
 <body class="text-gray-800">
 
-    <div id="loading-overlay" class="hidden">
-        <p>Cargando...</p>
+    <div id="loading-overlay"
+        class="fixed inset-0 bg-white bg-opacity-90 flex flex-col items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-2xl shadow-xl flex flex-col items-center">
+            <i data-lucide="loader-2" class="animate-spin h-12 w-12 text-blue-600 mb-4"></i>
+            <p class="text-gray-600 font-medium">Cargando incidencias<span class="loading-dots"></span></p>
+        </div>
     </div>
 
-    <div class="container mx-auto p-4 md:p-8">
-        <header class="mb-8 flex justify-between items-center">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900">Asignación de Incidencias</h1>
-                <p class="text-gray-500">Asigna técnicos a los reportes pendientes de las salas.</p>
+    <div id="toast"
+        class="fixed top-4 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300">
+        <div class="flex items-center gap-2">
+            <i data-lucide="check-circle" class="w-5 h-5"></i>
+            <span id="toast-message">Tarea asignada exitosamente!</span>
+        </div>
+    </div>
+
+    <!-- Modal para crear nueva incidencia -->
+    <div id="create-incident-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-bold text-gray-900">Crear Nueva Incidencia</h2>
+                    <button id="close-modal" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
             </div>
-            <a href="./home.html" class="text-blue-600 hover:underline flex items-center gap-2">
-                <i data-lucide="arrow-left"></i> Volver al Dashboard
-            </a>
+
+            <div class="p-6">
+                <form id="create-incident-form">
+                    <div class="space-y-4">
+                        <div class="form-group">
+                            <label for="sala" class="form-label">Sala</label>
+                            <input type="text" id="sala" class="form-input" placeholder="Ingrese el nombre de la sala"
+                                required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="serie" class="form-label">Serie de la Máquina</label>
+                            <input type="text" id="serie" class="form-input"
+                                placeholder="Ingrese la serie de la máquina" required>
+                        </div>
+
+                        <!-- NUEVO CAMPO: Técnico -->
+                        <div class="form-group">
+                            <label for="tecnico" class="form-label">Técnico Asignado</label>
+                            <select id="tecnico" class="form-input" required>
+                                <option value="" disabled selected>Seleccione un técnico</option>
+                                <!-- Las opciones se llenarán dinámicamente -->
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="diagnostico" class="form-label">Diagnóstico Inicial</label>
+                            <textarea id="diagnostico" class="form-input form-textarea"
+                                placeholder="Describa el problema o diagnóstico inicial" required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-200">
+                        <button type="button" id="cancel-create"
+                            class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                            Cancelar
+                        </button>
+                        <button type="submit"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            Crear y Asignar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        <header
+            class="mb-8 md:mb-12 flex flex-wrap justify-between items-center bg-white rounded-2xl p-6 shadow-md border-b-4 border-blue-600">
+            <div class="flex items-center space-x-4">
+                <img src="winsystems_logo.png" alt="Logo de Winsystems" class="h-10 md:h-12">
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold text-gray-900">Gestión de Tareas de Mantenimiento</h1>
+                    <p class="text-sm text-gray-500 font-medium">Asignación rápida de incidencias a técnicos disponibles
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4 mt-4 md:mt-0">
+                <!-- Botón para crear nueva incidencia -->
+                <button id="create-incident-btn"
+                    class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all duration-300 flex items-center gap-2 text-sm">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    Crear Incidencia
+                </button>
+                <a href="./home.html"
+                    class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-all duration-300 flex items-center gap-2 text-sm">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                    Dashboard
+                </a>
+                <div class="flex items-center gap-2 text-sm text-gray-500">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    <span>Actualizado: <span id="last-update" class="font-medium">Ahora</span></span>
+                </div>
+            </div>
         </header>
 
-        <main class="space-y-8">
-            <div id="inoperativos-container">
-            </div>
+        <div id="stats-container"
+            class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-10 opacity-0 transition-opacity duration-500">
+        </div>
 
-            <div id="pendientes-container">
-            </div>
+        <main class="space-y-10">
+            <section>
+                <div class="flex items-center gap-3 mb-6 border-b border-red-200 pb-2">
+                    <div class="bg-red-500 p-2 rounded-full">
+                        <i data-lucide="frown" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800">Urgente: Incidencias <span
+                            class="text-red-600">Inoperativas</span></h2>
+                    <span id="inoperativos-count"
+                        class="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-md">0</span>
+                    <button id="expand-all-inoperativos"
+                        class="expand-all-btn ml-auto bg-red-100 text-red-700 px-3 py-1 rounded-lg text-sm font-medium flex items-center gap-1">
+                        <i data-lucide="chevrons-down" class="w-4 h-4"></i>
+                        Expandir Todo
+                    </button>
+                </div>
+                <div id="inoperativos-container" class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                </div>
+            </section>
+
+            <section>
+                <div class="flex items-center gap-3 mb-6 border-b border-amber-200 pb-2">
+                    <div class="bg-amber-500 p-2 rounded-full">
+                        <i data-lucide="clock" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800">Pendientes de Asignación</h2>
+                    <span id="pendientes-count"
+                        class="bg-amber-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-md">0</span>
+                    <button id="expand-all-pendientes"
+                        class="expand-all-btn ml-auto bg-amber-100 text-amber-700 px-3 py-1 rounded-lg text-sm font-medium flex items-center gap-1">
+                        <i data-lucide="chevrons-down" class="w-4 h-4"></i>
+                        Expandir Todo
+                    </button>
+                </div>
+                <div id="pendientes-container" class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                </div>
+            </section>
+
+            <section>
+                <div class="flex items-center gap-3 mb-6 border-b border-green-200 pb-2">
+                    <div class="bg-green-500 p-2 rounded-full">
+                        <i data-lucide="users" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800">Técnicos Disponibles</h2>
+                    <span id="technicians-count"
+                        class="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-md">0</span>
+                </div>
+                <div id="technicians-container"
+                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                    <!-- Los técnicos se cargarán aquí dinámicamente -->
+                </div>
+            </section>
+
+            <section>
+                <div class="flex items-center gap-3 mb-6 border-b border-blue-200 pb-2">
+                    <div class="bg-blue-500 p-2 rounded-full">
+                        <i data-lucide="user-check" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800">Incidencias Asignadas</h2>
+                    <span id="asignadas-count"
+                        class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-md">0</span>
+                    <button id="expand-all-asignadas"
+                        class="expand-all-btn ml-auto bg-blue-100 text-blue-700 px-3 py-1 rounded-lg text-sm font-medium flex items-center gap-1">
+                        <i data-lucide="chevrons-down" class="w-4 h-4"></i>
+                        Expandir Todo
+                    </button>
+                </div>
+                <div id="asignadas-container" class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                    <!-- Las incidencias asignadas se cargarán aquí -->
+                </div>
+            </section>
         </main>
+
+        <footer class="mt-12 pt-6 border-t border-gray-200 text-center text-gray-500 text-sm">
+            <p>Winsystems &copy; 2024 - Sistema de Gestión de Incidencias</p>
+        </footer>
     </div>
 
     <script>
@@ -317,12 +457,16 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvYnF1a3R4dmhsdnRycGVvcGppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU2OTc4NDYsImV4cCI6MjA2MTI3Mzg0Nn0.rnubNUWSWEomj5Xwvr65kZLK7Ig_bLC74ajFh9cksFc';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // ▼▼▼ AGREGA ESTA NUEVA FUNCIÓN ▼▼▼
+        let realtimeSubscription = null;
+        let lastSuccessfulIncidents = [];
+        let availableTechnicians = [];
+
+
+        // --- UTILITY FUNCTIONS ---
         function getPeruDateTime() {
             const ahora = new Date();
             const timeZone = 'America/Lima';
 
-            // --- Obtener Fecha en formato YYYY-MM-DD ---
             const dateFormatter = new Intl.DateTimeFormat('es-PE', {
                 timeZone,
                 year: 'numeric',
@@ -335,7 +479,6 @@
             const year = parts.find(p => p.type === 'year').value;
             const fecha = `${year}-${month}-${day}`;
 
-            // --- Obtener Hora en formato HH:mm:ss ---
             const hora = ahora.toLocaleTimeString('es-PE', {
                 timeZone,
                 hour12: false,
@@ -344,101 +487,260 @@
                 second: '2-digit'
             });
 
-            return { fecha, hora }; // Devuelve un objeto con la fecha y hora correctas
+            return { fecha, hora };
         }
 
-        let realtimeSubscription = null;
-        // --- LÓGICA DE LA PÁGINA ---
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            const toastIcon = toast.querySelector('i');
 
-        // 1. VERIFICAR SESIÓN Y ROL
-        async function checkCoordinatorSession() {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) {
-                window.location.href = './index.html'; // Si no hay sesión, al login
+            if (type === 'error') {
+                toast.classList.remove('bg-green-500');
+                toast.classList.add('bg-red-500');
+                toastIcon.setAttribute('data-lucide', 'x-circle');
+            } else {
+                toast.classList.remove('bg-red-500');
+                toast.classList.add('bg-green-500');
+                toastIcon.setAttribute('data-lucide', 'check-circle');
+            }
+            lucide.createIcons();
+
+            toastMessage.textContent = message;
+            toast.classList.remove('translate-x-full');
+
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+            }, 3000);
+        }
+
+        function updateLastUpdateTime() {
+            const now = new Date();
+            document.getElementById('last-update').textContent = now.toLocaleTimeString('es-PE');
+        }
+
+        // --- MODAL FUNCTIONS ---
+        function openCreateIncidentModal() {
+            const modal = document.getElementById('create-incident-modal');
+            modal.classList.add('active');
+
+            // Cargar técnicos en el select
+            loadTechniciansForModal();
+
+            // Limpiar formulario
+            document.getElementById('create-incident-form').reset();
+        }
+
+        function loadTechniciansForModal() {
+            const select = document.getElementById('tecnico');
+            select.innerHTML = '<option value="" disabled selected>Seleccione un técnico</option>';
+
+            if (availableTechnicians.length === 0) {
+                select.innerHTML += '<option value="" disabled>No hay técnicos disponibles</option>';
                 return;
             }
 
-            // Verificamos si el usuario tiene el cargo de 'coordinador'
+            availableTechnicians.forEach(tech => {
+                const option = document.createElement('option');
+                option.value = tech.id_usuario;
+                option.textContent = tech.usuario;
+                select.appendChild(option);
+            });
+        }
+
+
+        function closeCreateIncidentModal() {
+            const modal = document.getElementById('create-incident-modal');
+            modal.classList.remove('active');
+
+            // Limpiar formulario
+            document.getElementById('create-incident-form').reset();
+        }
+
+        function loadTechniciansForModal() {
+            const select = document.getElementById('tecnico');
+            select.innerHTML = '<option value="" disabled selected>Seleccione un técnico</option>';
+
+            if (availableTechnicians.length === 0) {
+                select.innerHTML += '<option value="" disabled>No hay técnicos disponibles</option>';
+                return;
+            }
+
+            availableTechnicians.forEach(tech => {
+                const option = document.createElement('option');
+                option.value = tech.id_usuario;
+                option.textContent = tech.usuario;
+                select.appendChild(option);
+            });
+        }
+
+        // --- SESSION MANAGEMENT ---
+        async function checkCoordinatorSession() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                window.location.href = './index.html';
+                return;
+            }
+
             const { data: tecnicoData, error } = await supabaseClient
                 .from('tecnicos')
-                .select('cargo')
+                .select('cargo, usuario')
                 .eq('id_usuario', session.user.id)
                 .single();
 
-            if (error || !tecnicoData || (tecnicoData.cargo !== 'Coordinador' && tecnicoData.cargo !== 'admin')) { // O el rol que consideres
-                alert('Acceso denegado. No tienes permisos para ver esta página.');
+            if (error || !tecnicoData || (tecnicoData.cargo !== 'Coordinador' && tecnicoData.cargo !== 'admin')) {
                 window.location.href = './dashboard.html';
                 return;
             }
 
-            // Si todo está bien, cargamos la página
-            await loadAssignmentPage();
+            await loadAssignmentPage(false); // Carga inicial
         }
+
         function setupRealtimeSubscription(callback) {
             if (realtimeSubscription) {
                 supabaseClient.removeChannel(realtimeSubscription);
             }
-            realtimeSubscription = supabaseClient.channel('public:detalle')
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'detalle' }, (payload) => {
-                    console.log('¡Nuevo reporte detectado!', payload);
-                    callback();
-                })
+
+            // Suscripción para INSERT en detalle
+            const insertChannel = supabaseClient.channel('detalle-insert')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'INSERT',
+                        schema: 'public',
+                        table: 'detalle'
+                    },
+                    (payload) => {
+                        // Si es una asignación, recargar
+                        if (payload.new.estado === 'En Progreso' || payload.new.estado === 'Asignado') {
+                            setTimeout(() => callback(true), 1000);
+                        }
+                    }
+                )
                 .subscribe();
-            console.log("Escuchando cambios en tiempo real...");
+
+            // Suscripción para UPDATE en detalle
+            const updateChannel = supabaseClient.channel('detalle-update')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'UPDATE',
+                        schema: 'public',
+                        table: 'detalle'
+                    },
+                    (payload) => {
+                        // Si cambió a estado de asignación, recargar
+                        if (payload.new.estado === 'En Progreso' || payload.new.estado === 'Asignado') {
+                            setTimeout(() => callback(true), 1000);
+                        }
+                    }
+                )
+                .subscribe();
+
+            // Suscripción para INSERT en trabajos
+            const trabajosChannel = supabaseClient.channel('trabajos-insert')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'INSERT',
+                        schema: 'public',
+                        table: 'trabajos'
+                    },
+                    (payload) => {
+                        setTimeout(() => callback(true), 1000);
+                    }
+                )
+                .subscribe();
+
+            realtimeSubscription = [insertChannel, updateChannel, trabajosChannel];
         }
 
-        // 2. FUNCIÓN PRINCIPAL PARA CARGAR LOS DATOS
-        async function loadAssignmentPage() {
-            // Buscamos el div de carga y nos aseguramos de que sea visible
+        // --- DATA LOADING ---
+        async function loadAssignmentPage(isRealtime) {
             const loadingOverlay = document.getElementById('loading-overlay');
-            if (loadingOverlay) loadingOverlay.style.display = 'flex';
+            if (!isRealtime && loadingOverlay) loadingOverlay.style.display = 'flex';
 
-            // Obtenemos los datos en paralelo
-            const [pendingIncidents, technicians] = await Promise.all([
-                fetchPendingIncidents(),
-                fetchTechnicians()
-            ]);
-
-            // Mostramos las tarjetas en la página
-            renderIncidents(pendingIncidents, technicians);
-
-            // ▼▼▼ LÍNEA CLAVE Y FINAL ▼▼▼
-            // Una vez que todo terminó, ocultamos el velo de "Cargando..."
-            if (loadingOverlay) loadingOverlay.style.display = 'none';
-        }
-        // 3. OBTENER LAS INCIDENCIAS PENDIENTES
-        // REEMPLAZA TU FUNCIÓN ACTUAL CON ESTA
-        async function fetchPendingIncidents() {
             try {
-                const { data, error } = await supabaseClient.rpc('get_latest_machine_details');
+                // Fetch data
+                const [pendingIncidents, technicians, assignedIncidents] = await Promise.all([
+                    fetchPendingIncidents(),
+                    fetchTechnicians(),
+                    fetchAssignedIncidents()
+                ]);
 
-                // Si Supabase devuelve un error, lo mostramos en consola y devolvemos una lista vacía.
-                if (error) {
-                    console.error("Error al llamar a la función de la base de datos 'get_latest_machine_details':", error);
-                    return [];
+                // Guardar técnicos para el modal (IMPORTANTE)
+                availableTechnicians = technicians;
+
+                // Renderizar la vista con los nuevos datos
+                renderStatistics(pendingIncidents, technicians, assignedIncidents);
+                renderIncidents(pendingIncidents, technicians);
+                renderTechniciansList(technicians);
+                renderAssignedIncidents(assignedIncidents);
+                updateLastUpdateTime();
+
+                // Guardar como la última data válida
+                lastSuccessfulIncidents = pendingIncidents;
+
+            } catch (error) {
+                console.error("Error loading assignment page:", error);
+                showToast("Error crítico al cargar los datos. Verifique la conexión a Supabase.", "error");
+            } finally {
+                if (loadingOverlay) {
+                    loadingOverlay.style.opacity = '0';
+                    setTimeout(() => {
+                        loadingOverlay.style.display = 'none';
+                    }, 500);
                 }
-
-                // Si no hay datos, devolvemos una lista vacía para evitar errores.
-                if (!data) {
-                    return [];
-                }
-
-                // Si todo sale bien, filtramos y devolvemos los resultados.
-                return data.filter(item => item.estado === 'Inoperativo' || item.estado === 'Pendiente');
-
-            } catch (e) {
-                // Si ocurre cualquier otro error inesperado, lo capturamos aquí.
-                console.error("Error inesperado en fetchPendingIncidents:", e);
-                return []; // Devolvemos una lista vacía para que la página no se congele.
             }
         }
 
-        // 4. OBTENER LA LISTA DE TÉCNICOS
+        async function fetchPendingIncidents() {
+            // Llama a la RPC que devuelve el estado actual de las máquinas
+            const { data, error } = await supabaseClient.rpc('get_latest_machine_details');
+
+            if (error) {
+                // Lanzar error para ser capturado por loadAssignmentPage
+                throw new Error("Error en RPC get_latest_machine_details: " + error.message);
+            }
+
+            if (!data) return [];
+
+            const pending = data.filter(item => item.estado === 'Inoperativo' || item.estado === 'Pendiente');
+
+            // Ordenar del más reciente al más antiguo (DESC)
+            pending.sort((a, b) => {
+                const timeA = `${a.fecha_reporte || a.fecha} ${a.hora_reporte || '00:00:00'}`;
+                const timeB = `${b.fecha_reporte || b.fecha} ${b.hora_reporte || '00:00:00'}`;
+
+                if (timeA < timeB) return 1;
+                if (timeA > timeB) return -1;
+                return 0;
+            });
+
+            return pending;
+        }
+
+        async function fetchAssignedIncidents() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('detalle')
+                    .select(`id_detalle, id_maquina, id_trabajo, diag_ini, estado, tipo_trabajo, trab_realizado, resul, trabajos!inner(id_trabajo, hora_inicio, id_usuario, id_responsable, tecnicos!inner(id_usuario, usuario, cel)), maquinas!inner(id_maquina, serie, modelo, id_sala, sala!inner(id_sala, sala, sala_mincetur, distrito, provincia, departamento))`)
+                    .in('estado', ['En Progreso', 'Asignado'])
+                    .order('id_detalle', { ascending: false });
+
+                if (error) throw error;
+                return data;
+            } catch (error) {
+                console.error('Error en fetchAssignedIncidents:', error);
+                return [];
+            }
+        }
+
         async function fetchTechnicians() {
             const { data, error } = await supabaseClient
                 .from('tecnicos')
                 .select('id_usuario, usuario')
-                .in('cargo', ['Tecnico', 'Coordinador']) // O los cargos que pueden recibir asignaciones
+                .in('cargo', ['Tecnico', 'Coordinador'])
                 .order('usuario');
 
             if (error) {
@@ -448,157 +750,711 @@
             return data;
         }
 
-        // 5. MOSTRAR LAS INCIDENCIAS EN LA PÁGINA
-        // ▼▼▼ REEMPLAZA TU FUNCIÓN "renderIncidents" CON ESTAS DOS ▼▼▼
+        // --- CREATE INCIDENT FUNCTION ---
+        // --- CREATE INCIDENT FUNCTION ---
+        async function createNewIncident(formData) {
+            try {
+                console.log("📝 Iniciando creación de incidencia:", formData);
 
-        // NUEVA FUNCIÓN AUXILIAR: Dibuja un grupo de tarjetas (Inoperativos o Pendientes)
-        // NUEVA FUNCIÓN AUXILIAR: Dibuja un grupo de tarjetas (Inoperativos o Pendientes)
-        // NUEVA FUNCIÓN AUXILIAR: Dibuja un grupo de tarjetas (Inoperativos o Pendientes)
-        function renderGroup(title, incidents, technicians, containerId, borderColorClass) {
-            const groupContainer = document.getElementById(containerId);
-            if (!groupContainer) return;
+                const { fecha, hora } = getPeruDateTime();
+                console.log("🕐 Fecha y hora generadas:", fecha, hora);
 
-            if (incidents.length === 0) {
-                groupContainer.innerHTML = '';
+                // 1. Primero, obtener o crear la sala
+                console.log("🔍 Buscando/creando sala:", formData.sala);
+                const { data: salaData, error: salaError } = await supabaseClient
+                    .from('sala')
+                    .select('id_sala')
+                    .eq('sala_mincetur', formData.sala)
+                    .single();
+
+                let id_sala;
+
+                if (salaError || !salaData) {
+                    console.log("➕ Creando nueva sala...");
+                    const { data: newSala, error: newSalaError } = await supabaseClient
+                        .from('sala')
+                        .insert({
+                            sala: formData.sala,
+                            sala_mincetur: formData.sala,
+                            distrito: 'Por definir',
+                            provincia: 'Lima',
+                            departamento: 'Lima'
+                        })
+                        .select()
+                        .single();
+
+                    if (newSalaError) {
+                        console.error("❌ Error creando sala:", newSalaError);
+                        throw newSalaError;
+                    }
+                    id_sala = newSala.id_sala;
+                    console.log("✅ Sala creada con ID:", id_sala);
+                } else {
+                    id_sala = salaData.id_sala;
+                    console.log("✅ Sala existente con ID:", id_sala);
+                }
+
+                // 2. Obtener o crear la máquina
+                console.log("🔍 Buscando/creando máquina:", formData.serie);
+                const { data: maquinaData, error: maquinaError } = await supabaseClient
+                    .from('maquinas')
+                    .select('id_maquina')
+                    .eq('serie', formData.serie)
+                    .single();
+
+                let id_maquina;
+
+                if (maquinaError || !maquinaData) {
+                    console.log("➕ Creando nueva máquina...");
+                    const { data: newMaquina, error: newMaquinaError } = await supabaseClient
+                        .from('maquinas')
+                        .insert({
+                            serie: formData.serie,
+                            modelo: 'Máquina Winsystems',
+                            id_sala: id_sala
+                        })
+                        .select()
+                        .single();
+
+                    if (newMaquinaError) {
+                        console.error("❌ Error creando máquina:", newMaquinaError);
+                        throw newMaquinaError;
+                    }
+                    id_maquina = newMaquina.id_maquina;
+                    console.log("✅ Máquina creada con ID:", id_maquina);
+                } else {
+                    id_maquina = maquinaData.id_maquina;
+                    console.log("✅ Máquina existente con ID:", id_maquina);
+                }
+
+                // 3. Crear trabajo con el técnico asignado
+                console.log("👨‍💼 Creando trabajo para técnico:", formData.tecnico);
+                const { data: newTrabajo, error: trabajoError } = await supabaseClient
+                    .from('trabajos')
+                    .insert({
+                        id_sala: id_sala,
+                        id_usuario: formData.tecnico,
+                        fecha: fecha,
+                        hora_inicio: hora,
+                        hora_fin: hora
+                    })
+                    .select()
+                    .single();
+
+                if (trabajoError) {
+                    console.error("❌ Error creando trabajo:", trabajoError);
+                    throw trabajoError;
+                }
+                console.log("✅ Trabajo creado con ID:", newTrabajo.id_trabajo);
+
+                // 4. Crear detalle con estado "En Progreso"
+                console.log("📋 Creando detalle...");
+                const { error: detalleError } = await supabaseClient
+                    .from('detalle')
+                    .insert({
+                        id_trabajo: newTrabajo.id_trabajo,
+                        id_maquina: id_maquina,
+                        diag_ini: formData.diagnostico,
+                        estado: 'En Progreso',
+                        tipo_trabajo: 'Mantenimiento',
+                        fecha_reporte: fecha,
+                        hora_reporte: hora
+                    });
+
+                if (detalleError) {
+                    console.error("❌ Error creando detalle:", detalleError);
+                    throw detalleError;
+                }
+                console.log("✅ Detalle creado exitosamente");
+
+                showToast('¡Incidencia creada y asignada exitosamente!');
+                closeCreateIncidentModal();
+
+                // Recargar la página para mostrar la nueva incidencia
+                setTimeout(() => loadAssignmentPage(true), 1000);
+
+            } catch (error) {
+                console.error("💥 Error completo al crear la incidencia:", error);
+                showToast(`Error al crear la incidencia: ${error.message}`, 'error');
+            }
+        }
+
+        // --- RENDERING FUNCTIONS ---
+        function renderStatistics(incidents, technicians, assignedIncidents = []) {
+            const container = document.getElementById('stats-container');
+            const inoperativos = incidents.filter(i => i.estado === 'Inoperativo').length;
+            const pendientes = incidents.filter(i => i.estado === 'Pendiente').length;
+            const totalPendientes = incidents.length;
+            const totalTechnicians = technicians.length;
+            const totalAsignadas = assignedIncidents.length;
+
+            document.getElementById('inoperativos-count').textContent = inoperativos;
+            document.getElementById('pendientes-count').textContent = pendientes;
+            document.getElementById('asignadas-count').textContent = totalAsignadas;
+
+            const stats = [
+                { title: 'Total Pendientes', value: totalPendientes, icon: 'list-todo', color: 'text-blue-600', bg: 'bg-blue-50' },
+                { title: 'Inoperativos', value: inoperativos, icon: 'siren', color: 'text-red-600', bg: 'bg-red-50' },
+                { title: 'Pendientes Normales', value: pendientes, icon: 'hourglass', color: 'text-amber-600', bg: 'bg-amber-50' },
+                { title: 'Técnicos Disponibles', value: totalTechnicians, icon: 'wrench', color: 'text-green-600', bg: 'bg-green-50' },
+                { title: 'Asignadas en Progreso', value: totalAsignadas, icon: 'user-check', color: 'text-indigo-600', bg: 'bg-indigo-50' }
+            ];
+
+            // Actualizar el grid para 5 columnas
+            container.className = 'grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-10 opacity-0 transition-opacity duration-500';
+
+            container.innerHTML = stats.map(stat => `
+        <div class="stats-card border-l-4 ${stat.color.replace('text-', 'border-')}">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500 font-medium">${stat.title}</p>
+                    <p class="text-3xl font-extrabold text-gray-900 mt-1">${stat.value}</p>
+                </div>
+                <div class="p-3 rounded-full ${stat.bg}">
+                    <i data-lucide="${stat.icon}" class="w-7 h-7 ${stat.color}"></i>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+            container.classList.remove('opacity-0');
+            container.classList.add('opacity-100');
+            lucide.createIcons();
+        }
+
+        function renderIncidents(incidents, technicians) {
+            // Limpiar contenedores antes de rellenar
+            document.getElementById('inoperativos-container').innerHTML = '';
+            document.getElementById('pendientes-container').innerHTML = '';
+
+            const inoperativos = incidents.filter(i => i.estado === 'Inoperativo');
+            const pendientes = incidents.filter(i => i.estado === 'Pendiente');
+
+            renderIncidentGroup(inoperativos, technicians, 'inoperativos-container', 'inoperativo');
+            renderIncidentGroup(pendientes, technicians, 'pendientes-container', 'pendiente');
+
+            setupAssignmentListeners();
+        }
+
+        function renderTechniciansList(technicians) {
+            const container = document.getElementById('technicians-container');
+            const countElement = document.getElementById('technicians-count');
+
+            if (countElement) {
+                countElement.textContent = technicians.length;
+            }
+
+            if (technicians.length === 0) {
+                container.innerHTML = `
+            <div class="empty-state bg-white p-6 rounded-lg text-center shadow-md">
+                <i data-lucide="users" class="w-12 h-12 text-gray-400 mx-auto mb-3"></i>
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">No hay técnicos disponibles</h3>
+                <p class="text-gray-500">No se encontraron técnicos en el sistema.</p>
+            </div>
+        `;
+                lucide.createIcons();
                 return;
             }
 
-            let cardsHTML = incidents.map(incident => {
-                const fecha = new Date(incident.fecha + 'T00:00:00').toLocaleDateString('es-ES');
-                let selectOptions = technicians.map(tech => `<option value="${tech.id_usuario}">${tech.usuario}</option>`).join('');
+            const htmlContent = technicians.map(tech => `
+        <div class="technician-card bg-white p-4 rounded-lg shadow-md border-l-4 border-green-500 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <i data-lucide="user" class="w-5 h-5 text-green-600"></i>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-gray-800">${tech.usuario}</h3>
+                    <p class="text-sm text-gray-500">Técnico especializado</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="status-dot bg-green-500 w-3 h-3 rounded-full"></span>
+                <span class="text-sm text-gray-600">Disponible</span>
+            </div>
+        </div>
+    `).join('');
 
-                const detallesConcatenados = [
-                    incident.diag_ini ? `<b>Diag. Inicial:</b> ${incident.diag_ini}` : null,
-                    incident.trab_realizado ? `<b>Trabajo Realizado:</b> ${incident.trab_realizado}` : null,
-                    incident.resul ? `<b>Resultado:</b> ${incident.resul}` : null
-                ].filter(Boolean).join('<br>');
+            container.innerHTML = htmlContent;
+            lucide.createIcons();
+        }
 
-                // ▼▼▼ AQUÍ CONSTRUIMOS EL HTML CON LOS NUEVOS DATOS ▼▼▼
+        function renderAssignedIncidents(assignedIncidents) {
+            const container = document.getElementById('asignadas-container');
+            if (!container) {
+                console.error("No se encontró el contenedor 'asignadas-container'");
+                return;
+            }
+
+            if (!assignedIncidents || assignedIncidents.length === 0) {
+                container.innerHTML = `
+            <div class="empty-state col-span-full bg-white p-8 rounded-lg text-center shadow-md">
+                <i data-lucide="user-check" class="w-16 h-16 text-blue-400 mx-auto mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">Sin asignaciones activas</h3>
+                <p class="text-gray-500">No hay incidencias con estado "En Progreso" o "Asignado".</p>
+                <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <p class="text-sm text-blue-700">
+                        Cuando asignes una incidencia a un técnico, aparecerá aquí automáticamente.
+                    </p>
+                </div>
+            </div>
+        `;
+                lucide.createIcons();
+                return;
+            }
+
+            const htmlContent = assignedIncidents.map((incident) => {
+                // Manejar diferentes estructuras de datos
+                const machine = incident.maquinas || {};
+                const trabajo = incident.trabajos || {};
+                const tecnico = incident.tecnicos || trabajo.tecnicos || {};
+
+                const reportDate = incident.fecha_reporte || 'N/A';
+                const reportTime = incident.hora_reporte || 'N/A';
+                const assignmentDate = trabajo.fecha || 'N/A';
+                const assignmentTime = trabajo.hora_inicio || 'N/A';
+
+                const fechaReporte = reportDate !== 'N/A' ? new Date(reportDate + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
+                const horaReporte = reportTime.substring(0, 5);
+                const fechaAsignacion = assignmentDate !== 'N/A' ? new Date(assignmentDate + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
+                const horaAsignacion = assignmentTime.substring(0, 5);
+
+                const detallesHTML = incident.diag_ini || 'Sin detalles de diagnóstico.';
+
                 return `
-            <div class="incident-card bg-white p-6 rounded-lg shadow-md flex flex-wrap items-center justify-between gap-4">
-                <div class="flex-grow">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-sm text-gray-500">Sala: <span class="font-bold text-gray-800">${incident.sala_mincetur || 'N/A'}</span></p>
-                            <p class="text-xs text-gray-400">${incident.direccion || ''}, ${incident.distrito || ''}</p>
+            <div class="incident-button asignada p-4 mb-4">
+                <div class="flex items-center justify-between cursor-pointer" onclick="toggleIncidentDetails(this)">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <i data-lucide="slot-machine" class="w-5 h-5 text-blue-600"></i>
                         </div>
-                        <p class="text-xs text-right text-gray-400">Reportado por:<br><span class="font-medium text-gray-600">${incident.tecnico_reporta || 'N/A'}</span></p>
+                        <div>
+                            <h3 class="font-bold text-gray-900">${machine.sala_mincetur || 'N/A'}</h3>
+                            <p class="text-sm text-gray-500">${machine.modelo || 'Máquina Winsystems'} - S/N: ${machine.serie || 'N/A'}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="status-badge text-white bg-blue-600 flex items-center gap-1 py-1 px-3 rounded-full shadow-sm text-sm">
+                            <i data-lucide="user-check" class="w-4 h-4"></i> 
+                            ${incident.estado || 'Asignada'}
+                        </span>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 transition-transform"></i>
+                    </div>
+                </div>
+                
+                <div class="incident-details mt-4 hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div class="col-span-1">
+                            <p class="text-sm font-semibold text-gray-500 flex items-center gap-1">
+                                <i data-lucide="slot-machine" class="w-4 h-4 text-blue-600"></i> MÁQUINA
+                            </p>
+                            <h3 class="text-lg font-bold text-gray-900">${machine.modelo || 'Máquina Winsystems'}</h3>
+                            <p class="text-xs text-gray-500">S/N: ${machine.serie || 'N/A'}</p>
+                            <p class="text-xs text-gray-400">ID Detalle: ${incident.id_detalle}</p>
+                        </div>
+
+                        <div class="col-span-1">
+                            <p class="text-sm font-semibold text-gray-500 flex items-center gap-1">
+                                <i data-lucide="map-pin" class="w-4 h-4"></i> UBICACIÓN
+                            </p>
+                            <p class="text-md font-semibold text-gray-800">${machine.sala_mincetur || 'N/A'}</p>
+                            <p class="text-xs text-gray-500">${machine.distrito || ''}</p>
+                        </div>
+
+                        <div class="col-span-1 text-left md:text-right">
+                            <span class="status-badge text-white bg-blue-600 flex items-center justify-end md:justify-start gap-1 w-fit ml-auto py-1 px-3 rounded-full shadow-sm">
+                                <i data-lucide="user-check" class="w-4 h-4"></i> 
+                                ${incident.estado || 'Asignada'}
+                            </span>
+                            <p class="text-xs text-gray-400 mt-1">Reportado: ${fechaReporte} ${horaReporte}</p>
+                            <p class="text-xs text-gray-400">Asignado: ${fechaAsignacion} ${horaAsignacion}</p>
+                        </div>
                     </div>
 
-                    <p class="text-lg font-bold mt-2">${incident.modelo || 'Máquina'} (S/N: ${incident.serie})</p>
+                    <div class="border-t border-gray-100 pt-4 mb-4">
+                        <p class="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+                            <i data-lucide="file-text" class="w-4 h-4 text-gray-500"></i>
+                            Diagnóstico Inicial:
+                        </p>
+                        <div class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100 report-details-box">
+                            ${detallesHTML}
+                        </div>
+                    </div>
                     
-                    <p class="text-sm text-gray-600 mt-2 border-l-2 border-gray-200 pl-3">
-                        ${detallesConcatenados || 'Sin detalles adicionales.'}
-                    </p>
-                    
-                    <p class="text-xs text-gray-400 mt-2">Reportado el ${fecha}</p>
-                </div>
-                <div class="flex items-center gap-4">
-                    <select id="tecnico-select-${incident.id_maquina}" class="rounded-md border-gray-300 shadow-sm">
-                        <option value="">Seleccionar técnico...</option>
-                        ${selectOptions}
-                    </select>
-                    <button data-incident='${JSON.stringify(incident)}' class="assign-button bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-semibold flex items-center gap-2">
-                        <i data-lucide="send" class="w-4 h-4"></i> Asignar
-                    </button>
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                <i data-lucide="user" class="w-4 h-4 text-green-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-gray-700">Técnico Asignado</p>
+                                <p class="text-lg font-bold text-green-600">${tecnico.usuario || 'Por asignar'}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 text-sm text-gray-500">
+                            <i data-lucide="clock" class="w-4 h-4"></i>
+                            <span>${incident.estado || 'En progreso'}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
             }).join('');
 
-            groupContainer.innerHTML = `
-        <h2 class="text-2xl font-bold text-gray-800 mb-4 border-l-4 ${borderColorClass} pl-4">${title} (${incidents.length})</h2>
-        <div class="space-y-6">
-            ${cardsHTML}
-        </div>
-    `;
-        }
-        // FUNCIÓN PRINCIPAL DE RENDERIZADO (AHORA MÁS SIMPLE)
-        function renderIncidents(incidents, technicians) {
-            // 1. ORDENAR: Ponemos los incidentes más recientes primero
-            incidents.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-
-            // 2. AGRUPAR: Separamos la lista en dos grupos
-            const inoperativos = incidents.filter(i => i.estado === 'Inoperativo');
-            const pendientes = incidents.filter(i => i.estado === 'Pendiente');
-
-            // 3. RENDERIZAR CADA GRUPO
-            renderGroup('Inoperativos Urgentes', inoperativos, technicians, 'inoperativos-container', 'border-red-500');
-            renderGroup('Pendientes', pendientes, technicians, 'pendientes-container', 'border-amber-500');
-
-            // Añadimos el listener a todos los botones de "Asignar"
-            document.querySelectorAll('.assign-button').forEach(button => {
-                button.addEventListener('click', () => {
-                    const incidentData = JSON.parse(button.dataset.incident);
-                    const select = document.getElementById(`tecnico-select-${incidentData.id_maquina}`);
-                    const technicianId = select.value;
-
-                    if (!technicianId) {
-                        alert('Por favor, selecciona un técnico.');
-                        return;
-                    }
-                    // Usamos el 'parentNode' para encontrar la tarjeta completa y poder eliminarla
-                    handleAssignment(incidentData, technicianId, button.closest('.incident-card'));
-                });
-            });
-
+            container.innerHTML = htmlContent;
             lucide.createIcons();
         }
-        // 6. MANEJAR LA ASIGNACIÓN (CREAR NUEVOS REGISTROS)
-        async function handleAssignment(incident, technicianId, cardElement) {
-            if (!confirm(`¿Estás seguro de asignar esta tarea al técnico seleccionado?`)) {
+
+        function renderIncidentGroup(incidents, technicians, containerId, type) {
+            const container = document.getElementById(containerId);
+            const statusText = type === 'inoperativo' ? 'Inoperativo' : 'Pendiente';
+            const urgencyIcon = type === 'inoperativo' ? 'bolt' : 'clock';
+            const urgencyClass = type === 'inoperativo' ? 'attention-alert' : '';
+            // Icono de Máquina de Slot (Ruleta)
+            const machineIcon = 'slot-machine';
+
+            if (incidents.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state col-span-full bg-white p-8 rounded-lg text-center shadow-md">
+                        <i data-lucide="sparkles" class="w-16 h-16 text-blue-400 mx-auto mb-4"></i>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">¡Misión Cumplida!</h3>
+                        <p class="text-gray-500">No hay incidencias ${type === 'inoperativo' ? 'urgentes' : 'pendientes'} en la cola de asignación.</p>
+                    </div>
+                `;
+                lucide.createIcons();
                 return;
             }
 
+            const htmlContent = incidents.map((incident) => {
+                const reportDate = incident.fecha_reporte || incident.fecha || 'N/A';
+                const reportTime = incident.hora_reporte || incident.hora || 'N/A';
+
+                const fecha = reportDate !== 'N/A' ? new Date(reportDate + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
+                const hora = reportTime.substring(0, 5);
+
+                const selectOptions = technicians.map(tech =>
+                    `<option value="${tech.id_usuario}">${tech.usuario}</option>`
+                ).join('');
+
+                const detallesConcatenados = [
+                    incident.diag_ini ? ` ${incident.diag_ini}` : null,
+                    incident.trab_realizado ? `${incident.trab_realizado}` : null,
+                    incident.resul ? ` ${incident.resul}` : null
+                ].filter(Boolean).join('<br>');
+
+                const detallesHTML = detallesConcatenados || 'Sin detalles de diagnóstico o trabajo previo.';
+
+                return `
+                    <div class="incident-button ${type} ${urgencyClass} p-4 mb-4">
+                        <div class="flex items-center justify-between cursor-pointer" onclick="toggleIncidentDetails(this)">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 ${type === 'inoperativo' ? 'bg-red-100' : 'bg-amber-100'} rounded-full flex items-center justify-center">
+                                    <i data-lucide="${machineIcon}" class="w-5 h-5 ${type === 'inoperativo' ? 'text-red-600' : 'text-amber-600'}"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-gray-900">${incident.sala_mincetur || 'N/A'}</h3>
+                                    <p class="text-sm text-gray-500">${incident.modelo || 'Máquina Winsystems'} - S/N: ${incident.serie || 'N/A'}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="status-badge text-white ${type === 'inoperativo' ? 'bg-red-600' : 'bg-amber-600'} flex items-center gap-1 py-1 px-3 rounded-full shadow-sm text-sm">
+                                    <i data-lucide="${urgencyIcon}" class="w-4 h-4"></i> 
+                                    ${statusText}
+                                </span>
+                                <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 transition-transform"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="incident-details mt-4 hidden">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                <div class="col-span-1">
+                                    <p class="text-sm font-semibold text-gray-500 flex items-center gap-1">
+                                        <i data-lucide="${machineIcon}" class="w-4 h-4 text-blue-600"></i> MÁQUINA
+                                    </p>
+                                    <h3 class="text-lg font-bold text-gray-900">${incident.modelo || 'Máquina Winsystems'}</h3>
+                                    <p class="text-xs text-gray-500">S/N: ${incident.serie || 'N/A'}</p>
+                                </div>
+
+                                <div class="col-span-1">
+                                    <p class="text-sm font-semibold text-gray-500 flex items-center gap-1">
+                                        <i data-lucide="map-pin" class="w-4 h-4"></i> UBICACIÓN
+                                    </p>
+                                    <p class="text-md font-semibold text-gray-800">${incident.sala_mincetur || 'N/A'}</p>
+                                    <p class="text-xs text-gray-500">${incident.distrito || ''}</p>
+                                </div>
+
+                                <div class="col-span-1 text-left md:text-right">
+                                    <span class="status-badge text-white ${type === 'inoperativo' ? 'bg-red-600' : 'bg-amber-600'} flex items-center justify-end md:justify-start gap-1 w-fit ml-auto py-1 px-3 rounded-full shadow-sm">
+                                        <i data-lucide="${urgencyIcon}" class="w-4 h-4"></i> 
+                                        ${statusText}
+                                    </span>
+                                    <p class="text-xs text-gray-400 mt-1">Reportado: ${fecha} ${hora}</p>
+                                    <p class="text-xs text-gray-400">Por: ${incident.tecnico_reporta || 'N/A'}</p>
+                                </div>
+                            </div>
+
+                            <div class="border-t border-gray-100 pt-4 mb-4">
+                                <p class="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+                                    <i data-lucide="file-text" class="w-4 h-4 text-gray-500"></i>
+                                    Historial del Reporte:
+                                </p>
+                                <div class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100 report-details-box whitespace-pre-wrap text-justify">
+                                    ${detallesHTML}
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-4 p-3 bg-blue-50/50 rounded-lg border border-blue-100">
+                                <select class="technician-select flex-grow text-sm" data-incident-id="${incident.id_maquina}">
+                                    <option value="" disabled selected>Selecciona un Técnico para asignar...</option>
+                                    ${selectOptions}
+                                </select>
+                                <button 
+                                    data-incident='${JSON.stringify(incident)}' 
+                                    class="assign-button w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold shadow-md transition-colors"
+                                    disabled
+                                >
+                                    <i data-lucide="send" class="w-4 h-4"></i>
+                                    Asignar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = htmlContent;
+            lucide.createIcons();
+        }
+
+        // --- TOGGLE INCIDENT DETAILS ---
+        function toggleIncidentDetails(element) {
+            const details = element.parentElement.querySelector('.incident-details');
+            const icon = element.querySelector('i[data-lucide="chevron-down"]');
+
+            if (details.classList.contains('hidden')) {
+                details.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                details.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        // --- EXPAND ALL FUNCTIONALITY ---
+        function setupExpandAllButtons() {
+            // Inoperativos
+            document.getElementById('expand-all-inoperativos').addEventListener('click', function () {
+                const container = document.getElementById('inoperativos-container');
+                const isExpanded = this.getAttribute('data-expanded') === 'true';
+
+                if (isExpanded) {
+                    // Collapse all
+                    container.querySelectorAll('.incident-details').forEach(detail => {
+                        detail.classList.add('hidden');
+                    });
+                    container.querySelectorAll('i[data-lucide="chevron-down"]').forEach(icon => {
+                        icon.style.transform = 'rotate(0deg)';
+                    });
+                    this.setAttribute('data-expanded', 'false');
+                    this.innerHTML = '<i data-lucide="chevrons-down" class="w-4 h-4"></i> Expandir Todo';
+                } else {
+                    // Expand all
+                    container.querySelectorAll('.incident-details').forEach(detail => {
+                        detail.classList.remove('hidden');
+                    });
+                    container.querySelectorAll('i[data-lucide="chevron-down"]').forEach(icon => {
+                        icon.style.transform = 'rotate(180deg)';
+                    });
+                    this.setAttribute('data-expanded', 'true');
+                    this.innerHTML = '<i data-lucide="chevrons-up" class="w-4 h-4"></i> Contraer Todo';
+                }
+                lucide.createIcons();
+            });
+
+            // Pendientes
+            document.getElementById('expand-all-pendientes').addEventListener('click', function () {
+                const container = document.getElementById('pendientes-container');
+                const isExpanded = this.getAttribute('data-expanded') === 'true';
+
+                if (isExpanded) {
+                    // Collapse all
+                    container.querySelectorAll('.incident-details').forEach(detail => {
+                        detail.classList.add('hidden');
+                    });
+                    container.querySelectorAll('i[data-lucide="chevron-down"]').forEach(icon => {
+                        icon.style.transform = 'rotate(0deg)';
+                    });
+                    this.setAttribute('data-expanded', 'false');
+                    this.innerHTML = '<i data-lucide="chevrons-down" class="w-4 h-4"></i> Expandir Todo';
+                } else {
+                    // Expand all
+                    container.querySelectorAll('.incident-details').forEach(detail => {
+                        detail.classList.remove('hidden');
+                    });
+                    container.querySelectorAll('i[data-lucide="chevron-down"]').forEach(icon => {
+                        icon.style.transform = 'rotate(180deg)';
+                    });
+                    this.setAttribute('data-expanded', 'true');
+                    this.innerHTML = '<i data-lucide="chevrons-up" class="w-4 h-4"></i> Contraer Todo';
+                }
+                lucide.createIcons();
+            });
+
+            // Asignadas
+            document.getElementById('expand-all-asignadas').addEventListener('click', function () {
+                const container = document.getElementById('asignadas-container');
+                const isExpanded = this.getAttribute('data-expanded') === 'true';
+
+                if (isExpanded) {
+                    // Collapse all
+                    container.querySelectorAll('.incident-details').forEach(detail => {
+                        detail.classList.add('hidden');
+                    });
+                    container.querySelectorAll('i[data-lucide="chevron-down"]').forEach(icon => {
+                        icon.style.transform = 'rotate(0deg)';
+                    });
+                    this.setAttribute('data-expanded', 'false');
+                    this.innerHTML = '<i data-lucide="chevrons-down" class="w-4 h-4"></i> Expandir Todo';
+                } else {
+                    // Expand all
+                    container.querySelectorAll('.incident-details').forEach(detail => {
+                        detail.classList.remove('hidden');
+                    });
+                    container.querySelectorAll('i[data-lucide="chevron-down"]').forEach(icon => {
+                        icon.style.transform = 'rotate(180deg)';
+                    });
+                    this.setAttribute('data-expanded', 'true');
+                    this.innerHTML = '<i data-lucide="chevrons-up" class="w-4 h-4"></i> Contraer Todo';
+                }
+                lucide.createIcons();
+            });
+        }
+
+        function setupAssignmentListeners() {
+            document.querySelectorAll('.incident-button').forEach(card => {
+                const select = card.querySelector('.technician-select');
+                const button = card.querySelector('.assign-button');
+
+                if (select && button) {
+                    select.addEventListener('change', () => {
+                        button.disabled = !select.value;
+                    });
+
+                    button.addEventListener('click', async () => {
+                        const incidentData = JSON.parse(button.dataset.incident);
+                        const technicianId = select.value;
+
+                        if (!technicianId) {
+                            showToast('Por favor, selecciona un técnico.', 'error');
+                            return;
+                        }
+
+                        button.disabled = true;
+                        button.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Asignando...';
+                        lucide.createIcons();
+
+                        await handleAssignment(incidentData, technicianId, card);
+                    });
+                }
+            });
+        }
+
+        // --- ASSIGNMENT HANDLING ---
+        async function handleAssignment(incident, technicianId, cardElement) {
+            const { fecha, hora } = getPeruDateTime();
+
             try {
-                // A. Creamos un nuevo registro en 'trabajos' para el técnico asignado
-
-
+                // 1. Create trabajo record
                 const { data: newTrabajo, error: trabajoError } = await supabaseClient
                     .from('trabajos')
                     .insert({
                         id_sala: incident.id_sala,
                         id_usuario: technicianId,
                         fecha: fecha,
-                        hora_inicio: hora
+                        hora_inicio: hora,
+                        hora_fin: hora // Misma hora para inicio y fin
                     })
                     .select()
                     .single();
 
                 if (trabajoError) throw trabajoError;
 
-                // B. Creamos un nuevo 'detalle' vinculado al nuevo trabajo
+                // 2. Create detalle record
                 const { error: detalleError } = await supabaseClient
                     .from('detalle')
                     .insert({
                         id_trabajo: newTrabajo.id_trabajo,
                         id_maquina: incident.id_maquina,
-                        diag_ini: `Asignado por coordinador. Reporte original: ${incident.diag_ini}`,
-                        estado: 'Pendiente', // El técnico ahora lo ve como 'Pendiente'
+                        diag_ini: `Asignado por coordinador. Reporte original: ${incident.diag_ini || 'Sin descripción inicial.'}. Trabajos previos: ${incident.trab_realizado || 'N/A'}. Resultado anterior: ${incident.resul || 'N/A'}.`,
+                        estado: 'En Progreso',
                         tipo_trabajo: incident.tipo_trabajo,
                     });
 
                 if (detalleError) throw detalleError;
 
-                alert('¡Tarea asignada con éxito!');
-                cardElement.remove(); // Quitamos la tarjeta de la lista de pendientes
+                showToast(`¡Tarea ${incident.serie} asignada con éxito!`);
+
+                // Animar y remover la tarjeta, luego recargar la lista
+                cardElement.style.opacity = '0';
+                cardElement.style.transform = 'translateY(-20px) scale(0.95)';
+                setTimeout(() => {
+                    cardElement.remove();
+                    // Forzar recarga para actualizar contadores y lista
+                    loadAssignmentPage(true);
+                }, 300);
 
             } catch (error) {
                 console.error("Error al asignar la tarea:", error);
-                alert(`Hubo un error al asignar la tarea: ${error.message}`);
+                showToast(`Error al asignar: ${error.message}`, 'error');
+
+                // Re-enable button
+                const button = cardElement.querySelector('.assign-button');
+                button.disabled = false;
+                button.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> Asignar';
+                lucide.createIcons();
             }
         }
 
-
         // --- STARTUP ---
         document.addEventListener('DOMContentLoaded', () => {
-            checkCoordinatorSession(); // Carga la página la primera vez
+            lucide.createIcons();
 
-            // Y después de la carga inicial, nos ponemos a escuchar por nuevos cambios
-            setupRealtimeSubscription(() => {
-                console.log("Recargando la lista de incidencias...");
-                loadAssignmentPage(); // Vuelve a cargar toda la data y la redibuja
+            // Configurar eventos del modal
+            document.getElementById('create-incident-btn').addEventListener('click', openCreateIncidentModal);
+            document.getElementById('close-modal').addEventListener('click', closeCreateIncidentModal);
+            document.getElementById('cancel-create').addEventListener('click', closeCreateIncidentModal);
+
+            // Configurar envío del formulario
+            // Configurar envío del formulario
+            document.getElementById('create-incident-form').addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const formData = {
+                    sala: document.getElementById('sala').value,
+                    serie: document.getElementById('serie').value,
+                    tecnico: document.getElementById('tecnico').value, // Técnico asignado
+                    diagnostico: document.getElementById('diagnostico').value
+                    // Fecha y hora se generarán automáticamente
+                    // Estado será "En Progreso"
+                };
+
+                createNewIncident(formData);
             });
+
+            // 1. Inicia el proceso de autenticación y carga
+            checkCoordinatorSession();
+
+            // 2. Configura la escucha en tiempo real
+            setupRealtimeSubscription((isRealtime) => {
+                setTimeout(() => loadAssignmentPage(isRealtime), 500);
+            });
+
+            // 3. Configura los botones de expandir todo
+            setupExpandAllButtons();
+
+            // 4. Auto-refresh de respaldo
+            setInterval(() => {
+                loadAssignmentPage(false);
+            }, 30000);
         });
     </script>
 </body>
