@@ -100,7 +100,7 @@
 
         <header class="mb-6 flex flex-wrap justify-between items-center">
             <div class="flex items-center space-x-4">
-                <img src="winsystems_logo.png"
+                <img src="https://winsystems.com.pe/wp-content/uploads/2022/01/logo-winsystems-2022.png"
                     alt="Logo de Winsystems" class="h-24">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900">Reporte Detallado de Operaciones</h1>
@@ -108,6 +108,15 @@
                 </div>
             </div>
             <div class="flex items-center space-x-4 mt-4 md:mt-0">
+
+                <div class="flex items-center bg-gray-100 p-1 rounded-full text-sm shadow-inner">
+                    <span id="mode-text-estado" class="px-3 py-1 font-semibold text-gray-800 transition duration-300 select-none">Modo Estado</span>
+                    <label id="mode-switch-label" class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" value="" class="sr-only peer" id="report-mode-switch">
+                        <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                    <span id="mode-text-detallado" class="px-3 py-1 text-gray-500 transition duration-300 select-none">Modo Detallado</span>
+                </div>
                 <a href="./home.html" class="text-blue-600 hover:underline flex items-center gap-2">
                     <i data-lucide="arrow-left"></i> Volver al Inicio
                 </a>
@@ -154,8 +163,8 @@
                         <span id="sala-filter-text" class="block truncate">Todas</span>
                     </button>
                     <div id="sala-filter-options"
-                        class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto">
-                    </div>
+                        class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md text-base ring-1 ring-black ring-opacity-5 overflow-auto pb-1">
+                        </div>
                 </div>
             </div>
             <div id="work-type-filter-container" class="flex-grow">
@@ -166,8 +175,8 @@
                         <span id="work-type-filter-text" class="block truncate">Todos</span>
                     </button>
                     <div id="work-type-filter-options"
-                        class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto">
-                    </div>
+                        class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md text-base ring-1 ring-black ring-opacity-5 overflow-auto pb-1">
+                        </div>
                 </div>
             </div>
             <div id="estado-filter-container" class="flex-grow">
@@ -202,6 +211,7 @@
 
         let allDepartamentos = [], allSalas = [], allWorkTypes = [], allEstados = [];
         let currentRecords = [];
+        let reportMode = 'estado'; // Modalidad por defecto es 'estado'
 
         // --- HELPERS ---
         function debounce(func, delay = 400) {
@@ -215,14 +225,77 @@
         }
         const debouncedApplyFilters = debounce(applyFilters);
 
+        // NUEVO: Función para filtrar opciones en el multiselect
+        function filterOptions(inputId, itemClass) {
+            const input = document.getElementById(inputId);
+            const filter = input.value.toUpperCase();
+            
+            // Selecciona todos los items filtrables con la clase específica
+            const items = document.querySelectorAll(`.${itemClass}`); 
+            
+            items.forEach(item => {
+                // Obtiene el texto del span dentro del label
+                const textValue = item.querySelector('.option-text').textContent || item.querySelector('.option-text').innerText;
+                if (textValue.toUpperCase().indexOf(filter) > -1) {
+                    item.style.display = "flex"; // Muestra el item
+                } else {
+                    item.style.display = "none"; // Oculta el item
+                }
+            });
+        }
+        // --- FIN HELPERS ---
+
+
+        // --- MODE TOGGLE LOGIC ---
+        function handleModeToggle(e) {
+            const isChecked = e.target.checked;
+            reportMode = isChecked ? 'detallado' : 'estado';
+            updateModeSwitchUI(reportMode);
+            debouncedApplyFilters();
+        }
+
+        function updateModeSwitchUI(mode) {
+            const estadoText = document.getElementById('mode-text-estado');
+            const detalladoText = document.getElementById('mode-text-detallado');
+            
+            // Estilos para Modo Estado
+            if (mode === 'estado') {
+                estadoText.classList.add('font-semibold', 'text-gray-800');
+                estadoText.classList.remove('text-gray-500');
+                detalladoText.classList.remove('font-semibold', 'text-gray-800');
+                detalladoText.classList.add('text-gray-500');
+                // Desactiva el filtro de Estado en modo Estado para que solo filtre el último estado
+                document.getElementById('estado-filter-container').classList.remove('opacity-50');
+                document.getElementById('estado-filter-btn').disabled = false;
+            } 
+            // Estilos para Modo Detallado
+            else {
+                detalladoText.classList.add('font-semibold', 'text-gray-800');
+                detalladoText.classList.remove('text-gray-500');
+                estadoText.classList.remove('font-semibold', 'text-gray-800');
+                estadoText.classList.add('text-gray-500');
+                // Activa el filtro de Estado en modo Detallado
+                document.getElementById('estado-filter-container').classList.remove('opacity-50');
+                document.getElementById('estado-filter-btn').disabled = false;
+            }
+        }
+        // --- END MODE TOGGLE LOGIC ---
+
+
         // --- SESSION & INITIALIZATION ---
         async function checkSession() {
-            const { data: { session } } = await supabaseClient.auth.getSession();
+            const {
+                data: {
+                    session
+                }
+            } = await supabaseClient.auth.getSession();
             if (!session) {
                 window.location.href = './index.html';
                 return;
             }
-            const { data: tecnicoData } = await supabaseClient.from('tecnicos').select('cargo').eq('id_usuario', session.user.id).single();
+            const {
+                data: tecnicoData
+            } = await supabaseClient.from('tecnicos').select('cargo').eq('id_usuario', session.user.id).single();
             const userRole = tecnicoData?.cargo?.toLowerCase();
             if (userRole === 'sala') {
                 alert('Acceso denegado.');
@@ -242,6 +315,7 @@
             document.getElementById('export-excel-btn').addEventListener('click', exportToExcel);
             document.getElementById('start-date').addEventListener('change', debouncedApplyFilters);
             document.getElementById('end-date').addEventListener('change', debouncedApplyFilters);
+            document.getElementById('report-mode-switch').addEventListener('change', handleModeToggle);
 
             setDefaultDates();
 
@@ -251,9 +325,9 @@
                 populateWorkTypeFilter(),
                 populateEstadoFilter()
             ]);
-
             await applyFilters();
 
+            updateModeSwitchUI(reportMode);
             document.getElementById('main-content').classList.remove('opacity-0');
             document.getElementById('loading-overlay').style.display = 'none';
             lucide.createIcons();
@@ -261,7 +335,11 @@
             // Realtime Subscription
             const channel = supabaseClient
                 .channel('reporte-detallado')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'detalle' }, (payload) => {
+                .on('postgres_changes', {
+                    event: '*',
+                    schema: 'public',
+                    table: 'detalle'
+                }, (payload) => {
                     console.log('¡Cambio detectado en la base de datos!', payload);
                     debouncedApplyFilters();
                 })
@@ -284,46 +362,149 @@
         }
 
         async function populateDepartamentoFilter() {
-            const { data, error } = await supabaseClient.from('sala').select('departamento');
-            if (error) { console.error('Error fetching departamentos:', error); return; }
-            allDepartamentos = [...new Set(data.map(item => item.departamento).filter(Boolean))].sort().map(d => ({ departamento: d }));
-            createMultiSelect({ container: document.getElementById('departamento-filter-options'), items: allDepartamentos, idField: 'departamento', nameField: 'departamento', checkboxClass: 'departamento-checkbox', allSelectorId: 'select-all-departamentos', updateTextFn: updateDepartamentoFilterText });
+            const {
+                data,
+                error
+            } = await supabaseClient.from('sala').select('departamento');
+            if (error) {
+                console.error('Error fetching departamentos:', error);
+                return;
+            }
+            allDepartamentos = [...new Set(data.map(item => item.departamento).filter(Boolean))].sort().map(d => ({
+                departamento: d
+            }));
+            createMultiSelect({
+                container: document.getElementById('departamento-filter-options'),
+                items: allDepartamentos,
+                idField: 'departamento',
+                nameField: 'departamento',
+                checkboxClass: 'departamento-checkbox',
+                allSelectorId: 'select-all-departamentos',
+                updateTextFn: updateDepartamentoFilterText
+            });
         }
 
         async function populateSalaFilter() {
-            const { data, error } = await supabaseClient.from('sala').select('id_sala, sala_mincetur').order('sala_mincetur');
-            if (error) { console.error('Error fetching salas:', error); return; }
+            const {
+                data,
+                error
+            } = await supabaseClient.from('sala').select('id_sala, sala_mincetur').order('sala_mincetur');
+            if (error) {
+                console.error('Error fetching salas:', error);
+                return;
+            }
             allSalas = data;
-            createMultiSelect({ container: document.getElementById('sala-filter-options'), items: allSalas, idField: 'id_sala', nameField: 'sala_mincetur', checkboxClass: 'sala-checkbox', allSelectorId: 'select-all-salas', updateTextFn: updateSalaFilterText });
+            createMultiSelect({
+                container: document.getElementById('sala-filter-options'),
+                items: allSalas,
+                idField: 'id_sala',
+                nameField: 'sala_mincetur',
+                checkboxClass: 'sala-checkbox',
+                allSelectorId: 'select-all-salas',
+                updateTextFn: updateSalaFilterText,
+                searchable: true // Habilita el buscador
+            });
         }
 
         async function populateWorkTypeFilter() {
-            const { data, error } = await supabaseClient.from('detalle').select('tipo_trabajo');
-            if (error) { console.error('Error fetching work types:', error); return; }
-            allWorkTypes = [...new Set(data.map(item => item.tipo_trabajo).filter(Boolean))].sort().map(wt => ({ tipo_trabajo: wt }));
-            createMultiSelect({ container: document.getElementById('work-type-filter-options'), items: allWorkTypes, idField: 'tipo_trabajo', nameField: 'tipo_trabajo', checkboxClass: 'work-type-checkbox', allSelectorId: 'select-all-work-types', updateTextFn: updateWorkTypeFilterText });
+            const {
+                data,
+                error
+            } = await supabaseClient.from('detalle').select('tipo_trabajo');
+            if (error) {
+                console.error('Error fetching work types:', error);
+                return;
+            }
+            allWorkTypes = [...new Set(data.map(item => item.tipo_trabajo).filter(Boolean))].sort().map(wt => ({
+                tipo_trabajo: wt
+            }));
+            createMultiSelect({
+                container: document.getElementById('work-type-filter-options'),
+                items: allWorkTypes,
+                idField: 'tipo_trabajo',
+                nameField: 'tipo_trabajo',
+                checkboxClass: 'work-type-checkbox',
+                allSelectorId: 'select-all-work-types',
+                updateTextFn: updateWorkTypeFilterText,
+                searchable: true // Habilita el buscador
+            });
         }
 
         async function populateEstadoFilter() {
-            const { data, error } = await supabaseClient.from('detalle').select('estado');
-            if (error) { console.error('Error fetching estados:', error); return; }
-            allEstados = [...new Set(data.map(item => item.estado).filter(Boolean))].sort().map(st => ({ estado: st }));
-            createMultiSelect({ container: document.getElementById('estado-filter-options'), items: allEstados, idField: 'estado', nameField: 'estado', checkboxClass: 'estado-checkbox', allSelectorId: 'select-all-estados', updateTextFn: updateEstadoFilterText });
+            const {
+                data,
+                error
+            } = await supabaseClient.from('detalle').select('estado');
+            if (error) {
+                console.error('Error fetching estados:', error);
+                return;
+            }
+            allEstados = [...new Set(data.map(item => item.estado).filter(Boolean))].sort().map(st => ({
+                estado: st
+            }));
+            createMultiSelect({
+                container: document.getElementById('estado-filter-options'),
+                items: allEstados,
+                idField: 'estado',
+                nameField: 'estado',
+                checkboxClass: 'estado-checkbox',
+                allSelectorId: 'select-all-estados',
+                updateTextFn: updateEstadoFilterText
+            });
         }
 
-        // --- MULTI-SELECT UI LOGIC ---
-        function createMultiSelect({ container, items, idField, nameField, checkboxClass, allSelectorId, updateTextFn }) {
+        // --- MULTI-SELECT UI LOGIC (ACTUALIZADO) ---
+        function createMultiSelect({
+            container,
+            items,
+            idField,
+            nameField,
+            checkboxClass,
+            allSelectorId,
+            updateTextFn,
+            searchable = false // NUEVO parámetro
+        }) {
             container.innerHTML = '';
+            
+            const itemClass = `${checkboxClass}-item`; // Clase única para los elementos a filtrar
+            const searchId = `${checkboxClass}-search-input`; // ID único para el input de búsqueda
+
+            if (searchable) {
+                // Agregar input de búsqueda si se requiere
+                const searchInputHtml = `
+                    <div class="px-3 pt-2 pb-1 sticky top-0 bg-white z-20 shadow-sm border-b border-gray-200">
+                        <input type="text" id="${searchId}" placeholder="Buscar..." 
+                            class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 p-1.5 text-sm">
+                    </div>
+                `;
+                container.insertAdjacentHTML('afterbegin', searchInputHtml);
+                
+                // Event listener para el filtrado
+                document.getElementById(searchId).addEventListener('keyup', () => filterOptions(searchId, itemClass));
+            }
+
+
+            // "Todos" option
             const allOptionLabel = document.createElement('label');
-            allOptionLabel.className = 'flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer font-semibold';
-            allOptionLabel.innerHTML = `<input type="checkbox" id="${allSelectorId}" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3"> Todos`;
+            allOptionLabel.className =
+                `flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer font-semibold ${itemClass}`;
+            allOptionLabel.innerHTML =
+                `<input type="checkbox" id="${allSelectorId}" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3"> <span class="option-text">Todos</span>`;
             container.appendChild(allOptionLabel);
+
+
+            // Item options
             items.forEach(item => {
                 const label = document.createElement('label');
-                label.className = 'flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer';
-                label.innerHTML = `<input type="checkbox" data-id="${item[idField]}" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3 ${checkboxClass}"> ${item[nameField]}`;
+                // Usamos la clase itemClass para identificar los elementos a filtrar
+                label.className =
+                    `flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer ${itemClass}`;
+                label.innerHTML =
+                    `<input type="checkbox" data-id="${item[idField]}" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3 ${checkboxClass}"> <span class="option-text">${item[nameField]}</span>`;
                 container.appendChild(label);
             });
+
+
             document.getElementById(allSelectorId).addEventListener('change', (e) => {
                 container.querySelectorAll(`.${checkboxClass}`).forEach(cb => cb.checked = e.target.checked);
                 updateTextFn();
@@ -334,8 +515,11 @@
                 debouncedApplyFilters();
             });
         }
+        // --- FIN MULTI-SELECT UI LOGIC ---
 
-        const getSelectedIds = (selector) => Array.from(document.querySelectorAll(selector + ':checked')).map(cb => cb.dataset.id);
+
+        const getSelectedIds = (selector) => Array.from(document.querySelectorAll(selector + ':checked')).map(cb => cb
+            .dataset.id);
 
         function updateFilterText(textEl, selector, total, singleText, pluralText, allText) {
             const selectedCheckboxes = document.querySelectorAll(selector + ':checked');
@@ -343,21 +527,40 @@
             if (count === 0 || count === total) {
                 textEl.textContent = allText;
             } else if (count === 1) {
-                textEl.textContent = selectedCheckboxes[0].parentElement.textContent.trim();
+                textEl.textContent = selectedCheckboxes[0].parentElement.textContent.trim().replace('Todos', singleText);
             } else {
                 textEl.textContent = `${count} ${pluralText} seleccionados`;
             }
         }
 
-        function updateDepartamentoFilterText() { updateFilterText(document.getElementById('departamento-filter-text'), '.departamento-checkbox', allDepartamentos.length, 'dpto.', 'dptos.', 'Todos los departamentos'); }
-        function updateSalaFilterText() { updateFilterText(document.getElementById('sala-filter-text'), '.sala-checkbox', allSalas.length, 'sala', 'salas', 'Todas las salas'); }
-        function updateWorkTypeFilterText() { updateFilterText(document.getElementById('work-type-filter-text'), '.work-type-checkbox', allWorkTypes.length, 'tipo', 'tipos', 'Todos los tipos'); }
-        function updateEstadoFilterText() { updateFilterText(document.getElementById('estado-filter-text'), '.estado-checkbox', allEstados.length, 'estado', 'estados', 'Todos los estados'); }
+        function updateDepartamentoFilterText() {
+            updateFilterText(document.getElementById('departamento-filter-text'), '.departamento-checkbox',
+                allDepartamentos.length, 'dpto.', 'dptos.', 'Todos los departamentos');
+        }
 
-        document.getElementById('departamento-filter-btn').addEventListener('click', () => document.getElementById('departamento-filter-options').classList.toggle('hidden'));
-        document.getElementById('sala-filter-btn').addEventListener('click', () => document.getElementById('sala-filter-options').classList.toggle('hidden'));
-        document.getElementById('work-type-filter-btn').addEventListener('click', () => document.getElementById('work-type-filter-options').classList.toggle('hidden'));
-        document.getElementById('estado-filter-btn').addEventListener('click', () => document.getElementById('estado-filter-options').classList.toggle('hidden'));
+        function updateSalaFilterText() {
+            updateFilterText(document.getElementById('sala-filter-text'), '.sala-checkbox', allSalas.length,
+                'sala', 'salas', 'Todas las salas');
+        }
+
+        function updateWorkTypeFilterText() {
+            updateFilterText(document.getElementById('work-type-filter-text'), '.work-type-checkbox',
+                allWorkTypes.length, 'tipo', 'tipos', 'Todos los tipos');
+        }
+
+        function updateEstadoFilterText() {
+            updateFilterText(document.getElementById('estado-filter-text'), '.estado-checkbox', allEstados.length,
+                'estado', 'estados', 'Todos los estados');
+        }
+
+        document.getElementById('departamento-filter-btn').addEventListener('click', () => document.getElementById(
+            'departamento-filter-options').classList.toggle('hidden'));
+        document.getElementById('sala-filter-btn').addEventListener('click', () => document.getElementById(
+            'sala-filter-options').classList.toggle('hidden'));
+        document.getElementById('work-type-filter-btn').addEventListener('click', () => document.getElementById(
+            'work-type-filter-options').classList.toggle('hidden'));
+        document.getElementById('estado-filter-btn').addEventListener('click', () => document.getElementById(
+            'estado-filter-options').classList.toggle('hidden'));
 
         // --- DATA FETCHING & RENDERING ---
         async function applyFilters() {
@@ -376,15 +579,7 @@
 
             let query = supabaseClient
                 .from('detalle')
-                .select(`
-                    estado, diag_ini, trab_realizado, resul, tipo_trabajo,
-                    maquinas!inner(serie, modelo, gabinete),
-                    trabajos!inner(
-                        fecha, 
-                        tecnicos(usuario, correo, cel, cargo),
-                        sala!inner(id_sala, sala_mincetur, empresa, departamento, provincia, distrito)
-                    )
-                `)
+                .select('estado, diag_ini, trab_realizado, resul, tipo_trabajo, maquinas!inner(serie, modelo, gabinete), trabajos!inner(fecha, tecnicos(usuario, correo, cel, cargo), sala!inner(id_sala, sala_mincetur, empresa, departamento, provincia, distrito))')
                 .gte('trabajos.fecha', startDate)
                 .lte('trabajos.fecha', endDate);
 
@@ -392,10 +587,18 @@
             if (salas.length > 0) query = query.in('trabajos.sala.id_sala', salas);
             if (workTypes.length > 0) query = query.in('tipo_trabajo', workTypes);
 
-            const { data, error } = await query.order('fecha', { foreignTable: 'trabajos', ascending: false })
-                .limit(10000);
+            const {
+                data,
+                error
+            } = await query.order('fecha', {
+                foreignTable: 'trabajos',
+                ascending: false
+            })
+            .limit(10000);
+            
             if (error) {
                 console.error("Error fetching report data:", error);
+                document.getElementById('reporte-dashboard').innerHTML = `<p class="text-red-600 text-center py-8">Error cargando el reporte detallado: ${JSON.stringify(error)}</p>`;
                 return [];
             }
             return data;
@@ -414,7 +617,9 @@
                 'Gabinete': item.maquinas?.gabinete || 'N/A',
                 'Sala': item.trabajos.sala?.sala_mincetur || 'N/A',
                 'Empresa': item.trabajos.sala?.empresa || 'N/A',
-                'Ubicación': [item.trabajos.sala?.departamento, item.trabajos.sala?.provincia, item.trabajos.sala?.distrito].filter(Boolean).join(', '),
+                'Ubicación': [item.trabajos.sala?.departamento, item.trabajos.sala?.provincia, item.trabajos.sala
+                    ?.distrito
+                ].filter(Boolean).join(', '),
                 'Tipo de Trabajo': item.tipo_trabajo,
                 'Diagnóstico Inicial': item.diag_ini,
                 'Trabajo Realizado': item.trab_realizado,
@@ -434,68 +639,95 @@
             const tableBody = table.querySelector('tbody');
             const selectedEstados = getSelectedIds('.estado-checkbox');
 
-            // --- LÍNEAS DE DIAGNÓSTICO ---
-            console.clear(); // Limpia la consola para ver solo los mensajes nuevos
-            console.log(" PASO 1: Datos crudos recibidos de la base de datos ", data);
-            // --- FIN DE LÍNEAS DE DIAGNÓSTICO ---
-
-
-            tableHead.innerHTML = `<tr><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Slot/Ruleta</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Serie</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sala</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Incidencia</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Técnico Asignado</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Razón Social</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ubicación</th></tr>`;
+            tableHead.innerHTML =
+                `<tr><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Slot/Ruleta</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Serie</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sala</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Incidencia</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Técnico Asignado</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Razón Social</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ubicación</th></tr>`;
             tableBody.innerHTML = '';
 
             if (!data || data.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-gray-500">No se encontraron datos para los filtros seleccionados.</td></tr>`;
+                tableBody.innerHTML =
+                    `<tr><td colspan="9" class="text-center py-4 text-gray-500">No se encontraron datos para los filtros seleccionados.</td></tr>`;
                 return;
             }
 
-            let latestRecords = Object.values(data.reduce((acc, record) => {
-                const serie = record.maquinas?.serie;
-                if (serie) {
-                    if (!acc[serie] || new Date(record.trabajos.fecha) > new Date(acc[serie].trabajos.fecha)) {
-                        acc[serie] = record;
+            let recordsToDisplay = [];
+            
+            if (reportMode === 'estado') {
+                // 1. MODALIDAD ESTADO: Mostrar el último estado de cada máquina
+                
+                // Agrupar por serie y tomar el registro más reciente (último estado)
+                let latestRecords = Object.values(data.reduce((acc, record) => {
+                    const serie = record.maquinas?.serie;
+                    if (serie) {
+                        // Comprobar si el registro es más reciente que el actual para esa serie
+                        if (!acc[serie] || new Date(record.trabajos.fecha) > new Date(acc[serie].trabajos.fecha)) {
+                            acc[serie] = record;
+                        }
                     }
+                    return acc;
+                }, {}));
+                
+                // Aplicar filtro de Estado sobre el último estado
+                if (selectedEstados.length > 0) {
+                    recordsToDisplay = latestRecords.filter(record => selectedEstados.includes(record.estado));
+                } else {
+                    recordsToDisplay = latestRecords;
                 }
-                return acc;
-            }, {}));
 
-            // --- LÍNEAS DE DIAGNÓSTICO ---
-            console.log(" PASO 2: Últimos registros calculados (ANTES de filtrar por estado) ", latestRecords);
-            console.log(" PASO 3: Filtro de estado seleccionado por el usuario ", selectedEstados);
-            // --- FIN DE LÍNEAS DE DIAGNÓSTICO ---
-
-            if (selectedEstados.length > 0) {
-                latestRecords = latestRecords.filter(record => selectedEstados.includes(record.estado));
+            } else { // reportMode === 'detallado'
+                // 2. MODALIDAD DETALLADO: Mostrar TODOS los reportes
+                
+                // Aplicar filtro de Estado sobre todos los registros
+                if (selectedEstados.length > 0) {
+                    recordsToDisplay = data.filter(record => selectedEstados.includes(record.estado));
+                } else {
+                    recordsToDisplay = data;
+                }
             }
+            
+            // Ordenar la lista final (más reciente primero)
+            recordsToDisplay.sort((a, b) => new Date(b.trabajos.fecha) - new Date(a.trabajos.fecha));
+            currentRecords = recordsToDisplay; // Actualizar registros para exportación
 
-            // --- LÍNEAS DE DIAGNÓSTICO ---
-            console.log(" PASO 4: Últimos registros (DESPUÉS de filtrar por estado) ", latestRecords);
-            // --- FIN DE LÍNEAS DE DIAGNÓSTICO ---
-
-            latestRecords.sort((a, b) => new Date(b.trabajos.fecha) - new Date(a.trabajos.fecha));
-            currentRecords = latestRecords;
-
-            if (latestRecords.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-gray-500">No se encontraron máquinas con el estado final seleccionado.</td></tr>`;
+            if (recordsToDisplay.length === 0) {
+                const message = reportMode === 'estado' 
+                    ? 'No se encontraron máquinas con el estado final seleccionado.' 
+                    : 'No se encontraron reportes con el estado seleccionado.';
+                tableBody.innerHTML =
+                    `<tr><td colspan="9" class="text-center py-4 text-gray-500">${message}</td></tr>`;
                 return;
             }
 
-            latestRecords.forEach(item => {
+            recordsToDisplay.forEach(item => {
                 const tr = document.createElement('tr');
-                tr.className = { 'Operativo': 'status-operativo', 'Inoperativo': 'status-inoperativo', 'Pendiente': 'status-pendiente' }[item.estado] || '';
-                const fecha = new Date(item.trabajos.fecha + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }).replace('.', '');
-                const modeloGabinete = [item.maquinas?.modelo, item.maquinas?.gabinete].filter(Boolean).join(' / ');
+                tr.className = {
+                    'Operativo': 'status-operativo',
+                    'Inoperativo': 'status-inoperativo',
+                    'Pendiente': 'status-pendiente'
+                }[item.estado] || '';
+                const fecha = new Date(item.trabajos.fecha + 'T00:00:00').toLocaleDateString('es-ES', {
+                    day: '2-digit',
+                    month: 'short'
+                }).replace('.', '');
+                const modeloGabinete = [item.maquinas?.modelo, item.maquinas?.gabinete].filter(Boolean).join(
+                    ' / ');
                 const serie = item.maquinas?.serie || 'N/A';
                 const sala = item.trabajos.sala?.sala_mincetur || 'N/A';
                 const tipoTrabajo = item.tipo_trabajo || 'No especificado';
-                const detalleCompleto = [item.diag_ini, item.trab_realizado, item.resul].filter(Boolean).join('<br>');
-                const incidenciaHTML = `<div class="tooltip-container">${tipoTrabajo}<div class="tooltip-bubble">${detalleCompleto || 'Sin detalles.'}</div></div>`;
+                const detalleCompleto = [item.diag_ini, item.trab_realizado, item.resul].filter(Boolean).join(
+                    '<br>');
+                const incidenciaHTML = `<div class="tooltip-container">${tipoTrabajo}<div class="tooltip-bubble">${detalleCompleto ||
+                    'Sin detalles.'}</div></div>`;
                 const tecnico = item.trabajos.tecnicos;
                 let tecnicoHTML = `<span class="text-xs text-gray-400">No asignado</span>`;
                 if (tecnico) {
-                    tecnicoHTML = `<div class="font-medium text-gray-900">${tecnico.usuario}</div><div class="text-xs text-gray-500">${tecnico.correo || ''}</div><div class="text-xs text-gray-500">${tecnico.cel || ''}</div>`;
+                    tecnicoHTML =
+                        `<div class="font-medium text-gray-900">${tecnico.usuario}</div><div class="text-xs text-gray-500">${tecnico.correo ||
+                    ''}</div><div class="text-xs text-gray-500">${tecnico.cel || ''}</div>`;
                 }
                 const razonSocial = item.trabajos.sala?.empresa || 'N/A';
-                const ubicacion = [item.trabajos.sala?.departamento, item.trabajos.sala?.provincia, item.trabajos.sala?.distrito].filter(Boolean).join(', ');
+                const ubicacion = [item.trabajos.sala?.departamento, item.trabajos.sala?.provincia, item.trabajos
+                    .sala?.distrito
+                ].filter(Boolean).join(', ');
 
                 tr.innerHTML = `
                     <td class="px-4 py-4 whitespace-nowrap text-sm">${fecha}</td>
@@ -519,4 +751,3 @@
 </body>
 
 </html>
-
