@@ -19,6 +19,7 @@
             --ws-dark: #1e293b;
             --ws-red: #dc2626;
             --ws-amber: #f59e0b;
+            --ws-success: #10b981;
         }
 
         /* FIX FINAL para el indicador de Supabase Realtime */
@@ -167,6 +168,7 @@
             opacity: 0;
             visibility: hidden;
             transition: all 0.3s ease;
+            backdrop-filter: blur(8px);
         }
 
         .modal-overlay.active {
@@ -376,17 +378,20 @@
                 padding: 0.75rem 1rem;
                 font-size: 0.875rem;
             }
-
+            
             .tab-content {
                 padding: 1rem;
             }
-
+            
             .incident-header {
                 padding: 1rem;
             }
-
+            
             .incident-details {
                 padding: 0 1rem 1rem;
+            }
+            .two-columns {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -423,11 +428,11 @@
             transition: all 0.3s;
         }
 
-        .availability-toggle input:checked+.toggle-slider {
+        .availability-toggle input:checked + .toggle-slider {
             background-color: #10b981;
         }
 
-        .availability-toggle input:checked+.toggle-slider::before {
+        .availability-toggle input:checked + .toggle-slider::before {
             transform: translateX(20px);
         }
 
@@ -443,7 +448,7 @@
                 grid-template-columns: 1fr;
             }
         }
-
+        
         /* Animación de puntos de carga */
         .loading-dots::after {
             content: ' .';
@@ -451,24 +456,47 @@
             animation-delay: .2s;
             display: inline-block;
         }
-
         @keyframes dots {
-            0% {
-                content: ' .';
-            }
-
-            33% {
-                content: ' ..';
-            }
-
-            66% {
-                content: ' ...';
-            }
-
-            100% {
-                content: ' .';
-            }
+            0% { content: ' .'; }
+            33% { content: ' ..'; }
+            66% { content: ' ...'; }
+            100% { content: ' .'; }
         }
+         /* Badge de estado (de la versión anterior) */
+         .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+         }
+        .status-badge.operativo { background: #dcfce7; color: #166534; }
+        .status-badge.inoperativo { background: #fecaca; color: #dc2626; }
+        .status-badge.pendiente { background: #fef3c7; color: #d97706; }
+        .status-badge.en-progreso { background: #dbeafe; color: #1e40af; }
+
+         /* Toast Notification (de la versión anterior) */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--ws-success);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 300px;
+        }
+        .toast.show { transform: translateX(0); }
+        .toast.error { background: var(--ws-error); }
+        .toast.warning { background: var(--ws-warning); }
     </style>
 </head>
 
@@ -509,27 +537,23 @@
                             <input type="text" id="sala" class="form-input" placeholder="Ingrese el nombre de la sala"
                                 required>
                         </div>
-
                         <div class="form-group">
                             <label for="serie" class="form-label">Serie de la Máquina</label>
                             <input type="text" id="serie" class="form-input"
                                 placeholder="Ingrese la serie de la máquina" required>
                         </div>
-
                         <div class="form-group">
                             <label for="tecnico" class="form-label">Técnico Asignado</label>
                             <select id="tecnico" class="form-input" required>
                                 <option value="" disabled selected>Seleccione un técnico</option>
                             </select>
                         </div>
-
                         <div class="form-group">
                             <label for="diagnostico" class="form-label">Diagnóstico Inicial</label>
                             <textarea id="diagnostico" class="form-input form-textarea"
                                 placeholder="Describa el problema o diagnóstico inicial" required></textarea>
                         </div>
                     </div>
-
                     <div class="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-200">
                         <button type="button" id="cancel-create"
                             class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
@@ -585,26 +609,22 @@
                 <button class="tab-button active" data-tab="urgentes">
                     <i data-lucide="alert-triangle" class="w-4 h-4"></i>
                     Urgentes
-                    <span id="urgentes-count"
-                        class="ml-1 bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-xs">0</span>
+                    <span id="urgentes-count" class="ml-1 bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-xs">0</span>
                 </button>
                 <button class="tab-button" data-tab="pendientes">
                     <i data-lucide="clock" class="w-4 h-4"></i>
                     Pendientes
-                    <span id="pendientes-count"
-                        class="ml-1 bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-xs">0</span>
+                    <span id="pendientes-count" class="ml-1 bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-xs">0</span>
                 </button>
                 <button class="tab-button" data-tab="asignadas">
                     <i data-lucide="user-check" class="w-4 h-4"></i>
                     Asignadas
-                    <span id="asignadas-count"
-                        class="ml-1 bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs">0</span>
+                    <span id="asignadas-count" class="ml-1 bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs">0</span>
                 </button>
                 <button class="tab-button" data-tab="tecnicos">
                     <i data-lucide="users" class="w-4 h-4"></i>
                     Técnicos
-                    <span id="tecnicos-count"
-                        class="ml-1 bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs">0</span>
+                    <span id="tecnicos-count" class="ml-1 bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs">0</span>
                 </button>
             </div>
 
@@ -617,11 +637,10 @@
                 </div>
                 <div class="search-container">
                     <i data-lucide="search" class="search-icon w-4 h-4"></i>
-                    <input type="text" id="search-urgentes" class="search-input"
-                        placeholder="Buscar en incidencias urgentes...">
+                    <input type="text" id="search-urgentes" class="search-input" placeholder="Buscar en incidencias urgentes...">
                 </div>
                 <div id="urgentes-container" class="two-columns">
-                </div>
+                    </div>
             </div>
 
             <div class="tab-content" id="pendientes-tab">
@@ -633,11 +652,10 @@
                 </div>
                 <div class="search-container">
                     <i data-lucide="search" class="search-icon w-4 h-4"></i>
-                    <input type="text" id="search-pendientes" class="search-input"
-                        placeholder="Buscar en incidencias pendientes...">
+                    <input type="text" id="search-pendientes" class="search-input" placeholder="Buscar en incidencias pendientes...">
                 </div>
                 <div id="pendientes-container" class="two-columns">
-                </div>
+                    </div>
             </div>
 
             <div class="tab-content" id="asignadas-tab">
@@ -649,11 +667,10 @@
                 </div>
                 <div class="search-container">
                     <i data-lucide="search" class="search-icon w-4 h-4"></i>
-                    <input type="text" id="search-asignadas" class="search-input"
-                        placeholder="Buscar en incidencias asignadas...">
+                    <input type="text" id="search-asignadas" class="search-input" placeholder="Buscar en incidencias asignadas...">
                 </div>
                 <div id="asignadas-container" class="two-columns">
-                </div>
+                    </div>
             </div>
 
             <div class="tab-content" id="tecnicos-tab">
@@ -667,9 +684,8 @@
                     <i data-lucide="search" class="search-icon w-4 h-4"></i>
                     <input type="text" id="search-tecnicos" class="search-input" placeholder="Buscar técnicos...">
                 </div>
-                <div id="tecnicos-container"
-                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                </div>
+                <div id="tecnicos-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    </div>
             </div>
         </div>
 
@@ -685,268 +701,71 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let realtimeSubscription = null;
-        let lastSuccessfulIncidents = [];
+        let lastSuccessfulIncidents = []; // Almacenará TODOS los estados
         let availableTechnicians = [];
         let currentTab = 'urgentes';
 
         // --- UTILITY FUNCTIONS ---
-        function getPeruDateTime() {
-            const ahora = new Date();
-            const timeZone = 'America/Lima';
+        function getPeruDateTime() { const ahora = new Date(); const timeZone = 'America/Lima'; const dateFormatter = new Intl.DateTimeFormat('es-PE', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }); const parts = dateFormatter.formatToParts(ahora); const day = parts.find(p => p.type === 'day').value; const month = parts.find(p => p.type === 'month').value; const year = parts.find(p => p.type === 'year').value; const fecha = `${year}-${month}-${day}`; const hora = ahora.toLocaleTimeString('es-PE', { timeZone, hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }); return { fecha, hora }; }
+        function showToast(message, type = 'success') { const toast = document.getElementById('toast'); const toastMessage = document.getElementById('toast-message'); if (!toast) { console.error("Error: Elemento #toast no encontrado."); return; } const toastIcon = toast.querySelector('i'); if (!toastIcon) { console.error("Error: Elemento <i> dentro de #toast no encontrado."); return; } if (type === 'error') { toast.classList.remove('bg-green-500'); toast.classList.add('bg-red-500'); toastIcon.setAttribute('data-lucide', 'x-circle'); } else { toast.classList.remove('bg-red-500'); toast.classList.add('bg-green-500'); toastIcon.setAttribute('data-lucide', 'check-circle'); } lucide.createIcons(); toastMessage.textContent = message; toast.classList.remove('translate-x-full'); setTimeout(() => { toast.classList.add('translate-x-full'); }, 3000); }
+        function updateLastUpdateTime() { const now = new Date(); document.getElementById('last-update').textContent = now.toLocaleTimeString('es-PE'); }
+        function parseLimaDateTime(dateStr, timeStr) { if (!dateStr || !timeStr) return null; const limaOffset = '-05:00'; try { return new Date(`${dateStr}T${timeStr}${limaOffset}`); } catch (e) { console.warn("Fecha/hora no válida:", dateStr, timeStr); return null; } }
+        function timeAgo(dateString, timeString) { if (!dateString || !timeString) return 'fecha desconocida'; const incidentDate = parseLimaDateTime(dateString, timeString); if (!incidentDate) return 'fecha inválida'; const now = new Date(); const seconds = Math.floor((now - incidentDate) / 1000); if (isNaN(seconds) || seconds < 0) return 'recién'; let interval = seconds / 31536000; if (interval > 1) return `hace ${Math.floor(interval)} años`; interval = seconds / 2592000; if (interval > 1) return `hace ${Math.floor(interval)} mes(es)`; interval = seconds / 86400; if (interval > 1) return `hace ${Math.floor(interval)} días`; interval = seconds / 3600; if (interval > 1) return `hace ${Math.floor(interval)} h`; interval = seconds / 60; if (interval > 1) return `hace ${Math.floor(interval)} min`; return `hace ${Math.floor(seconds)} seg`; }
 
-            const dateFormatter = new Intl.DateTimeFormat('es-PE', {
-                timeZone,
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit'
-            });
-            const parts = dateFormatter.formatToParts(ahora);
-            const day = parts.find(p => p.type === 'day').value;
-            const month = parts.find(p => p.type === 'month').value;
-            const year = parts.find(p => p.type === 'year').value;
-            const fecha = `${year}-${month}-${day}`;
-
-            const hora = ahora.toLocaleTimeString('es-PE', {
-                timeZone,
-                hour12: false,
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
-
-            return { fecha, hora };
-        }
-
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            const toastMessage = document.getElementById('toast-message');
-
-            if (!toast) {
-                console.error("Error: Elemento #toast no encontrado.");
-                return;
-            }
-
-            const toastIcon = toast.querySelector('i');
-
-            if (!toastIcon) {
-                console.error("Error: Elemento <i> dentro de #toast no encontrado.");
-                return;
-            }
-
-            if (type === 'error') {
-                toast.classList.remove('bg-green-500');
-                toast.classList.add('bg-red-500');
-                toastIcon.setAttribute('data-lucide', 'x-circle');
-            } else {
-                toast.classList.remove('bg-red-500');
-                toast.classList.add('bg-green-500');
-                toastIcon.setAttribute('data-lucide', 'check-circle');
-            }
-            lucide.createIcons();
-
-            toastMessage.textContent = message;
-            toast.classList.remove('translate-x-full');
-
-            setTimeout(() => {
-                toast.classList.add('translate-x-full');
-            }, 3000);
-        }
-
-        function updateLastUpdateTime() {
-            const now = new Date();
-            document.getElementById('last-update').textContent = now.toLocaleTimeString('es-PE');
-        }
-
-        /**
-         * Parsea una fecha y hora (de Lima) a un objeto Date de JS,
-         * forzando la zona horaria correcta.
-         */
-        function parseLimaDateTime(dateStr, timeStr) {
-            if (!dateStr || !timeStr) return null;
-            // Asumimos que la BBDD guarda en -05:00 (Lima)
-            const limaOffset = '-05:00';
-            try {
-                return new Date(`${dateStr}T${timeStr}${limaOffset}`);
-            } catch (e) {
-                console.warn("Fecha/hora no válida:", dateStr, timeStr);
-                return null;
-            }
-        }
-
-        /**
-         * Devuelve una cadena de tiempo relativo (ej. "hace 5 min")
-         */
-        function timeAgo(dateString, timeString) {
-            if (!dateString || !timeString) return 'fecha desconocida';
-
-            const incidentDate = parseLimaDateTime(dateString, timeString);
-            if (!incidentDate) return 'fecha inválida';
-
-            const now = new Date();
-            const seconds = Math.floor((now - incidentDate) / 1000);
-
-            if (isNaN(seconds) || seconds < 0) return 'recién';
-
-            let interval = seconds / 31536000; // años
-            if (interval > 1) return `hace ${Math.floor(interval)} años`;
-            interval = seconds / 2592000; // meses
-            if (interval > 1) return `hace ${Math.floor(interval)} mes(es)`;
-            interval = seconds / 86400; // días
-            if (interval > 1) return `hace ${Math.floor(interval)} días`;
-            interval = seconds / 3600; // horas
-            if (interval > 1) return `hace ${Math.floor(interval)} h`;
-            interval = seconds / 60; // minutos
-            if (interval > 1) return `hace ${Math.floor(interval)} min`;
-
-            return `hace ${Math.floor(seconds)} seg`;
-        }
 
         // --- TAB MANAGEMENT ---
         function switchTab(tabName) {
-            // Actualizar botones de pestaña
-            document.querySelectorAll('.tab-button').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-
-            // Actualizar contenido de pestaña
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            document.getElementById(`${tabName}-tab`).classList.add('active');
-
-            currentTab = tabName;
+             document.querySelectorAll('.tab-button').forEach(btn => { btn.classList.remove('active'); }); document.querySelector(`[data-tab="${tabName}"]`).classList.add('active'); document.querySelectorAll('.tab-content').forEach(content => { content.classList.remove('active'); }); document.getElementById(`${tabName}-tab`).classList.add('active'); currentTab = tabName;
         }
 
         // --- MODAL FUNCTIONS ---
-        function openCreateIncidentModal() {
-            const modal = document.getElementById('create-incident-modal');
-            modal.classList.add('active');
-            loadTechniciansForModal();
-            document.getElementById('create-incident-form').reset();
-        }
+        function openCreateIncidentModal() { const modal = document.getElementById('create-incident-modal'); modal.classList.add('active'); loadTechniciansForModal(); document.getElementById('create-incident-form').reset(); }
+        function closeCreateIncidentModal() { const modal = document.getElementById('create-incident-modal'); modal.classList.remove('active'); document.getElementById('create-incident-form').reset(); }
+        function loadTechniciansForModal() { const select = document.getElementById('tecnico'); select.innerHTML = '<option value="" disabled selected>Seleccione un técnico</option>'; if (availableTechnicians.length === 0) { select.innerHTML += '<option value="" disabled>No hay técnicos disponibles</option>'; return; } const availableTechs = availableTechnicians.filter(tech => tech.disponible !== false); availableTechs.forEach(tech => { const option = document.createElement('option'); option.value = tech.id_usuario; option.textContent = tech.usuario; select.appendChild(option); }); }
 
-        function closeCreateIncidentModal() {
-            const modal = document.getElementById('create-incident-modal');
-            modal.classList.remove('active');
-            document.getElementById('create-incident-form').reset();
-        }
-
-        function loadTechniciansForModal() {
-            const select = document.getElementById('tecnico');
-            select.innerHTML = '<option value="" disabled selected>Seleccione un técnico</option>';
-
-            if (availableTechnicians.length === 0) {
-                select.innerHTML += '<option value="" disabled>No hay técnicos disponibles</option>';
-                return;
-            }
-
-            // Filtrar solo técnicos disponibles
-            const availableTechs = availableTechnicians.filter(tech => tech.disponible !== false);
-
-            availableTechs.forEach(tech => {
-                const option = document.createElement('option');
-                option.value = tech.id_usuario;
-                option.textContent = tech.usuario;
-                select.appendChild(option);
-            });
-        }
 
         // --- SESSION MANAGEMENT ---
         async function checkCoordinatorSession() {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) {
-                window.location.href = './index.html';
-                return;
-            }
-
-            const { data: tecnicoData, error } = await supabaseClient
-                .from('tecnicos')
-                .select('cargo, usuario')
-                .eq('id_usuario', session.user.id)
-                .single();
-
-            if (error || !tecnicoData || (tecnicoData.cargo !== 'Coordinador' && tecnicoData.cargo !== 'admin')) {
-                window.location.href = './dashboard.html';
-                return;
-            }
-
-            await loadAssignmentPage(false);
+             const { data: { session } } = await supabaseClient.auth.getSession(); if (!session) { window.location.href = './index.html'; return; } const { data: tecnicoData, error } = await supabaseClient.from('tecnicos').select('cargo, usuario').eq('id_usuario', session.user.id).single(); if (error || !tecnicoData || (tecnicoData.cargo !== 'Coordinador' && tecnicoData.cargo !== 'admin')) { window.location.href = './dashboard.html'; return; } await loadAssignmentPage(false);
         }
 
+        // --- REALTIME SUBSCRIPTION ---
         function setupRealtimeSubscription(callback) {
-            if (realtimeSubscription) {
-                supabaseClient.removeChannel(realtimeSubscription);
-            }
-
-            const insertChannel = supabaseClient.channel('detalle-insert')
-                .on(
-                    'postgres_changes',
-                    {
-                        event: 'INSERT',
-                        schema: 'public',
-                        table: 'detalle'
-                    },
-                    (payload) => {
-                        if (payload.new.estado === 'En Progreso' || payload.new.estado === 'Asignado') {
-                            setTimeout(() => callback(true), 1000);
-                        }
-                    }
-                )
-                .subscribe();
-
-            const updateChannel = supabaseClient.channel('detalle-update')
-                .on(
-                    'postgres_changes',
-                    {
-                        event: 'UPDATE',
-                        schema: 'public',
-                        table: 'detalle'
-                    },
-                    (payload) => {
-                        if (payload.new.estado === 'En Progreso' || payload.new.estado === 'Asignado') {
-                            setTimeout(() => callback(true), 1000);
-                        }
-                    }
-                )
-                .subscribe();
-
-            const trabajosChannel = supabaseClient.channel('trabajos-insert')
-                .on(
-                    'postgres_changes',
-                    {
-                        event: 'INSERT',
-                        schema: 'public',
-                        table: 'trabajos'
-                    },
-                    (payload) => {
-                        setTimeout(() => callback(true), 1000);
-                    }
-                )
-                .subscribe();
-
-            realtimeSubscription = [insertChannel, updateChannel, trabajosChannel];
+             if (realtimeSubscription) { supabaseClient.removeChannel(realtimeSubscription); } const insertChannel = supabaseClient.channel('detalle-insert') .on( 'postgres_changes', { event: 'INSERT', schema: 'public', table: 'detalle' }, (payload) => { if (payload.new.estado === 'En Progreso' || payload.new.estado === 'Asignado') { setTimeout(() => callback(true), 1000); } } ) .subscribe(); const updateChannel = supabaseClient.channel('detalle-update') .on( 'postgres_changes', { event: 'UPDATE', schema: 'public', table: 'detalle' }, (payload) => { if (payload.new.estado === 'En Progreso' || payload.new.estado === 'Asignado') { setTimeout(() => callback(true), 1000); } } ) .subscribe(); const trabajosChannel = supabaseClient.channel('trabajos-insert') .on( 'postgres_changes', { event: 'INSERT', schema: 'public', table: 'trabajos' }, (payload) => { setTimeout(() => callback(true), 1000); } ) .subscribe(); realtimeSubscription = [insertChannel, updateChannel, trabajosChannel];
         }
 
-        // --- DATA LOADING ---
+        // --- DATA LOADING (MODIFICADO) ---
         async function loadAssignmentPage(isRealtime) {
             const loadingOverlay = document.getElementById('loading-overlay');
             if (!isRealtime && loadingOverlay) loadingOverlay.style.display = 'flex';
 
             try {
-                const [pendingIncidents, technicians, assignedIncidents] = await Promise.all([
-                    fetchPendingIncidents(),
-                    fetchTechnicians(),
-                    fetchAssignedIncidents()
+                // LLAMAMOS A AMBAS FUNCIONES, PERO AHORA AMBAS USAN EL RPC
+                const [allIncidentStates, technicians] = await Promise.all([
+                    fetchLatestMachineDetailsRPC(), // <-- LLAMA A LA FUNCIÓN RPC
+                    fetchTechnicians()
                 ]);
 
+                // Guardamos los datos globales
+                lastSuccessfulIncidents = allIncidentStates; // Lista completa de estados
                 availableTechnicians = technicians;
-                renderStatistics(pendingIncidents, technicians, assignedIncidents);
-                renderIncidents(pendingIncidents, technicians);
+
+                // --- FILTRAMOS LAS LISTAS AQUÍ ---
+                const inoperativos = allIncidentStates.filter(i => i.estado === 'Inoperativo');
+                const pendientes = allIncidentStates.filter(i => i.estado === 'Pendiente');
+                const asignadas = allIncidentStates.filter(i => i.estado === 'En Progreso' || i.estado === 'Asignado');
+                
+                // --- RENDERIZAMOS TODO ---
+                renderStatistics(inoperativos, pendientes, asignadas, technicians); // Pasamos las listas filtradas
+                renderIncidentGroup(inoperativos, technicians, 'urgentes-container', 'inoperativo');
+                renderIncidentGroup(pendientes, technicians, 'pendientes-container', 'pendiente');
+                
+                // *** Usamos la nueva función de renderizado para 'Asignadas' ***
+                renderAssignedIncidents(asignadas); 
+                
                 renderTechniciansList(technicians);
-                renderAssignedIncidents(assignedIncidents);
+                
                 updateLastUpdateTime();
-                lastSuccessfulIncidents = pendingIncidents;
 
             } catch (error) {
                 console.error("Error loading assignment page:", error);
@@ -961,206 +780,59 @@
             }
         }
 
-        async function fetchPendingIncidents() {
+        // --- NUEVA FUNCIÓN RPC (REEMPLAZA A fetchPendingIncidents) ---
+        // Esta función AHORA trae TODOS los últimos estados, no solo pendientes.
+        async function fetchLatestMachineDetailsRPC() {
+            console.log("🔍 Buscando TODOS los últimos estados via RPC...");
             const { data, error } = await supabaseClient.rpc('get_latest_machine_details');
 
             if (error) {
                 throw new Error("Error en RPC get_latest_machine_details: " + error.message);
             }
-
             if (!data) return [];
-
-            const pending = data.filter(item => item.estado === 'Inoperativo' || item.estado === 'Pendiente');
-
-            pending.sort((a, b) => {
-                const timeA = `${a.fecha_reporte || a.fecha} ${a.hora_reporte || '00:00:00'}`;
-                const timeB = `${b.fecha_reporte || b.fecha} ${b.hora_reporte || '00:00:00'}`;
-
-                if (timeA < timeB) return 1;
-                if (timeA > timeB) return -1;
-                return 0;
-            });
-
-            return pending;
+            
+            console.log(`✅ RPC 'get_latest_machine_details' retornó ${data.length} registros.`);
+            return data; // Devuelve la lista completa
         }
-
-        async function fetchAssignedIncidents() {
-            try {
-                const { data, error } = await supabaseClient
-                    .from('detalle')
-                    .select(`id_detalle, id_maquina, id_trabajo, diag_ini, estado, tipo_trabajo, trab_realizado, resul, 
-                        trabajos(id_trabajo, hora_inicio, fecha, id_usuario, id_responsable, 
-                            tecnicos(id_usuario, usuario, cel, cargo) 
-                        ), 
-                        maquinas(id_maquina, serie, modelo, id_sala, 
-                            sala(id_sala, sala, sala_mincetur:sala, distrito) 
-                        )
-                    `)
-                    .in('estado', ['En Progreso', 'Asignado']) // "En Progreso" también está aquí
-                    .order('id_detalle', { ascending: false });
-
-                if (error) throw error;
-                return data;
-            } catch (error) {
-                console.error('Error en fetchAssignedIncidents:', error);
-                return [];
-            }
-        }
-
+        
+        // --- fetchAssignedIncidents (YA NO SE USA, SE ELIMINA) ---
+        
+        // --- fetchPendingIncidents (YA NO SE USA, SE ELIMINA) ---
+        
         async function fetchTechnicians() {
-            const { data, error } = await supabaseClient
+             const { data, error } = await supabaseClient
                 .from('tecnicos')
-                .select('id_usuario, usuario, disponible')
-                .in('cargo', ['Tecnico', 'Coordinador'])
+                // CORREGIDO: Seleccionar 'id_usuario, usuario, disponible, cargo'
+                .select('id_usuario, usuario, disponible, cargo') 
+                .in('cargo', ['Tecnico', 'Coordinador', 'tecnico', 'coordinador']) // Insensible a mayúsculas
                 .order('usuario');
 
-            if (error) {
-                console.error("Error fetching technicians:", error);
-                return [];
-            }
-            return data;
+             if (error) {
+                 console.error("Error fetching technicians:", error);
+                 return [];
+             }
+             return data;
         }
 
         async function createNewIncident(formData) {
-            try {
-                console.log("📝 Iniciando creación de incidencia:", formData);
-
-                const { fecha, hora } = getPeruDateTime();
-                console.log("🕐 Fecha y hora generadas:", fecha, hora);
-
-                // 1. Obtener o crear la sala
-                console.log("🔍 Buscando/creando sala:", formData.sala);
-                const { data: salaData, error: salaError } = await supabaseClient
-                    .from('sala')
-                    .select('id_sala')
-                    .eq('sala_mincetur', formData.sala)
-                    .single();
-
-                let id_sala;
-
-                if (salaError || !salaData) {
-                    console.log("➕ Creando nueva sala...");
-                    const { data: newSala, error: newSalaError } = await supabaseClient
-                        .from('sala')
-                        .insert({
-                            sala: formData.sala,
-                            sala_mincetur: formData.sala,
-                            distrito: 'Por definir',
-                            provincia: 'Lima',
-                            departamento: 'Lima'
-                        })
-                        .select()
-                        .single();
-
-                    if (newSalaError) {
-                        console.error("❌ Error creando sala:", newSalaError);
-                        throw newSalaError;
-                    }
-                    id_sala = newSala.id_sala;
-                    console.log("✅ Sala creada con ID:", id_sala);
-                } else {
-                    id_sala = salaData.id_sala;
-                    console.log("✅ Sala existente con ID:", id_sala);
-                }
-
-                // 2. Obtener o crear la máquina
-                console.log("🔍 Buscando/creando máquina:", formData.serie);
-                const { data: maquinaData, error: maquinaError } = await supabaseClient
-                    .from('maquinas')
-                    .select('id_maquina')
-                    .eq('serie', formData.serie)
-                    .single();
-
-                let id_maquina;
-
-                if (maquinaError || !maquinaData) {
-                    console.log("➕ Creando nueva máquina...");
-                    const { data: newMaquina, error: newMaquinaError } = await supabaseClient
-                        .from('maquinas')
-                        .insert({
-                            serie: formData.serie,
-                            modelo: 'Máquina Winsystems',
-                            id_sala: id_sala
-                        })
-                        .select()
-                        .single();
-
-                    if (newMaquinaError) {
-                        console.error("❌ Error creando máquina:", newMaquinaError);
-                        throw newMaquinaError;
-                    }
-                    id_maquina = newMaquina.id_maquina;
-                    console.log("✅ Máquina creada con ID:", id_maquina);
-                } else {
-                    id_maquina = maquinaData.id_maquina;
-                    console.log("✅ Máquina existente con ID:", id_maquina);
-                }
-
-                // 3. Crear trabajo con el técnico asignado
-                console.log("👨‍💼 Creando trabajo para técnico:", formData.tecnico);
-                const { data: newTrabajo, error: trabajoError } = await supabaseClient
-                    .from('trabajos')
-                    .insert({
-                        id_sala: id_sala,
-                        id_usuario: formData.tecnico,
-                        fecha: fecha,
-                        hora_inicio: hora,
-                        hora_fin: hora
-                    })
-                    .select()
-                    .single();
-
-                if (trabajoError) {
-                    console.error("❌ Error creando trabajo:", trabajoError);
-                    throw trabajoError;
-                }
-                console.log("✅ Trabajo creado con ID:", newTrabajo.id_trabajo);
-
-                // 4. Crear detalle con estado "En Progreso"
-                console.log("📋 Creando detalle...");
-                const { error: detalleError } = await supabaseClient
-                    .from('detalle')
-                    .insert({
-                        id_trabajo: newTrabajo.id_trabajo,
-                        id_maquina: id_maquina,
-                        diag_ini: formData.diagnostico,
-                        estado: 'En Progreso',
-                        tipo_trabajo: 'Mantenimiento',
-                        fecha_reporte: fecha,
-                        hora_reporte: hora
-                    });
-
-                if (detalleError) {
-                    console.error("❌ Error creando detalle:", detalleError);
-                    throw detalleError;
-                }
-                console.log("✅ Detalle creado exitosamente");
-
-                showToast('¡Incidencia creada y asignada exitosamente!');
-                closeCreateIncidentModal();
-
-                setTimeout(() => loadAssignmentPage(true), 1000);
-
-            } catch (error) {
-                console.error("💥 Error completo al crear la incidencia:", error);
-                showToast(`Error al crear la incidencia: ${error.message}`, 'error');
-            }
+             try { console.log("📝 Iniciando creación de incidencia:", formData); const { fecha, hora } = getPeruDateTime(); console.log("🕐 Fecha y hora generadas:", fecha, hora); console.log("🔍 Buscando/creando sala:", formData.sala); const { data: salaData, error: salaError } = await supabaseClient .from('sala') .select('id_sala') .eq('sala_mincetur', formData.sala) .single(); let id_sala; if (salaError || !salaData) { console.log("➕ Creando nueva sala..."); const { data: newSala, error: newSalaError } = await supabaseClient .from('sala') .insert({ sala: formData.sala, sala_mincetur: formData.sala, distrito: 'Por definir', provincia: 'Lima', departamento: 'Lima' }) .select() .single(); if (newSalaError) { console.error("❌ Error creando sala:", newSalaError); throw newSalaError; } id_sala = newSala.id_sala; console.log("✅ Sala creada con ID:", id_sala); } else { id_sala = salaData.id_sala; console.log("✅ Sala existente con ID:", id_sala); } console.log("🔍 Buscando/creando máquina:", formData.serie); const { data: maquinaData, error: maquinaError } = await supabaseClient .from('maquinas') .select('id_maquina') .eq('serie', formData.serie) .single(); let id_maquina; if (maquinaError || !maquinaData) { console.log("➕ Creando nueva máquina..."); const { data: newMaquina, error: newMaquinaError } = await supabaseClient .from('maquinas') .insert({ serie: formData.serie, modelo: 'Máquina Winsystems', id_sala: id_sala }) .select() .single(); if (newMaquinaError) { console.error("❌ Error creando máquina:", newMaquinaError); throw newMaquinaError; } id_maquina = newMaquina.id_maquina; console.log("✅ Máquina creada con ID:", id_maquina); } else { id_maquina = maquinaData.id_maquina; console.log("✅ Máquina existente con ID:", id_maquina); } console.log("👨‍💼 Creando trabajo para técnico:", formData.tecnico); const { data: newTrabajo, error: trabajoError } = await supabaseClient .from('trabajos') .insert({ id_sala: id_sala, id_usuario: formData.tecnico, fecha: fecha, hora_inicio: hora, hora_fin: hora }) .select() .single(); if (trabajoError) { console.error("❌ Error creando trabajo:", trabajoError); throw trabajoError; } console.log("✅ Trabajo creado con ID:", newTrabajo.id_trabajo); console.log("📋 Creando detalle..."); const { error: detalleError } = await supabaseClient .from('detalle') .insert({ id_trabajo: newTrabajo.id_trabajo, id_maquina: id_maquina, diag_ini: formData.diagnostico, estado: 'En Progreso', tipo_trabajo: 'Mantenimiento', fecha_reporte: fecha, hora_reporte: hora }); if (detalleError) { console.error("❌ Error creando detalle:", detalleError); throw detalleError; } console.log("✅ Detalle creado exitosamente"); showToast('¡Incidencia creada y asignada exitosamente!'); closeCreateIncidentModal(); setTimeout(() => loadAssignmentPage(true), 1000); } catch (error) { console.error("💥 Error completo al crear la incidencia:", error); showToast(`Error al crear la incidencia: ${error.message}`, 'error'); }
         }
 
         // --- RENDERING FUNCTIONS ---
-        function renderStatistics(incidents, technicians, assignedIncidents = []) {
+        
+        function renderStatistics(inoperativosList, pendientesList, asignadasList, techniciansList) {
             const container = document.getElementById('stats-container');
-            const inoperativos = incidents.filter(i => i.estado === 'Inoperativo').length;
-            const pendientes = incidents.filter(i => i.estado === 'Pendiente').length;
-            const totalPendientes = incidents.length;
-            const totalTechnicians = technicians.length;
-            const totalAsignadas = assignedIncidents.length;
+            const inoperativos = inoperativosList.length;
+            const pendientes = pendientesList.length;
+            const totalPendientes = inoperativos + pendientes;
+            // CORREGIDO: Filtrar por 'disponible' no es false (incluye true y null) Y que el cargo sea 'tecnico'
+            const totalTechnicians = techniciansList.filter(t => t.disponible !== false && (t.cargo?.toLowerCase() === 'tecnico')).length;
+            const totalAsignadas = asignadasList.length;
 
-            // Actualizar contadores en las pestañas
             document.getElementById('urgentes-count').textContent = inoperativos;
             document.getElementById('pendientes-count').textContent = pendientes;
             document.getElementById('asignadas-count').textContent = totalAsignadas;
-            document.getElementById('tecnicos-count').textContent = totalTechnicians;
+            document.getElementById('tecnicos-count').textContent = totalTechnicians; // Muestra solo técnicos disponibles
 
             const stats = [
                 { title: 'Total Pendientes', value: totalPendientes, icon: 'list-todo', color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -1171,7 +843,6 @@
             ];
 
             container.className = 'grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8 opacity-0 transition-opacity duration-500';
-
             container.innerHTML = stats.map(stat => `
                 <div class="stats-card border-l-4 ${stat.color.replace('text-', 'border-')}">
                     <div class="flex items-center justify-between">
@@ -1191,65 +862,8 @@
             lucide.createIcons();
         }
 
-        function renderIncidents(incidents, technicians) {
-            const inoperativos = incidents.filter(i => i.estado === 'Inoperativo');
-            const pendientes = incidents.filter(i => i.estado === 'Pendiente');
-
-            renderIncidentGroup(inoperativos, technicians, 'urgentes-container', 'inoperativo');
-            renderIncidentGroup(pendientes, technicians, 'pendientes-container', 'pendiente');
-
-            setupAssignmentListeners();
-        }
-
-        function renderTechniciansList(technicians) {
-            const container = document.getElementById('tecnicos-container');
-
-            if (technicians.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state bg-white p-8 rounded-lg text-center shadow-md col-span-full border-t-4 border-amber-400">
-                        <i data-lucide="user-x" class="w-16 h-16 text-amber-500 mx-auto mb-4"></i>
-                        <h3 class="text-xl font-semibold text-gray-800 mb-2">No se encontraron técnicos</h3>
-                        <p class="text-gray-500 mb-4">No hay técnicos con cargo "Tecnico" o "Coordinador" registrados en el sistema.</p>
-                        <p class="text-sm text-gray-400">(Si esto es un error, contacte al administrador)</p>
-                    </div>
-                `;
-                lucide.createIcons();
-                return;
-            }
-
-            const htmlContent = technicians.map(tech => {
-                const isAvailable = tech.disponible !== false;
-                return `
-                <div class="technician-card bg-white p-4 rounded-lg shadow-md border-l-4 ${isAvailable ? 'border-green-500' : 'border-gray-400'}">
-                    <div class="flex items-center gap-3 mb-3">
-                        <div class="w-10 h-10 ${isAvailable ? 'bg-green-100' : 'bg-gray-100'} rounded-full flex items-center justify-center">
-                            <i data-lucide="user" class="w-5 h-5 ${isAvailable ? 'text-green-600' : 'text-gray-500'}"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-semibold text-gray-800">${tech.usuario}</h3>
-                            <p class="text-sm ${isAvailable ? 'text-green-600' : 'text-gray-500'}">${isAvailable ? 'Disponible' : 'No disponible'}</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <span class="status-dot ${isAvailable ? 'bg-green-500' : 'bg-gray-400'} w-3 h-3 rounded-full"></span>
-                            <span class="text-sm ${isAvailable ? 'text-gray-600' : 'text-gray-400'}">${isAvailable ? 'Disponible' : 'No disponible'}</span>
-                        </div>
-                        <label class="availability-toggle">
-                            <input type="checkbox" ${isAvailable ? 'checked' : ''} data-tech-id="${tech.id_usuario}">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                </div>
-            `}).join('');
-
-            container.innerHTML = htmlContent;
-            lucide.createIcons();
-
-            // Configurar eventos de cambio de disponibilidad
-            setupAvailabilityToggles();
-        }
-
+        // --- FUNCIÓN DE RENDERIZADO 'ASIGNADAS' (MODIFICADA) ---
+        // Usa la misma lógica que renderIncidentGroup, ya que los datos vienen del mismo RPC
         function renderAssignedIncidents(assignedIncidents) {
             const container = document.getElementById('asignadas-container');
             if (!container) {
@@ -1259,15 +873,10 @@
 
             if (!assignedIncidents || assignedIncidents.length === 0) {
                 container.innerHTML = `
-                    <div class="empty-state bg-white p-8 rounded-lg text-center shadow-md">
+                    <div class="empty-state bg-white p-8 rounded-lg text-center shadow-md col-span-full">
                         <i data-lucide="user-check" class="w-16 h-16 text-blue-400 mx-auto mb-4"></i>
                         <h3 class="text-xl font-semibold text-gray-700 mb-2">Sin asignaciones activas</h3>
                         <p class="text-gray-500">No hay incidencias con estado "En Progreso" o "Asignado".</p>
-                        <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                            <p class="text-sm text-blue-700">
-                                Cuando asignes una incidencia a un técnico, aparecerá aquí automáticamente.
-                            </p>
-                        </div>
                     </div>
                 `;
                 lucide.createIcons();
@@ -1275,32 +884,31 @@
             }
 
             const htmlContent = assignedIncidents.map((incident) => {
-                const machine = incident.maquinas || {};
-                const sala = machine.sala || {};
-                const trabajo = incident.trabajos || {};
-                const tecnico = incident.tecnicos || trabajo.tecnicos || {};
-                const tipoReporte = tecnico.cargo || 'N/A';
-                const esSala = tipoReporte.toLowerCase().includes('sala');
-                const badgeColor = esSala ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800';
-                const badgeIcon = esSala ? 'building' : 'user';
-                const reportadoPorHTML = `
-                <span class="text-xs ${badgeColor} px-2 py-1 rounded-full flex items-center gap-1">
-                    <i data-lucide="${badgeIcon}" class="w-3 h-3"></i>
-                    Reportado por: ${tipoReporte}
-                </span>
-            `;
-
-                const reportDate = incident.fecha_reporte || 'N/A';
-                const reportTime = incident.hora_reporte || 'N/A';
-                const assignmentDate = trabajo.fecha || 'N/A';
-                const assignmentTime = trabajo.hora_inicio || 'N/A';
+                const estado = incident.estado || 'Asignado';
+                const salaNombre = incident.sala_mincetur || 'N/A'; // Usa el alias del RPC
+                const modelo = incident.modelo || 'Máquina Winsystems';
+                const serie = incident.serie || 'N/A';
+                const idDetalle = incident.id_detalle || 'N/A';
+                
+                const reportDate = incident.fecha_reporte || 'N/A'; // Usa alias del RPC
+                const reportTime = (incident.hora_reporte || 'N/A'); // Usa alias del RPC
 
                 const fechaReporte = reportDate !== 'N/A' ? new Date(reportDate + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
                 const horaReporte = reportTime.substring(0, 5);
-                const fechaAsignacion = assignmentDate !== 'N/A' ? new Date(assignmentDate + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
-                const horaAsignacion = assignmentTime.substring(0, 5);
 
-                const detallesHTML = incident.diag_ini || 'Sin detalles de diagnóstico.';
+                // Concatena todos los detalles
+                const detallesConcatenados = [
+                    incident.diag_ini ? ` ${incident.diag_ini}` : null,
+                    incident.trab_realizado ? `${incident.trab_realizado}` : null,
+                    incident.resul ? ` ${incident.resul}` : null
+                ].filter(Boolean).join('<br>');
+                const detallesHTML = detallesConcatenados || 'Sin detalles de diagnóstico.';
+
+                // Datos del técnico que reportó
+                const tecnicoNombre = incident.tecnico_reporta || 'N/A';
+                const tecnicoCargo = incident.cargo_reporta || 'N/A';
+                // const tecnicoCel = incident.cel || 'N/A'; // No se usa en esta tarjeta
+                // const tecnicoCorreo = incident.correo || 'N/A'; // No se usa en esta tarjeta
 
                 return `
                     <div class="incident-card asignada">
@@ -1308,17 +916,17 @@
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                        <i data-lucide="laptop-minimal-check" class="w-5 h-5 text-blue-600"></i>
+                                        <i data-lucide="user-check" class="w-5 h-5 text-blue-600"></i>
                                     </div>
                                     <div>
-                                        <h3 class="font-bold text-gray-900">${sala.sala_mincetur || 'N/A'}</h3>
-                                        <p class="text-sm text-gray-500">${machine.modelo || 'Máquina Winsystems'} - S/N: ${machine.serie || 'N/A'}</p>
+                                        <h3 class="font-bold text-gray-900">${salaNombre}</h3>
+                                        <p class="text-sm text-gray-500">${modelo} - S/N: ${serie}</p>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-3">
                                     <span class="status-badge text-white bg-blue-600 flex items-center gap-1 py-1 px-3 rounded-full shadow-sm text-sm">
                                         <i data-lucide="user-check" class="w-4 h-4"></i> 
-                                        ${incident.estado || 'Asignada'}
+                                        ${estado}
                                     </span>
                                     <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 transition-transform"></i>
                                 </div>
@@ -1331,36 +939,31 @@
                                     <p class="text-sm font-semibold text-gray-500 flex items-center gap-1">
                                         <i data-lucide="laptop-minimal-check" class="w-4 h-4 text-blue-600"></i> MÁQUINA
                                     </p>
-                                    <h3 class="text-lg font-bold text-gray-900">${machine.modelo || 'Máquina Winsystems'}</h3>
-                                    <p class="text-xs text-gray-500">S/N: ${machine.serie || 'N/A'}</p>
-                                    <p class="text-xs text-gray-400">ID Detalle: ${incident.id_detalle}</p>
+                                    <h3 class="text-lg font-bold text-gray-900">${modelo}</h3>
+                                    <p class="text-xs text-gray-500">S/N: ${serie}</p>
+                                    <p class="text-xs text-gray-400">ID Detalle: ${idDetalle}</p>
                                 </div>
 
                                 <div class="col-span-1">
                                     <p class="text-sm font-semibold text-gray-500 flex items-center gap-1">
                                         <i data-lucide="map-pin" class="w-4 h-4"></i> UBICACIÓN
                                     </p>
-                                    <p class="text-md font-semibold text-gray-800">${sala.sala_mincetur || 'N/A'}</p>
-                                    <p class="text-xs text-gray-500">${sala.distrito || ''}</p>
+                                    <p class="text-md font-semibold text-gray-800">${salaNombre}</p>
+                                    <p class="text-xs text-gray-500">${incident.distrito || ''}</p>
                                 </div>
 
                                 <div class="col-span-1 text-left md:text-right">
-                                    <p class="text-xs text-gray-400 mt-1">Reportado: ${fechaReporte} ${horaReporte}</p>
-                                    <p class="text-xs text-gray-400">Asignado: ${fechaAsignacion} ${horaAsignacion}</p>
-                                    <div class="col-span-1 text-left md:text-right">
-                                    <p class="text-xs text-gray-400 mt-1">Reportado: ${fechaReporte} ${horaReporte}</p>
-                                        <p class="text-xs text-gray-400">Por: ${tecnico.usuario || 'N/A'}</p>
-                                    <p class="text-xs text-gray-400">Asignado: ${fechaAsignacion} ${horaAsignacion}</p>
-                                </div>
+                                    <p class="text-xs text-gray-400">Asignado: ${fechaReporte} ${horaReporte}</p>
+                                    <p class="text-xs text-gray-400">Por: ${tecnicoNombre} (${tecnicoCargo})</p>
                                 </div>
                             </div>
 
                             <div class="border-t border-gray-100 pt-4 mb-4">
                                 <p class="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
                                     <i data-lucide="file-text" class="w-4 h-4 text-gray-500"></i>
-                                    Diagnóstico Inicial:
+                                    Historial del Reporte:
                                 </p>
-                                <div class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100 report-details-box">
+                                <div class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100 report-details-box whitespace-pre-wrap text-justify">
                                     ${detallesHTML}
                                 </div>
                             </div>
@@ -1372,12 +975,12 @@
                                     </div>
                                     <div>
                                         <p class="text-sm font-semibold text-gray-700">Técnico Asignado</p>
-                                        <p class="text-lg font-bold text-green-600">${tecnico.usuario || 'Por asignar'}</p>
+                                        <p class="text-lg font-bold text-green-600">${tecnicoNombre}</p>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2 text-sm text-gray-500">
                                     <i data-lucide="clock" class="w-4 h-4"></i>
-                                    <span>${incident.estado || 'En progreso'}</span>
+                                    <span>${estado}</span>
                                 </div>
                             </div>
                         </div>
@@ -1389,6 +992,7 @@
             lucide.createIcons();
         }
 
+        // --- FUNCIÓN DE RENDERIZADO ÚNICA PARA 'Urgentes' y 'Pendientes' ---
         function renderIncidentGroup(incidents, technicians, containerId, type) {
             const container = document.getElementById(containerId);
             const statusText = type === 'inoperativo' ? 'Inoperativo' : 'Pendiente';
@@ -1398,7 +1002,7 @@
 
             if (incidents.length === 0) {
                 container.innerHTML = `
-                    <div class="empty-state bg-white p-8 rounded-lg text-center shadow-md">
+                    <div class="empty-state bg-white p-8 rounded-lg text-center shadow-md col-span-full">
                         <i data-lucide="sparkles" class="w-16 h-16 text-blue-400 mx-auto mb-4"></i>
                         <h3 class="text-xl font-semibold text-gray-700 mb-2">¡Misión Cumplida!</h3>
                         <p class="text-gray-500">No hay incidencias ${type === 'inoperativo' ? 'urgentes' : 'pendientes'} en la cola de asignación.</p>
@@ -1409,35 +1013,27 @@
             }
 
             const htmlContent = incidents.map((incident) => {
-                const reportDate = incident.fecha_reporte || incident.fecha || 'N/A';
-                const reportTime = incident.hora_reporte || incident.hora || 'N/A';
+                const reportDate = incident.fecha_reporte || 'N/A';
+                const reportTime = incident.hora_reporte || 'N/A';
 
-                // Usamos la fecha/hora con formato para el tooltip
                 const fecha = reportDate !== 'N/A' ? new Date(reportDate + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
                 const hora = reportTime.substring(0, 5);
-
-                // Usamos la fecha/hora sin formato para la función timeAgo
                 const elapsed = timeAgo(reportDate, reportTime);
-
-                // Filtrar solo técnicos disponibles
+                
                 const availableTechs = technicians.filter(tech => tech.disponible !== false);
-                const selectOptions = availableTechs.map(tech =>
-                    `<option value="${tech.id_usuario}">${tech.usuario}</option>`
-                ).join('');
+                const selectOptions = availableTechs.map(tech => `<option value="${tech.id_usuario}">${tech.usuario}</option>`).join('');
 
                 const detallesConcatenados = [
                     incident.diag_ini ? ` ${incident.diag_ini}` : null,
                     incident.trab_realizado ? `${incident.trab_realizado}` : null,
                     incident.resul ? ` ${incident.resul}` : null
                 ].filter(Boolean).join('<br>');
-
                 const detallesHTML = detallesConcatenados || 'Sin detalles de diagnóstico o trabajo previo.';
 
-                // Determinar tipo de reporte y estilos
                 const tipoReporte = incident.cargo_reporta || 'N/A';
                 const esSala = tipoReporte.toLowerCase().includes('sala');
                 const badgeColor = esSala ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800';
-                const badgeIcon = esSala ? 'building' : 'users';
+                const badgeIcon = esSala ? 'building' : 'user';
 
                 return `
                     <div class="incident-card ${type} ${urgencyClass}">
@@ -1458,7 +1054,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                
                                 <div class="flex items-center gap-3">
                                     <div class="flex flex-col items-end gap-1 text-right">
                                         <span class="text-xs font-semibold text-gray-500 flex items-center gap-1" title="Reportado: ${fecha} ${hora}">
@@ -1472,7 +1067,6 @@
                                     </div>
                                     <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 transition-transform"></i>
                                 </div>
-
                             </div>
                         </div>
                         
@@ -1485,7 +1079,6 @@
                                     <h3 class="text-lg font-bold text-gray-900">${incident.modelo || 'Máquina Winsystems'}</h3>
                                     <p class="text-xs text-gray-500">S/N: ${incident.serie || 'N/A'}</p>
                                 </div>
-
                                 <div class="col-span-1">
                                     <p class="text-sm font-semibold text-gray-500 flex items-center gap-1">
                                         <i data-lucide="map-pin" class="w-4 h-4"></i> UBICACIÓN
@@ -1493,13 +1086,11 @@
                                     <p class="text-md font-semibold text-gray-800">${incident.sala_mincetur || 'N/A'}</p>
                                     <p class="text-xs text-gray-500">${incident.distrito || ''}</p>
                                 </div>
-
                                 <div class="col-span-1 text-left md:text-right">
                                     <p class="text-xs text-gray-400 mt-1">Reportado: ${fecha} ${hora}</p>
                                     ${incident.tecnico_reporta ? `<p class="text-xs text-gray-400">Por: ${incident.tecnico_reporta} (${tipoReporte})</p>` : ''}
                                 </div>
                             </div>
-
                             <div class="border-t border-gray-100 pt-4 mb-4">
                                 <p class="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
                                     <i data-lucide="file-text" class="w-4 h-4 text-gray-500"></i>
@@ -1509,7 +1100,6 @@
                                     ${detallesHTML}
                                 </div>
                             </div>
-                            
                             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-4 p-3 bg-blue-50/50 rounded-lg border border-blue-100">
                                 <select class="technician-select flex-grow text-sm" data-incident-id="${incident.id_maquina}">
                                     <option value="" disabled selected>Selecciona un Técnico para asignar...</option>
@@ -1518,7 +1108,7 @@
                                 <button 
                                     data-incident='${JSON.stringify(incident)}' 
                                     class="assign-button w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold shadow-md transition-colors"
-                                    disabled
+                                    disabled 
                                 >
                                     <i data-lucide="send" class="w-4 h-4"></i>
                                     Asignar
@@ -1533,283 +1123,39 @@
             lucide.createIcons();
         }
 
+
         // --- TOGGLE INCIDENT DETAILS ---
         function toggleIncidentDetails(element) {
-            const card = element.closest('.incident-card');
-            const details = card.querySelector('.incident-details');
-            const icon = element.querySelector('i[data-lucide="chevron-down"]');
-
-            if (details.classList.contains('hidden')) {
-                details.classList.remove('hidden');
-                icon.style.transform = 'rotate(180deg)';
-            } else {
-                details.classList.add('hidden');
-                icon.style.transform = 'rotate(0deg)';
-            }
+             const card = element.closest('.incident-card'); const details = card.querySelector('.incident-details'); const icon = element.querySelector('i[data-lucide="chevron-down"]'); if (details.classList.contains('hidden')) { details.classList.remove('hidden'); icon.style.transform = 'rotate(180deg)'; } else { details.classList.add('hidden'); icon.style.transform = 'rotate(0deg)'; }
         }
 
         // --- EXPAND ALL FUNCTIONALITY ---
         function setupExpandAllButtons() {
-            // Urgentes
-            document.getElementById('expand-all-urgentes').addEventListener('click', function () {
-                const container = document.getElementById('urgentes-container');
-                const isExpanded = this.getAttribute('data-expanded') === 'true';
-
-                if (isExpanded) {
-                    container.querySelectorAll('.incident-details').forEach(detail => {
-                        detail.classList.add('hidden');
-                    });
-                    container.querySelectorAll('i[data-lucide="chevron-down"]').forEach(icon => {
-                        icon.style.transform = 'rotate(0deg)';
-                    });
-                    this.setAttribute('data-expanded', 'false');
-                    this.innerHTML = '<i data-lucide="chevrons-down" class="w-4 h-4"></i> Expandir Todo';
-                } else {
-                    container.querySelectorAll('.incident-details').forEach(detail => {
-                        detail.classList.remove('hidden');
-                    });
-                    container.querySelectorAll('i[data-lucide="chevron-down"]').forEach(icon => {
-                        icon.style.transform = 'rotate(180deg)';
-                    });
-                    this.setAttribute('data-expanded', 'true');
-                    this.innerHTML = '<i data-lucide="chevrons-up" class="w-4 h-4"></i> Contraer Todo';
-                }
-                lucide.createIcons();
-            });
-
-            // Pendientes
-            document.getElementById('expand-all-pendientes').addEventListener('click', function () {
-                const container = document.getElementById('pendientes-container');
-                const isExpanded = this.getAttribute('data-expanded') === 'true';
-
-                if (isExpanded) {
-                    container.querySelectorAll('.incident-details').forEach(detail => {
-                        detail.classList.add('hidden');
-                    });
-                    container.querySelectorAll('i[data-lucide="chevron-down"]').forEach(icon => {
-                        icon.style.transform = 'rotate(0deg)';
-                    });
-                    this.setAttribute('data-expanded', 'false');
-                    this.innerHTML = '<i data-lucide="chevrons-down" class="w-4 h-4"></i> Expandir Todo';
-                } else {
-                    container.querySelectorAll('.incident-details').forEach(detail => {
-                        detail.classList.remove('hidden');
-                    });
-                    container.querySelectorAll('i[data-lucide="chevron-down"]').forEach(icon => {
-                        icon.style.transform = 'rotate(180deg)';
-                    });
-                    this.setAttribute('data-expanded', 'true');
-                    this.innerHTML = '<i data-lucide="chevrons-up" class="w-4 h-4"></i> Contraer Todo';
-                }
-                lucide.createIcons();
-            });
-
-            // Asignadas
-            document.getElementById('expand-all-asignadas').addEventListener('click', function () {
-                const container = document.getElementById('asignadas-container');
-                const isExpanded = this.getAttribute('data-expanded') === 'true';
-
-                if (isExpanded) {
-                    container.querySelectorAll('.incident-details').forEach(detail => {
-                        detail.classList.add('hidden');
-                    });
-                    container.querySelectorAll('i[data-lucide="chevron-down"]').forEach(icon => {
-                        icon.style.transform = 'rotate(0deg)';
-                    });
-                    this.setAttribute('data-expanded', 'false');
-                    this.innerHTML = '<i data-lucide="chevrons-down" class="w-4 h-4"></i> Expandir Todo';
-                } else {
-                    container.querySelectorAll('.incident-details').forEach(detail => {
-                        detail.classList.remove('hidden');
-                    });
-                    container.querySelectorAll('i[data-lucide="chevron-down"]').forEach(icon => {
-                        icon.style.transform = 'rotate(180deg)';
-                    });
-                    this.setAttribute('data-expanded', 'true');
-                    this.innerHTML = '<i data-lucide="chevrons-up" class="w-4 h-4"></i> Contraer Todo';
-                }
-                lucide.createIcons();
-            });
+             document.getElementById('expand-all-urgentes').addEventListener('click', function () { const container = document.getElementById('urgentes-container'); const isExpanded = this.getAttribute('data-expanded') === 'true'; if (isExpanded) { container.querySelectorAll('.incident-details').forEach(detail => { detail.classList.add('hidden'); }); container.querySelectorAll('i[data-lucide="chevron-down"]').forEach(icon => { icon.style.transform = 'rotate(0deg)'; }); this.setAttribute('data-expanded', 'false'); this.innerHTML = '<i data-lucide="chevrons-down" class="w-4 h-4"></i> Expandir Todo'; } else { container.querySelectorAll('.incident-details').forEach(detail => { detail.classList.remove('hidden'); }); container.querySelectorAll('i[data-lucide="chevron-down"]').forEach(icon => { icon.style.transform = 'rotate(180deg)'; }); this.setAttribute('data-expanded', 'true'); this.innerHTML = '<i data-lucide="chevrons-up" class="w-4 h-4"></i> Contraer Todo'; } lucide.createIcons(); }); document.getElementById('expand-all-pendientes').addEventListener('click', function () { const container = document.getElementById('pendientes-container'); const isExpanded = this.getAttribute('data-expanded') === 'true'; if (isExpanded) { container.querySelectorAll('.incident-details').forEach(detail => { detail.classList.add('hidden'); }); container.querySelectorAll('i[data-lucide="chevron-down"]').forEach(icon => { icon.style.transform = 'rotate(0deg)'; }); this.setAttribute('data-expanded', 'false'); this.innerHTML = '<i data-lucide="chevrons-down" class="w-4 h-4"></i> Expandir Todo'; } else { container.querySelectorAll('.incident-details').forEach(detail => { detail.classList.remove('hidden'); }); container.querySelectorAll('i[data-lucide="chevron-down"]').forEach(icon => { icon.style.transform = 'rotate(180deg)'; }); this.setAttribute('data-expanded', 'true'); this.innerHTML = '<i data-lucide="chevrons-up" class="w-4 h-4"></i> Contraer Todo'; } lucide.createIcons(); }); document.getElementById('expand-all-asignadas').addEventListener('click', function () { const container = document.getElementById('asignadas-container'); const isExpanded = this.getAttribute('data-expanded') === 'true'; if (isExpanded) { container.querySelectorAll('.incident-details').forEach(detail => { detail.classList.add('hidden'); }); container.querySelectorAll('i[data-lucide="chevron-down"]').forEach(icon => { icon.style.transform = 'rotate(0deg)'; }); this.setAttribute('data-expanded', 'false'); this.innerHTML = '<i data-lucide="chevrons-down" class="w-4 h-4"></i> Expandir Todo'; } else { container.querySelectorAll('.incident-details').forEach(detail => { detail.classList.remove('hidden'); }); container.querySelectorAll('i[data-lucide="chevron-down"]').forEach(icon => { icon.style.transform = 'rotate(180deg)'; }); this.setAttribute('data-expanded', 'true'); this.innerHTML = '<i data-lucide="chevrons-up" class="w-4 h-4"></i> Contraer Todo'; } lucide.createIcons(); });
         }
 
+        // --- ASSIGNMENT LISTENERS ---
         function setupAssignmentListeners() {
-            document.querySelectorAll('.incident-card').forEach(card => {
-                const select = card.querySelector('.technician-select');
-                const button = card.querySelector('.assign-button');
-
-                if (select && button) {
-                    select.addEventListener('change', () => {
-                        button.disabled = !select.value;
-                    });
-
-                    button.addEventListener('click', async () => {
-                        const incidentData = JSON.parse(button.dataset.incident);
-                        const technicianId = select.value;
-
-                        if (!technicianId) {
-                            showToast('Por favor, selecciona un técnico.', 'error');
-                            return;
-                        }
-
-                        button.disabled = true;
-                        button.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Asignando...';
-                        lucide.createIcons();
-
-                        await handleAssignment(incidentData, technicianId, card);
-                    });
-                }
-            });
+             document.querySelectorAll('.incident-card').forEach(card => { const select = card.querySelector('.technician-select'); const button = card.querySelector('.assign-button'); if (select && button) { select.addEventListener('change', () => { button.disabled = !select.value; }); button.addEventListener('click', async () => { const incidentData = JSON.parse(button.dataset.incident); const technicianId = select.value; if (!technicianId) { showToast('Por favor, selecciona un técnico.', 'error'); return; } button.disabled = true; button.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Asignando...'; lucide.createIcons(); await handleAssignment(incidentData, technicianId, card); }); } });
         }
 
         // --- AVAILABILITY TOGGLES ---
         function setupAvailabilityToggles() {
-            document.querySelectorAll('.availability-toggle input').forEach(toggle => {
-                toggle.addEventListener('change', async function () {
-                    const techId = this.getAttribute('data-tech-id');
-                    const isAvailable = this.checked;
-
-                    try {
-                        const { error } = await supabaseClient
-                            .from('tecnicos')
-                            .update({ disponible: isAvailable })
-                            .eq('id_usuario', techId);
-
-                        if (error) throw error;
-
-                        showToast(`Técnico ${isAvailable ? 'marcado como disponible' : 'marcado como no disponible'}`);
-
-                        // Actualizar la lista de técnicos
-                        setTimeout(() => loadAssignmentPage(true), 500);
-                    } catch (error) {
-                        console.error("Error al actualizar disponibilidad:", error);
-                        showToast('Error al actualizar disponibilidad', 'error');
-                        this.checked = !isAvailable; // Revertir el cambio
-                    }
-                });
-            });
+             document.querySelectorAll('.availability-toggle input').forEach(toggle => { toggle.addEventListener('change', async function() { const techId = this.getAttribute('data-tech-id'); const isAvailable = this.checked; try { const { error } = await supabaseClient .from('tecnicos') .update({ disponible: isAvailable }) .eq('id_usuario', techId); if (error) throw error; showToast(`Técnico ${isAvailable ? 'marcado como disponible' : 'marcado como no disponible'}`); setTimeout(() => loadAssignmentPage(true), 500); } catch (error) { console.error("Error al actualizar disponibilidad:", error); showToast('Error al actualizar disponibilidad', 'error'); this.checked = !isAvailable; } }); });
         }
 
         // --- ASSIGNMENT HANDLING ---
         async function handleAssignment(incident, technicianId, cardElement) {
-            const { fecha, hora } = getPeruDateTime();
-
-            try {
-                // 1. Create trabajo record
-                const { data: newTrabajo, error: trabajoError } = await supabaseClient
-                    .from('trabajos')
-                    .insert({
-                        id_sala: incident.id_sala,
-                        id_usuario: technicianId,
-                        fecha: fecha,
-                        hora_inicio: hora,
-                        hora_fin: hora
-                    })
-                    .select()
-                    .single();
-
-                if (trabajoError) throw trabajoError;
-
-                // 2. Create detalle record
-                const { error: detalleError } = await supabaseClient
-                    .from('detalle')
-                    .insert({
-                        id_trabajo: newTrabajo.id_trabajo,
-                        id_maquina: incident.id_maquina,
-                        diag_ini: `Asignado por coordinador. Reporte original: ${incident.diag_ini || 'Sin descripción inicial.'}. Trabajos previos: ${incident.trab_realizado || 'N/A'}. Resultado anterior: ${incident.resul || 'N/A'}.`,
-                        estado: 'En Progreso',
-                        tipo_trabajo: incident.tipo_trabajo,
-                    });
-
-                if (detalleError) throw detalleError;
-
-                showToast(`¡Tarea ${incident.serie} asignada con éxito!`);
-
-                cardElement.style.opacity = '0';
-                cardElement.style.transform = 'translateY(-20px) scale(0.95)';
-                setTimeout(() => {
-                    cardElement.remove();
-                    loadAssignmentPage(true);
-                }, 300);
-
-            } catch (error) {
-                console.error("Error al asignar la tarea:", error);
-                showToast(`Error al asignar: ${error.message}`, 'error');
-
-                const button = cardElement.querySelector('.assign-button');
-                button.disabled = false;
-                button.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> Asignar';
-                lucide.createIcons();
-            }
+             const { fecha, hora } = getPeruDateTime(); try { const { data: newTrabajo, error: trabajoError } = await supabaseClient .from('trabajos') .insert({ id_sala: incident.id_sala, id_usuario: technicianId, fecha: fecha, hora_inicio: hora, hora_fin: hora }) .select() .single(); if (trabajoError) throw trabajoError; const { error: detalleError } = await supabaseClient .from('detalle') .insert({ id_trabajo: newTrabajo.id_trabajo, id_maquina: incident.id_maquina, diag_ini: `Asignado por coordinador. Reporte original: ${incident.diag_ini || 'Sin descripción inicial.'}. Trabajos previos: ${incident.trab_realizado || 'N/A'}. Resultado anterior: ${incident.resul || 'N/A'}.`, estado: 'En Progreso', tipo_trabajo: incident.tipo_trabajo, }); if (detalleError) throw detalleError; showToast(`¡Tarea ${incident.serie} asignada con éxito!`); cardElement.style.opacity = '0'; cardElement.style.transform = 'translateY(-20px) scale(0.95)'; setTimeout(() => { cardElement.remove(); loadAssignmentPage(true); }, 300); } catch (error) { console.error("Error al asignar la tarea:", error); showToast(`Error al asignar: ${error.message}`, 'error'); const button = cardElement.querySelector('.assign-button'); button.disabled = false; button.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> Asignar'; lucide.createIcons(); }
         }
 
         // --- SEARCH & SORT FUNCTIONS ---
         function setupSearchFilters() {
-            const addFilter = (inputId, containerId, cardSelector) => {
-                const input = document.getElementById(inputId);
-                if (!input) return;
-
-                input.addEventListener('input', (e) => {
-                    const searchTerm = e.target.value.toLowerCase().trim();
-                    const cards = document.querySelectorAll(`#${containerId} ${cardSelector}`);
-
-                    cards.forEach(card => {
-                        const cardText = card.textContent.toLowerCase();
-                        if (cardText.includes(searchTerm)) {
-                            card.style.display = 'block';
-                        } else {
-                            card.style.display = 'none';
-                        }
-                    });
-                });
-            };
-
-            addFilter('search-urgentes', 'urgentes-container', '.incident-card');
-            addFilter('search-pendientes', 'pendientes-container', '.incident-card');
-            addFilter('search-asignadas', 'asignadas-container', '.incident-card');
-            addFilter('search-tecnicos', 'tecnicos-container', '.technician-card');
+             const addFilter = (inputId, containerId, cardSelector) => { const input = document.getElementById(inputId); if (!input) return; input.addEventListener('input', (e) => { const searchTerm = e.target.value.toLowerCase().trim(); const cards = document.querySelectorAll(`#${containerId} ${cardSelector}`); cards.forEach(card => { const cardText = card.textContent.toLowerCase(); if (cardText.includes(searchTerm)) { card.style.display = 'block'; } else { card.style.display = 'none'; } }); }); }; addFilter('search-urgentes', 'urgentes-container', '.incident-card'); addFilter('search-pendientes', 'pendientes-container', '.incident-card'); addFilter('search-asignadas', 'asignadas-container', '.incident-card'); addFilter('search-tecnicos', 'tecnicos-container', '.technician-card');
         }
 
         function setupTechnicianSort() {
-            const sortBtn = document.getElementById('sort-tecnicos');
-            if (!sortBtn) return;
-
-            sortBtn.setAttribute('data-sort-mode', 'name-asc'); // Initial state
-            sortBtn.innerHTML = '<i data-lucide="arrow-up-a-z" class="w-4 h-4"></i> Nombre (A-Z)';
-            lucide.createIcons();
-
-            sortBtn.addEventListener('click', function () {
-                const container = document.getElementById('tecnicos-container');
-                const cards = Array.from(container.querySelectorAll('.technician-card'));
-                const currentMode = this.getAttribute('data-sort-mode');
-                let nextMode = 'name-asc';
-
-                cards.sort((a, b) => {
-                    const nameA = a.querySelector('h3').textContent.trim();
-                    const nameB = b.querySelector('h3').textContent.trim();
-                    const availableA = a.querySelector('.availability-toggle input').checked;
-                    const availableB = b.querySelector('.availability-toggle input').checked;
-
-                    if (currentMode === 'name-asc') {
-                        nextMode = 'name-desc';
-                        this.innerHTML = '<i data-lucide="arrow-down-z-a" class="w-4 h-4"></i> Nombre (Z-A)';
-                        return nameB.localeCompare(nameA);
-                    } else if (currentMode === 'name-desc') {
-                        nextMode = 'available';
-                        this.innerHTML = '<i data-lucide="user-check" class="w-4 h-4"></i> Disponibles';
-                        if (availableA && !availableB) return -1;
-                        if (!availableA && availableB) return 1;
-                        return nameA.localeCompare(nameB); // Fallback to name
-                    } else { // currentMode === 'available'
-                        nextMode = 'name-asc';
-                        this.innerHTML = '<i data-lucide="arrow-up-a-z" class="w-4 h-4"></i> Nombre (A-Z)';
-                        return nameA.localeCompare(nameB);
-                    }
-                });
-
-                cards.forEach(card => container.appendChild(card));
-                this.setAttribute('data-sort-mode', nextMode);
-                lucide.createIcons();
-            });
+            const sortBtn = document.getElementById('sort-tecnicos'); if (!sortBtn) return; sortBtn.setAttribute('data-sort-mode', 'name-asc'); sortBtn.innerHTML = '<i data-lucide="arrow-up-a-z" class="w-4 h-4"></i> Nombre (A-Z)'; lucide.createIcons(); sortBtn.addEventListener('click', function() { const container = document.getElementById('tecnicos-container'); const cards = Array.from(container.querySelectorAll('.technician-card')); const currentMode = this.getAttribute('data-sort-mode'); let nextMode = 'name-asc'; cards.sort((a, b) => { const nameA = a.querySelector('h3').textContent.trim(); const nameB = b.querySelector('h3').textContent.trim(); const availableA = a.querySelector('.availability-toggle input').checked; const availableB = b.querySelector('.availability-toggle input').checked; if (currentMode === 'name-asc') { nextMode = 'name-desc'; this.innerHTML = '<i data-lucide="arrow-down-z-a" class="w-4 h-4"></i> Nombre (Z-A)'; return nameB.localeCompare(nameA); } else if (currentMode === 'name-desc') { nextMode = 'available'; this.innerHTML = '<i data-lucide="user-check" class="w-4 h-4"></i> Disponibles'; if (availableA && !availableB) return -1; if (!availableA && availableB) return 1; return nameA.localeCompare(nameB); } else { nextMode = 'name-asc'; this.innerHTML = '<i data-lucide="arrow-up-a-z" class="w-4 h-4"></i> Nombre (A-Z)'; return nameA.localeCompare(nameB); } }); cards.forEach(card => container.appendChild(card)); this.setAttribute('data-sort-mode', nextMode); lucide.createIcons(); });
         }
 
         // --- STARTUP ---
@@ -1824,20 +1170,18 @@
             // Configurar envío del formulario
             document.getElementById('create-incident-form').addEventListener('submit', function (e) {
                 e.preventDefault();
-
                 const formData = {
                     sala: document.getElementById('sala').value,
                     serie: document.getElementById('serie').value,
                     tecnico: document.getElementById('tecnico').value,
                     diagnostico: document.getElementById('diagnostico').value
                 };
-
                 createNewIncident(formData);
             });
 
             // Configurar eventos de pestañas
             document.querySelectorAll('.tab-button').forEach(button => {
-                button.addEventListener('click', function () {
+                button.addEventListener('click', function() {
                     const tabName = this.getAttribute('data-tab');
                     switchTab(tabName);
                 });
@@ -1853,19 +1197,18 @@
 
             // 3. Configura los botones de expandir todo
             setupExpandAllButtons();
-
-            // 4. NUEVO: Configura filtros de búsqueda
+            
+            // 4. Configura filtros de búsqueda
             setupSearchFilters();
-
-            // 5. NUEVO: Configura el botón de ordenar técnicos
+            
+            // 5. Configura el botón de ordenar técnicos
             setupTechnicianSort();
 
-            // 6. Auto-refresh de respaldo (MODIFICADO a 'true' para ser suave)
+            // 6. Auto-refresh de respaldo
             setInterval(() => {
                 loadAssignmentPage(true); // 'true' evita mostrar el loading overlay
             }, 30000);
         });
     </script>
 </body>
-
 </html>
