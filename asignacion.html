@@ -22,16 +22,11 @@
             --ws-success: #10b981;
         }
 
-        /* FIX FINAL para el indicador de Supabase Realtime */
+        /* FIX para el indicador de Supabase Realtime */
         div[style*="background-color: rgb(34, 197, 94)"][style*="position: fixed"],
         #supabase-realtime-status-indicator {
             display: none !important;
             visibility: hidden !important;
-            opacity: 0 !important;
-            z-index: -9999 !important;
-            width: 0 !important;
-            height: 0 !important;
-            pointer-events: none !important;
         }
 
         body {
@@ -60,440 +55,105 @@
             width: 6px;
         }
 
-        .incident-card.inoperativo::before {
-            background-color: var(--ws-red);
-        }
-
-        .incident-card.pendiente::before {
-            background-color: var(--ws-amber);
-        }
-
-        .incident-card.asignada::before {
-            background-color: var(--ws-primary);
-        }
+        .incident-card.inoperativo::before { background-color: var(--ws-red); }
+        .incident-card.pendiente::before { background-color: var(--ws-amber); }
+        .incident-card.asignada::before { background-color: var(--ws-primary); }
 
         .incident-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
 
-        .status-badge {
-            font-weight: 700;
-        }
-
-        .attention-alert {
-            animation: subtle-pulse 3s infinite ease-in-out;
-        }
+        .status-badge { font-weight: 700; }
+        .attention-alert { animation: subtle-pulse 3s infinite ease-in-out; }
 
         @keyframes subtle-pulse {
-
-            0%,
-            100% {
-                box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.2);
-            }
-
-            50% {
-                box-shadow: 0 0 0 6px rgba(220, 38, 38, 0);
-            }
+            0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.2); }
+            50% { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
         }
 
-        .stats-card {
-            background: white;
-            border-radius: 0.75rem;
-            padding: 1.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s;
-        }
-
-        .stats-card:hover {
-            transform: translateY(-2px);
-        }
-
-        .technician-select {
-            background: #f9fafb;
-            border: 1px solid #d1d5db;
-            color: #1f2937;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-        }
-
-        .assign-button {
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            padding: 0.5rem 1rem;
-        }
-
-        .report-details-box {
-            line-height: 1.4;
-            text-align: justify;
-        }
-
-        .technician-card {
-            transition: all 0.3s ease;
-        }
-
-        .technician-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .status-dot {
-            animation: pulse 2s infinite;
-        }
+        .stats-card { background: white; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); transition: transform 0.2s; }
+        .stats-card:hover { transform: translateY(-2px); }
+        .technician-select { background: #f9fafb; border: 1px solid #d1d5db; color: #1f2937; padding: 0.5rem 1rem; border-radius: 0.5rem; }
+        .assign-button { border-radius: 0.5rem; font-size: 0.875rem; padding: 0.5rem 1rem; }
+        .report-details-box { line-height: 1.4; text-align: justify; }
+        .technician-card { transition: all 0.3s ease; }
+        .technician-card:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); }
+        .status-dot { animation: pulse 2s infinite; }
 
         @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.5;
-            }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
 
         /* Modal Styles */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(8px);
-        }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.3s ease; backdrop-filter: blur(8px); }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content { background: white; border-radius: 1rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; transform: scale(0.9); transition: transform 0.3s ease; }
+        .modal-overlay.active .modal-content { transform: scale(1); }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-label { display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151; }
+        .form-input { width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; transition: border-color 0.2s; }
+        .form-input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        .form-textarea { min-height: 100px; resize: vertical; }
 
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
+        /* Tab Styles */
+        .tab-container { background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); overflow: hidden; }
+        .tab-header { display: flex; border-bottom: 1px solid #e5e7eb; overflow-x: auto; }
+        .tab-button { padding: 1rem 1.5rem; font-weight: 500; color: #6b7280; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 0.5rem; }
+        .tab-button:hover { color: #374151; background-color: #f9fafb; }
+        .tab-button.active { color: #3b82f6; border-bottom-color: #3b82f6; background-color: #f0f7ff; }
+        .tab-content { display: none; padding: 1.5rem; }
+        .tab-content.active { display: block; }
+        .incident-header { cursor: pointer; padding: 1rem 1.5rem; }
+        .incident-details { padding: 0 1.5rem 1.5rem; border-top: 1px solid #f3f4f6; }
 
-        .modal-content {
-            background: white;
-            border-radius: 1rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            width: 90%;
-            max-width: 600px;
-            max-height: 90vh;
-            overflow-y: auto;
-            transform: scale(0.9);
-            transition: transform 0.3s ease;
-        }
+        /* Search Bar */
+        .search-container { position: relative; margin-bottom: 1.5rem; }
+        .search-input { width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border: 1px solid #d1d5db; border-radius: 0.75rem; font-size: 0.875rem; transition: all 0.2s; }
+        .search-input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        .search-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #9ca3af; }
 
-        .modal-overlay.active .modal-content {
-            transform: scale(1);
-        }
+        /* Quick Actions */
+        .quick-actions { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .action-btn { padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s; }
+        .action-btn.primary { background-color: #3b82f6; color: white; }
+        .action-btn.primary:hover { background-color: #2563eb; }
+        .action-btn.secondary { background-color: #f3f4f6; color: #374151; }
+        .action-btn.secondary:hover { background-color: #e5e7eb; }
 
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
+        /* Priority Badges */
+        .priority-indicator { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; }
+        .priority-high { background-color: #fef2f2; color: #dc2626; }
+        .priority-medium { background-color: #fffbeb; color: #d97706; }
+        .priority-low { background-color: #f0f9ff; color: #0369a1; }
 
-        .form-label {
-            display: block;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-            color: #374151;
-        }
+        /* Availability Toggle */
+        .availability-toggle { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+        .availability-toggle input { display: none; }
+        .availability-toggle .toggle-slider { width: 44px; height: 24px; background-color: #d1d5db; border-radius: 24px; position: relative; transition: all 0.3s; }
+        .availability-toggle .toggle-slider::before { content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%; background-color: white; top: 3px; left: 3px; transition: all 0.3s; }
+        .availability-toggle input:checked + .toggle-slider { background-color: #10b981; }
+        .availability-toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
 
-        .form-input {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.5rem;
-            font-size: 1rem;
-            transition: border-color 0.2s;
-        }
+        /* Column Layout */
+        .two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        @media (max-width: 1024px) { .two-columns { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .tab-button { padding: 0.75rem 1rem; font-size: 0.875rem; } .tab-content { padding: 1rem; } .incident-header { padding: 1rem; } .incident-details { padding: 0 1rem 1rem; } }
 
-        .form-input:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .form-textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-
-        /* Nuevos estilos para pestañas */
-        .tab-container {
-            background: white;
-            border-radius: 1rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .tab-header {
-            display: flex;
-            border-bottom: 1px solid #e5e7eb;
-            overflow-x: auto;
-        }
-
-        .tab-button {
-            padding: 1rem 1.5rem;
-            font-weight: 500;
-            color: #6b7280;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s;
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .tab-button:hover {
-            color: #374151;
-            background-color: #f9fafb;
-        }
-
-        .tab-button.active {
-            color: #3b82f6;
-            border-bottom-color: #3b82f6;
-            background-color: #f0f7ff;
-        }
-
-        .tab-content {
-            display: none;
-            padding: 1.5rem;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        /* Mejoras para tarjetas de incidencias */
-        .incident-header {
-            cursor: pointer;
-            padding: 1rem 1.5rem;
-        }
-
-        .incident-details {
-            padding: 0 1.5rem 1.5rem;
-            border-top: 1px solid #f3f4f6;
-        }
-
-        /* Barra de búsqueda */
-        .search-container {
-            position: relative;
-            margin-bottom: 1.5rem;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 0.75rem 1rem 0.75rem 2.5rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.75rem;
-            font-size: 0.875rem;
-            transition: all 0.2s;
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 0.75rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #9ca3af;
-        }
-
-        /* Botones de acción rápida */
-        .quick-actions {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-        }
-
-        .action-btn {
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.2s;
-        }
-
-        .action-btn.primary {
-            background-color: #3b82f6;
-            color: white;
-        }
-
-        .action-btn.primary:hover {
-            background-color: #2563eb;
-        }
-
-        .action-btn.secondary {
-            background-color: #f3f4f6;
-            color: #374151;
-        }
-
-        .action-btn.secondary:hover {
-            background-color: #e5e7eb;
-        }
-
-        /* Indicadores de estado mejorados */
-        .priority-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.375rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .priority-high {
-            background-color: #fef2f2;
-            color: #dc2626;
-        }
-
-        .priority-medium {
-            background-color: #fffbeb;
-            color: #d97706;
-        }
-
-        .priority-low {
-            background-color: #f0f9ff;
-            color: #0369a1;
-        }
-
-        /* Mejoras responsive */
-        @media (max-width: 768px) {
-            .tab-button {
-                padding: 0.75rem 1rem;
-                font-size: 0.875rem;
-            }
-            
-            .tab-content {
-                padding: 1rem;
-            }
-            
-            .incident-header {
-                padding: 1rem;
-            }
-            
-            .incident-details {
-                padding: 0 1rem 1rem;
-            }
-            .two-columns {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Nuevos estilos para disponibilidad de técnicos */
-        .availability-toggle {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            cursor: pointer;
-        }
-
-        .availability-toggle input {
-            display: none;
-        }
-
-        .availability-toggle .toggle-slider {
-            width: 44px;
-            height: 24px;
-            background-color: #d1d5db;
-            border-radius: 24px;
-            position: relative;
-            transition: all 0.3s;
-        }
-
-        .availability-toggle .toggle-slider::before {
-            content: '';
-            position: absolute;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background-color: white;
-            top: 3px;
-            left: 3px;
-            transition: all 0.3s;
-        }
-
-        .availability-toggle input:checked + .toggle-slider {
-            background-color: #10b981;
-        }
-
-        .availability-toggle input:checked + .toggle-slider::before {
-            transform: translateX(20px);
-        }
-
-        /* Estilo para dos columnas */
-        .two-columns {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-        }
-
-        @media (max-width: 1024px) {
-            .two-columns {
-                grid-template-columns: 1fr;
-            }
-        }
-        
-        /* Animación de puntos de carga */
-        .loading-dots::after {
-            content: ' .';
-            animation: dots 1.4s infinite;
-            animation-delay: .2s;
-            display: inline-block;
-        }
-        @keyframes dots {
-            0% { content: ' .'; }
-            33% { content: ' ..'; }
-            66% { content: ' ...'; }
-            100% { content: ' .'; }
-        }
-         /* Badge de estado (de la versión anterior) */
-         .status-badge {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-         }
+        /* Loading Dots */
+        .loading-dots::after { content: ' .'; animation: dots 1.4s infinite; animation-delay: .2s; display: inline-block; }
+        @keyframes dots { 0% { content: ' .'; } 33% { content: ' ..'; } 66% { content: ' ...'; } 100% { content: ' .'; } }
+         
+        /* Status Badges */
+        .status-badge { padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
         .status-badge.operativo { background: #dcfce7; color: #166534; }
         .status-badge.inoperativo { background: #fecaca; color: #dc2626; }
         .status-badge.pendiente { background: #fef3c7; color: #d97706; }
         .status-badge.en-progreso { background: #dbeafe; color: #1e40af; }
 
-         /* Toast Notification (de la versión anterior) */
-        .toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--ws-success);
-            color: white;
-            padding: 16px 24px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-            z-index: 1000;
-            transform: translateX(400px);
-            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            min-width: 300px;
-        }
+        /* Toast Notification */
+        .toast { position: fixed; top: 20px; right: 20px; background: var(--ws-success); color: white; padding: 16px 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); z-index: 1000; transform: translateX(400px); transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); display: flex; align-items: center; gap: 12px; min-width: 300px; }
         .toast.show { transform: translateX(0); }
         .toast.error { background: var(--ws-error); }
         .toast.warning { background: var(--ws-warning); }
@@ -532,28 +192,35 @@
             <div class="p-6">
                 <form id="create-incident-form">
                     <div class="space-y-4">
+                        
                         <div class="form-group">
-                            <label for="sala" class="form-label">Sala</label>
-                            <input type="text" id="sala" class="form-input" placeholder="Ingrese el nombre de la sala"
-                                required>
-                        </div>
-                        <div class="form-group">
-                            <label for="serie" class="form-label">Serie de la Máquina</label>
-                            <input type="text" id="serie" class="form-input"
-                                placeholder="Ingrese la serie de la máquina" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="tecnico" class="form-label">Técnico Asignado</label>
-                            <select id="tecnico" class="form-input" required>
-                                <option value="" disabled selected>Seleccione un técnico</option>
+                            <label for="sala-select" class="form-label">Sala</label>
+                            <select id="sala-select" class="form-input" required>
+                                <option value="" disabled selected>Cargando salas...</option>
                             </select>
                         </div>
+
                         <div class="form-group">
-                            <label for="diagnostico" class="form-label">Diagnóstico Inicial</label>
-                            <textarea id="diagnostico" class="form-input form-textarea"
+                            <label for="maquina-select" class="form-label">Serie de la Máquina</label>
+                            <select id="maquina-select" class="form-input" required disabled>
+                                <option value="" disabled selected>Seleccione una sala primero</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tecnico-select-modal" class="form-label">Técnico Asignado</label>
+                            <select id="tecnico-select-modal" class="form-input" required>
+                                <option value="" disabled selected>Cargando técnicos...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="diagnostico-modal" class="form-label">Diagnóstico Inicial</label>
+                            <textarea id="diagnostico-modal" class="form-input form-textarea"
                                 placeholder="Describa el problema o diagnóstico inicial" required></textarea>
                         </div>
                     </div>
+
                     <div class="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-200">
                         <button type="button" id="cancel-create"
                             class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
@@ -569,40 +236,23 @@
             </div>
         </div>
     </div>
-
     <div class="container mx-auto p-4 md:p-8 max-w-7xl">
         <header
             class="mb-8 md:mb-12 flex flex-wrap justify-between items-center bg-white rounded-2xl p-6 shadow-md border-b-4 border-blue-600">
             <div class="flex items-center space-x-4">
-                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                    <i data-lucide="wrench" class="w-6 h-6 text-white"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl md:text-2xl font-bold text-gray-900">Gestión de Incidencias</h1>
-                    <p class="text-sm text-gray-500 font-medium">Asignación rápida y seguimiento de tareas</p>
-                </div>
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center"> <i data-lucide="wrench" class="w-6 h-6 text-white"></i> </div>
+                <div> <h1 class="text-xl md:text-2xl font-bold text-gray-900">Gestión de Incidencias</h1> <p class="text-sm text-gray-500 font-medium">Asignación rápida y seguimiento de tareas</p> </div>
             </div>
             <div class="flex items-center gap-4 mt-4 md:mt-0">
-                <button id="create-incident-btn"
-                    class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all duration-300 flex items-center gap-2 text-sm">
-                    <i data-lucide="plus" class="w-4 h-4"></i>
-                    Nueva Incidencia
-                </button>
-                <a href="./home.html"
-                    class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-all duration-300 flex items-center gap-2 text-sm">
-                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
-                    Dashboard
-                </a>
-                <div class="flex items-center gap-2 text-sm text-gray-500">
-                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                    <span>Actualizado: <span id="last-update" class="font-medium">Ahora</span></span>
-                </div>
+                <button id="create-incident-btn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all duration-300 flex items-center gap-2 text-sm"> <i data-lucide="plus" class="w-4 h-4"></i> Nueva Incidencia </button>
+                <a href="./home.html" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-all duration-300 flex items-center gap-2 text-sm"> <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard </a>
+                <div class="flex items-center gap-2 text-sm text-gray-500"> <i data-lucide="refresh-cw" class="w-4 h-4"></i> <span>Actualizado: <span id="last-update" class="font-medium">Ahora</span></span> </div>
             </div>
         </header>
 
         <div id="stats-container"
             class="grid grid-cols-2 lg:grid-cols-5 gap-6 mb-8 opacity-0 transition-opacity duration-500">
-        </div>
+            </div>
 
         <div class="tab-container mb-8">
             <div class="tab-header">
@@ -630,47 +280,35 @@
 
             <div class="tab-content active" id="urgentes-tab">
                 <div class="quick-actions">
-                    <button id="expand-all-urgentes" class="action-btn secondary">
-                        <i data-lucide="chevrons-down" class="w-4 h-4"></i>
-                        Expandir Todo
-                    </button>
+                    <button id="expand-all-urgentes" class="action-btn secondary"> <i data-lucide="chevrons-down" class="w-4 h-4"></i> Expandir Todo </button>
                 </div>
                 <div class="search-container">
                     <i data-lucide="search" class="search-icon w-4 h-4"></i>
                     <input type="text" id="search-urgentes" class="search-input" placeholder="Buscar en incidencias urgentes...">
                 </div>
-                <div id="urgentes-container" class="two-columns">
-                    </div>
+                <div id="urgentes-container" class="two-columns"></div>
             </div>
 
             <div class="tab-content" id="pendientes-tab">
-                <div class="quick-actions">
-                    <button id="expand-all-pendientes" class="action-btn secondary">
-                        <i data-lucide="chevrons-down" class="w-4 h-4"></i>
-                        Expandir Todo
-                    </button>
+                 <div class="quick-actions">
+                    <button id="expand-all-pendientes" class="action-btn secondary"> <i data-lucide="chevrons-down" class="w-4 h-4"></i> Expandir Todo </button>
                 </div>
                 <div class="search-container">
                     <i data-lucide="search" class="search-icon w-4 h-4"></i>
                     <input type="text" id="search-pendientes" class="search-input" placeholder="Buscar en incidencias pendientes...">
                 </div>
-                <div id="pendientes-container" class="two-columns">
-                    </div>
+                <div id="pendientes-container" class="two-columns"></div>
             </div>
 
             <div class="tab-content" id="asignadas-tab">
                 <div class="quick-actions">
-                    <button id="expand-all-asignadas" class="action-btn secondary">
-                        <i data-lucide="chevrons-down" class="w-4 h-4"></i>
-                        Expandir Todo
-                    </button>
+                    <button id="expand-all-asignadas" class="action-btn secondary"> <i data-lucide="chevrons-down" class="w-4 h-4"></i> Expandir Todo </button>
                 </div>
                 <div class="search-container">
                     <i data-lucide="search" class="search-icon w-4 h-4"></i>
                     <input type="text" id="search-asignadas" class="search-input" placeholder="Buscar en incidencias asignadas...">
                 </div>
-                <div id="asignadas-container" class="two-columns">
-                    </div>
+                <div id="asignadas-container" class="two-columns"></div>
             </div>
 
             <div class="tab-content" id="tecnicos-tab">
@@ -684,8 +322,7 @@
                     <i data-lucide="search" class="search-icon w-4 h-4"></i>
                     <input type="text" id="search-tecnicos" class="search-input" placeholder="Buscar técnicos...">
                 </div>
-                <div id="tecnicos-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    </div>
+                <div id="tecnicos-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
             </div>
         </div>
 
@@ -718,11 +355,103 @@
              document.querySelectorAll('.tab-button').forEach(btn => { btn.classList.remove('active'); }); document.querySelector(`[data-tab="${tabName}"]`).classList.add('active'); document.querySelectorAll('.tab-content').forEach(content => { content.classList.remove('active'); }); document.getElementById(`${tabName}-tab`).classList.add('active'); currentTab = tabName;
         }
 
-        // --- MODAL FUNCTIONS ---
-        function openCreateIncidentModal() { const modal = document.getElementById('create-incident-modal'); modal.classList.add('active'); loadTechniciansForModal(); document.getElementById('create-incident-form').reset(); }
-        function closeCreateIncidentModal() { const modal = document.getElementById('create-incident-modal'); modal.classList.remove('active'); document.getElementById('create-incident-form').reset(); }
-        function loadTechniciansForModal() { const select = document.getElementById('tecnico'); select.innerHTML = '<option value="" disabled selected>Seleccione un técnico</option>'; if (availableTechnicians.length === 0) { select.innerHTML += '<option value="" disabled>No hay técnicos disponibles</option>'; return; } const availableTechs = availableTechnicians.filter(tech => tech.disponible !== false); availableTechs.forEach(tech => { const option = document.createElement('option'); option.value = tech.id_usuario; option.textContent = tech.usuario; select.appendChild(option); }); }
+        // --- MODAL FUNCTIONS (MODIFICADAS) ---
+        async function openCreateIncidentModal() {
+            const modal = document.getElementById('create-incident-modal');
+            modal.classList.add('active');
+            document.getElementById('create-incident-form').reset();
+            // Carga técnicos Y salas al abrir
+            await loadTechniciansForModal();
+            await loadSalasForModal();
+            
+            // Añade listener para el cambio de sala
+            document.getElementById('sala-select').addEventListener('change', loadMaquinasForModal);
+        }
 
+        function closeCreateIncidentModal() {
+            const modal = document.getElementById('create-incident-modal');
+            modal.classList.remove('active');
+            document.getElementById('create-incident-form').reset();
+            // Limpia el listener para evitar duplicados
+            document.getElementById('sala-select').removeEventListener('change', loadMaquinasForModal);
+        }
+
+        async function loadSalasForModal() {
+            const select = document.getElementById('sala-select');
+            select.innerHTML = '<option value="" disabled selected>Cargando salas...</option>';
+            try {
+                const { data: salas, error } = await supabaseClient
+                    .from('sala')
+                    .select('id_sala, sala') // Usamos 'sala'
+                    .order('sala');
+                if (error) throw error;
+
+                select.innerHTML = '<option value="" disabled selected>Seleccione una sala</option>';
+                salas.forEach(sala => {
+                    const option = document.createElement('option');
+                    option.value = sala.id_sala;
+                    option.textContent = sala.sala; // Mostramos 'sala'
+                    select.appendChild(option);
+                });
+            } catch (e) {
+                 select.innerHTML = '<option value="" disabled selected>Error al cargar salas</option>';
+                 console.error("Error cargando salas para modal:", e);
+            }
+        }
+
+        async function loadMaquinasForModal() {
+            const salaId = document.getElementById('sala-select').value;
+            const select = document.getElementById('maquina-select');
+            select.innerHTML = '<option value="" disabled selected>Cargando máquinas...</option>';
+            select.disabled = true;
+
+            if (!salaId) {
+                 select.innerHTML = '<option value="" disabled selected>Seleccione una sala primero</option>';
+                 return;
+            }
+
+            try {
+                 const { data: maquinas, error } = await supabaseClient
+                    .from('maquinas')
+                    .select('id_maquina, serie, modelo')
+                    .eq('id_sala', salaId)
+                    .order('serie');
+                if (error) throw error;
+
+                select.innerHTML = '<option value="" disabled selected>Seleccione una máquina</option>';
+                if (maquinas.length === 0) {
+                     select.innerHTML = '<option value="" disabled selected>No hay máquinas en esta sala</option>';
+                }
+
+                maquinas.forEach(maq => {
+                    const option = document.createElement('option');
+                    option.value = maq.id_maquina;
+                    option.textContent = `${maq.serie} (${maq.modelo || 'N/A'})`;
+                    select.appendChild(option);
+                });
+                select.disabled = false;
+            } catch (e) {
+                 select.innerHTML = '<option value="" disabled selected>Error al cargar máquinas</option>';
+                 console.error("Error cargando máquinas para modal:", e);
+            }
+        }
+        
+        function loadTechniciansForModal() {
+            const select = document.getElementById('tecnico-select-modal'); // ID actualizado
+            select.innerHTML = '<option value="" disabled selected>Seleccione un técnico</option>';
+            if (availableTechnicians.length === 0) {
+                select.innerHTML += '<option value="" disabled>No hay técnicos disponibles</option>';
+                return;
+            }
+            const availableTechs = availableTechnicians.filter(tech => tech.disponible !== false);
+            availableTechs.forEach(tech => {
+                const option = document.createElement('option');
+                option.value = tech.id_usuario;
+                option.textContent = tech.usuario;
+                select.appendChild(option);
+            });
+        }
+        // --- FIN MODAL FUNCTIONS ---
 
         // --- SESSION MANAGEMENT ---
         async function checkCoordinatorSession() {
@@ -780,7 +509,7 @@
             }
         }
 
-        // --- NUEVA FUNCIÓN RPC (REEMPLAZA A fetchPendingIncidents) ---
+        // --- NUEVA FUNCIÓN RPC ---
         // Esta función AHORA trae TODOS los últimos estados, no solo pendientes.
         async function fetchLatestMachineDetailsRPC() {
             console.log("🔍 Buscando TODOS los últimos estados via RPC...");
@@ -795,16 +524,14 @@
             return data; // Devuelve la lista completa
         }
         
-        // --- fetchAssignedIncidents (YA NO SE USA, SE ELIMINA) ---
-        
-        // --- fetchPendingIncidents (YA NO SE USA, SE ELIMINA) ---
-        
+        // --- fetchTechnicians (MODIFICADO) ---
         async function fetchTechnicians() {
              const { data, error } = await supabaseClient
                 .from('tecnicos')
-                // CORREGIDO: Seleccionar 'id_usuario, usuario, disponible, cargo'
-                .select('id_usuario, usuario, disponible, cargo') 
-                .in('cargo', ['Tecnico', 'Coordinador', 'tecnico', 'coordinador']) // Insensible a mayúsculas
+                // CORREGIDO: Seleccionar todo lo necesario para el tab y la lógica
+                .select('id_usuario, usuario, cargo, de_guardia, horario_lv, horario_sab, disponible') 
+                // Usamos 'ilike' para ser case-insensitive
+                .or('cargo.ilike.tecnico,cargo.ilike.coordinador')
                 .order('usuario');
 
              if (error) {
@@ -814,75 +541,141 @@
              return data;
         }
 
+        // --- createNewIncident (MODIFICADO) ---
+        // Ahora lee IDs desde los <select>
         async function createNewIncident(formData) {
-             try { console.log("📝 Iniciando creación de incidencia:", formData); const { fecha, hora } = getPeruDateTime(); console.log("🕐 Fecha y hora generadas:", fecha, hora); console.log("🔍 Buscando/creando sala:", formData.sala); const { data: salaData, error: salaError } = await supabaseClient .from('sala') .select('id_sala') .eq('sala_mincetur', formData.sala) .single(); let id_sala; if (salaError || !salaData) { console.log("➕ Creando nueva sala..."); const { data: newSala, error: newSalaError } = await supabaseClient .from('sala') .insert({ sala: formData.sala, sala_mincetur: formData.sala, distrito: 'Por definir', provincia: 'Lima', departamento: 'Lima' }) .select() .single(); if (newSalaError) { console.error("❌ Error creando sala:", newSalaError); throw newSalaError; } id_sala = newSala.id_sala; console.log("✅ Sala creada con ID:", id_sala); } else { id_sala = salaData.id_sala; console.log("✅ Sala existente con ID:", id_sala); } console.log("🔍 Buscando/creando máquina:", formData.serie); const { data: maquinaData, error: maquinaError } = await supabaseClient .from('maquinas') .select('id_maquina') .eq('serie', formData.serie) .single(); let id_maquina; if (maquinaError || !maquinaData) { console.log("➕ Creando nueva máquina..."); const { data: newMaquina, error: newMaquinaError } = await supabaseClient .from('maquinas') .insert({ serie: formData.serie, modelo: 'Máquina Winsystems', id_sala: id_sala }) .select() .single(); if (newMaquinaError) { console.error("❌ Error creando máquina:", newMaquinaError); throw newMaquinaError; } id_maquina = newMaquina.id_maquina; console.log("✅ Máquina creada con ID:", id_maquina); } else { id_maquina = maquinaData.id_maquina; console.log("✅ Máquina existente con ID:", id_maquina); } console.log("👨‍💼 Creando trabajo para técnico:", formData.tecnico); const { data: newTrabajo, error: trabajoError } = await supabaseClient .from('trabajos') .insert({ id_sala: id_sala, id_usuario: formData.tecnico, fecha: fecha, hora_inicio: hora, hora_fin: hora }) .select() .single(); if (trabajoError) { console.error("❌ Error creando trabajo:", trabajoError); throw trabajoError; } console.log("✅ Trabajo creado con ID:", newTrabajo.id_trabajo); console.log("📋 Creando detalle..."); const { error: detalleError } = await supabaseClient .from('detalle') .insert({ id_trabajo: newTrabajo.id_trabajo, id_maquina: id_maquina, diag_ini: formData.diagnostico, estado: 'En Progreso', tipo_trabajo: 'Mantenimiento', fecha_reporte: fecha, hora_reporte: hora }); if (detalleError) { console.error("❌ Error creando detalle:", detalleError); throw detalleError; } console.log("✅ Detalle creado exitosamente"); showToast('¡Incidencia creada y asignada exitosamente!'); closeCreateIncidentModal(); setTimeout(() => loadAssignmentPage(true), 1000); } catch (error) { console.error("💥 Error completo al crear la incidencia:", error); showToast(`Error al crear la incidencia: ${error.message}`, 'error'); }
+             try {
+                console.log("📝 Iniciando creación de incidencia:", formData);
+                const { fecha, hora } = getPeruDateTime();
+                
+                // Los datos ya son IDs, no es necesario buscar/crear sala o máquina
+                const id_sala = formData.sala;
+                const id_maquina = formData.maquina;
+                const id_tecnico = formData.tecnico;
+
+                if (!id_sala || !id_maquina || !id_tecnico) {
+                    throw new Error("Sala, Máquina y Técnico son requeridos.");
+                }
+
+                console.log("👨‍💼 Creando trabajo para técnico:", id_tecnico);
+                const { data: newTrabajo, error: trabajoError } = await supabaseClient
+                    .from('trabajos')
+                    .insert({
+                        id_sala: id_sala,
+                        id_usuario: id_tecnico,
+                        fecha: fecha,
+                        hora_inicio: hora,
+                        hora_fin: hora
+                    })
+                    .select()
+                    .single();
+
+                if (trabajoError) {
+                    console.error("❌ Error creando trabajo:", trabajoError);
+                    throw trabajoError;
+                }
+                console.log("✅ Trabajo creado con ID:", newTrabajo.id_trabajo);
+
+                console.log("📋 Creando detalle...");
+                const { error: detalleError } = await supabaseClient
+                    .from('detalle')
+                    .insert({
+                        id_trabajo: newTrabajo.id_trabajo,
+                        id_maquina: id_maquina,
+                        diag_ini: formData.diagnostico,
+                        estado: 'En Progreso',
+                        tipo_trabajo: 'Mantenimiento', // O el tipo por defecto que prefieras
+                        fecha_reporte: fecha,
+                        hora_reporte: hora
+                    });
+
+                if (detalleError) {
+                    console.error("❌ Error creando detalle:", detalleError);
+                    throw detalleError;
+                }
+                console.log("✅ Detalle creado exitosamente");
+
+                showToast('¡Incidencia creada y asignada exitosamente!');
+                closeCreateIncidentModal();
+
+                setTimeout(() => loadAssignmentPage(true), 1000); // Recarga la UI
+
+             } catch (error) {
+                 console.error("💥 Error completo al crear la incidencia:", error);
+                 showToast(`Error al crear la incidencia: ${error.message}`, 'error');
+             }
         }
 
         // --- RENDERING FUNCTIONS ---
         
+        // renderStatistics (MODIFICADO)
         function renderStatistics(inoperativosList, pendientesList, asignadasList, techniciansList) {
             const container = document.getElementById('stats-container');
             const inoperativos = inoperativosList.length;
             const pendientes = pendientesList.length;
             const totalPendientes = inoperativos + pendientes;
-            // CORREGIDO: Filtrar por 'disponible' no es false (incluye true y null) Y que el cargo sea 'tecnico'
-            const totalTechnicians = techniciansList.filter(t => t.disponible !== false && (t.cargo?.toLowerCase() === 'tecnico')).length;
+            
+            // --- Lógica de Disponibilidad (copiada de Flutter) ---
+            const now = new Date();
+            const currentTime = { hour: now.getHours(), minute: now.getMinutes() };
+            const dayOfWeek = now.getDay(); // 0=Dom, 1=Lun, ..., 6=Sab
+            
+            const availableTechs = techniciansList.filter(tech => {
+                // Solo contamos técnicos, no coordinadores
+                if (tech.cargo?.toLowerCase() !== 'tecnico') return false; 
+                
+                const deGuardia = tech.de_guardia;
+                if (deGuardia === true) return true; // Forzado disponible
+                if (deGuardia === false) return false; // Forzado no disponible
+
+                // Seguir horario (de_guardia es null)
+                let horarioString = null;
+                if (dayOfWeek >= 1 && dayOfWeek <= 5) { // Lunes a Viernes
+                    horarioString = tech.horario_lv;
+                } else if (dayOfWeek === 6) { // Sábado
+                    horarioString = tech.horario_sab;
+                } else { // Domingo
+                    return false;
+                }
+                
+                const horario = parseHorario(horarioString);
+                if (horario.start && horario.end) {
+                    return isTimeWithinRange(currentTime, horario.start, horario.end);
+                }
+                return false; // Sin horario definido, no está disponible
+            }).length;
+            // --- Fin Lógica Disponibilidad ---
+            
             const totalAsignadas = asignadasList.length;
 
             document.getElementById('urgentes-count').textContent = inoperativos;
             document.getElementById('pendientes-count').textContent = pendientes;
             document.getElementById('asignadas-count').textContent = totalAsignadas;
-            document.getElementById('tecnicos-count').textContent = totalTechnicians; // Muestra solo técnicos disponibles
+            document.getElementById('tecnicos-count').textContent = availableTechs; // Muestra solo disponibles
 
             const stats = [
                 { title: 'Total Pendientes', value: totalPendientes, icon: 'list-todo', color: 'text-blue-600', bg: 'bg-blue-50' },
                 { title: 'Inoperativos', value: inoperativos, icon: 'siren', color: 'text-red-600', bg: 'bg-red-50' },
                 { title: 'Pendientes Normales', value: pendientes, icon: 'hourglass', color: 'text-amber-600', bg: 'bg-amber-50' },
-                { title: 'Técnicos Disponibles', value: totalTechnicians, icon: 'wrench', color: 'text-green-600', bg: 'bg-green-50' },
+                { title: 'Técnicos Disponibles', value: availableTechs, icon: 'wrench', color: 'text-green-600', bg: 'bg-green-50' },
                 { title: 'Asignadas en Progreso', value: totalAsignadas, icon: 'user-check', color: 'text-indigo-600', bg: 'bg-indigo-50' }
             ];
-
-            container.className = 'grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8 opacity-0 transition-opacity duration-500';
-            container.innerHTML = stats.map(stat => `
-                <div class="stats-card border-l-4 ${stat.color.replace('text-', 'border-')}">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-500 font-medium">${stat.title}</p>
-                            <p class="text-3xl font-extrabold text-gray-900 mt-1">${stat.value}</p>
-                        </div>
-                        <div class="p-3 rounded-full ${stat.bg}">
-                            <i data-lucide="${stat.icon}" class="w-7 h-7 ${stat.color}"></i>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-
-            container.classList.remove('opacity-0');
-            container.classList.add('opacity-100');
-            lucide.createIcons();
+             container.className = 'grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8 opacity-0 transition-opacity duration-500'; container.innerHTML = stats.map(stat => ` <div class="stats-card border-l-4 ${stat.color.replace('text-', 'border-')}"> <div class="flex items-center justify-between"> <div> <p class="text-sm text-gray-500 font-medium">${stat.title}</p> <p class="text-3xl font-extrabold text-gray-900 mt-1">${stat.value}</p> </div> <div class="p-3 rounded-full ${stat.bg}"> <i data-lucide="${stat.icon}" class="w-7 h-7 ${stat.color}"></i> </div> </div> </div> `).join(''); container.classList.remove('opacity-0'); container.classList.add('opacity-100'); lucide.createIcons();
         }
 
-        // --- FUNCIÓN DE RENDERIZADO 'ASIGNADAS' (MODIFICADA) ---
+        // renderAssignedIncidents (MODIFICADO)
         // Usa la misma lógica que renderIncidentGroup, ya que los datos vienen del mismo RPC
         function renderAssignedIncidents(assignedIncidents) {
             const container = document.getElementById('asignadas-container');
-            if (!container) {
-                console.error("No se encontró el contenedor 'asignadas-container'");
-                return;
-            }
+            if (!container) { console.error("No se encontró el contenedor 'asignadas-container'"); return; }
 
             if (!assignedIncidents || assignedIncidents.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state bg-white p-8 rounded-lg text-center shadow-md col-span-full">
-                        <i data-lucide="user-check" class="w-16 h-16 text-blue-400 mx-auto mb-4"></i>
-                        <h3 class="text-xl font-semibold text-gray-700 mb-2">Sin asignaciones activas</h3>
-                        <p class="text-gray-500">No hay incidencias con estado "En Progreso" o "Asignado".</p>
-                    </div>
-                `;
+                container.innerHTML = ` <div class="empty-state bg-white p-8 rounded-lg text-center shadow-md col-span-full"> <i data-lucide="user-check" class="w-16 h-16 text-blue-400 mx-auto mb-4"></i> <h3 class="text-xl font-semibold text-gray-700 mb-2">Sin asignaciones activas</h3> <p class="text-gray-500">No hay incidencias con estado "En Progreso" o "Asignado".</p> </div> `;
                 lucide.createIcons();
                 return;
             }
 
+            // Usamos la misma estructura de datos del RPC (get_latest_machine_details)
             const htmlContent = assignedIncidents.map((incident) => {
                 const estado = incident.estado || 'Asignado';
                 const salaNombre = incident.sala_mincetur || 'N/A'; // Usa el alias del RPC
@@ -907,8 +700,17 @@
                 // Datos del técnico que reportó
                 const tecnicoNombre = incident.tecnico_reporta || 'N/A';
                 const tecnicoCargo = incident.cargo_reporta || 'N/A';
-                // const tecnicoCel = incident.cel || 'N/A'; // No se usa en esta tarjeta
-                // const tecnicoCorreo = incident.correo || 'N/A'; // No se usa en esta tarjeta
+                
+                // Badge de "Reportado por"
+                const esSala = tecnicoCargo.toLowerCase().includes('sala');
+                const badgeColor = esSala ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800';
+                const badgeIcon = esSala ? 'building' : 'user';
+                const reportadoPorHTML = `
+                    <span class="text-xs ${badgeColor} px-2 py-1 rounded-full flex items-center gap-1">
+                        <i data-lucide="${badgeIcon}" class="w-3 h-3"></i>
+                        Reportado por: ${tecnicoCargo}
+                    </span>
+                `;
 
                 return `
                     <div class="incident-card asignada">
@@ -918,9 +720,10 @@
                                     <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                                         <i data-lucide="user-check" class="w-5 h-5 text-blue-600"></i>
                                     </div>
-                                    <div>
-                                        <h3 class="font-bold text-gray-900">${salaNombre}</h3>
-                                        <p class="text-sm text-gray-500">${modelo} - S/N: ${serie}</p>
+                                    <div class_name="min-w-0">
+                                        <h3 class="font-bold text-gray-900 truncate">${salaNombre}</h3>
+                                        <p class="text-sm text-gray-500 truncate">${modelo} - S/N: ${serie}</p>
+                                        <div class="flex items-center gap-2 mt-1">${reportadoPorHTML}</div>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-3">
@@ -936,52 +739,36 @@
                         <div class="incident-details hidden">
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                 <div class="col-span-1">
-                                    <p class="text-sm font-semibold text-gray-500 flex items-center gap-1">
-                                        <i data-lucide="laptop-minimal-check" class="w-4 h-4 text-blue-600"></i> MÁQUINA
-                                    </p>
+                                    <p class="text-sm font-semibold text-gray-500 flex items-center gap-1"><i data-lucide="laptop-minimal-check" class="w-4 h-4 text-blue-600"></i> MÁQUINA</p>
                                     <h3 class="text-lg font-bold text-gray-900">${modelo}</h3>
                                     <p class="text-xs text-gray-500">S/N: ${serie}</p>
                                     <p class="text-xs text-gray-400">ID Detalle: ${idDetalle}</p>
                                 </div>
-
                                 <div class="col-span-1">
-                                    <p class="text-sm font-semibold text-gray-500 flex items-center gap-1">
-                                        <i data-lucide="map-pin" class="w-4 h-4"></i> UBICACIÓN
-                                    </p>
+                                    <p class="text-sm font-semibold text-gray-500 flex items-center gap-1"><i data-lucide="map-pin" class="w-4 h-4"></i> UBICACIÓN</p>
                                     <p class="text-md font-semibold text-gray-800">${salaNombre}</p>
                                     <p class="text-xs text-gray-500">${incident.distrito || ''}</p>
                                 </div>
-
                                 <div class="col-span-1 text-left md:text-right">
                                     <p class="text-xs text-gray-400">Asignado: ${fechaReporte} ${horaReporte}</p>
                                     <p class="text-xs text-gray-400">Por: ${tecnicoNombre} (${tecnicoCargo})</p>
                                 </div>
                             </div>
-
                             <div class="border-t border-gray-100 pt-4 mb-4">
-                                <p class="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
-                                    <i data-lucide="file-text" class="w-4 h-4 text-gray-500"></i>
-                                    Historial del Reporte:
-                                </p>
+                                <p class="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1"><i data-lucide="file-text" class="w-4 h-4 text-gray-500"></i> Historial del Reporte:</p>
                                 <div class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100 report-details-box whitespace-pre-wrap text-justify">
                                     ${detallesHTML}
                                 </div>
                             </div>
-                            
                             <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                                        <i data-lucide="user" class="w-4 h-4 text-green-600"></i>
-                                    </div>
+                                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center"> <i data-lucide="user" class="w-4 h-4 text-green-600"></i> </div>
                                     <div>
                                         <p class="text-sm font-semibold text-gray-700">Técnico Asignado</p>
                                         <p class="text-lg font-bold text-green-600">${tecnicoNombre}</p>
                                     </div>
                                 </div>
-                                <div class="flex items-center gap-2 text-sm text-gray-500">
-                                    <i data-lucide="clock" class="w-4 h-4"></i>
-                                    <span>${estado}</span>
-                                </div>
+                                <div class="flex items-center gap-2 text-sm text-gray-500"> <i data-lucide="clock" class="w-4 h-4"></i> <span>${estado}</span> </div>
                             </div>
                         </div>
                     </div>
@@ -992,137 +779,102 @@
             lucide.createIcons();
         }
 
-        // --- FUNCIÓN DE RENDERIZADO ÚNICA PARA 'Urgentes' y 'Pendientes' ---
+        // renderIncidentGroup (Para Urgentes y Pendientes)
         function renderIncidentGroup(incidents, technicians, containerId, type) {
-            const container = document.getElementById(containerId);
-            const statusText = type === 'inoperativo' ? 'Inoperativo' : 'Pendiente';
-            const urgencyIcon = type === 'inoperativo' ? 'bolt' : 'clock';
-            const urgencyClass = type === 'inoperativo' ? 'attention-alert' : '';
-            const machineIcon = 'laptop-minimal-check';
+             const container = document.getElementById(containerId); const statusText = type === 'inoperativo' ? 'Inoperativo' : 'Pendiente'; const urgencyIcon = type === 'inoperativo' ? 'bolt' : 'clock'; const urgencyClass = type === 'inoperativo' ? 'attention-alert' : ''; const machineIcon = 'laptop-minimal-check'; if (incidents.length === 0) { container.innerHTML = ` <div class="empty-state bg-white p-8 rounded-lg text-center shadow-md col-span-full"> <i data-lucide="sparkles" class="w-16 h-16 text-blue-400 mx-auto mb-4"></i> <h3 class="text-xl font-semibold text-gray-700 mb-2">¡Misión Cumplida!</h3> <p class="text-gray-500">No hay incidencias ${type === 'inoperativo' ? 'urgentes' : 'pendientes'} en la cola de asignación.</p> </div> `; lucide.createIcons(); return; } const htmlContent = incidents.map((incident) => { const reportDate = incident.fecha_reporte || 'N/A'; const reportTime = incident.hora_reporte || 'N/A'; const fecha = reportDate !== 'N/A' ? new Date(reportDate + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'; const hora = reportTime.substring(0, 5); const elapsed = timeAgo(reportDate, reportTime); const availableTechs = technicians.filter(tech => tech.disponible !== false); const selectOptions = availableTechs.map(tech => `<option value="${tech.id_usuario}">${tech.usuario}</option>`).join(''); const detallesConcatenados = [ incident.diag_ini ? ` ${incident.diag_ini}` : null, incident.trab_realizado ? `${incident.trab_realizado}` : null, incident.resul ? ` ${incident.resul}` : null ].filter(Boolean).join('<br>'); const detallesHTML = detallesConcatenados || 'Sin detalles de diagnóstico o trabajo previo.'; const tipoReporte = incident.cargo_reporta || 'N/A'; const esSala = tipoReporte.toLowerCase().includes('sala'); const badgeColor = esSala ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'; const badgeIcon = esSala ? 'building' : 'user'; return ` <div class="incident-card ${type} ${urgencyClass}"> <div class="incident-header" onclick="toggleIncidentDetails(this)"> <div class="flex items-center justify-between"> <div class="flex items-center gap-3"> <div class="w-10 h-10 ${type === 'inoperativo' ? 'bg-red-100' : 'bg-amber-100'} rounded-full flex items-center justify-center"> <i data-lucide="${machineIcon}" class="w-5 h-5 ${type === 'inoperativo' ? 'text-red-600' : 'text-amber-600'}"></i> </div> <div class="min-w-0"> <h3 class="font-bold text-gray-900 truncate">${incident.sala_mincetur || 'N/A'}</h3> <p class="text-sm text-gray-500 truncate">${incident.modelo || 'Máquina Winsystems'} - S/N: ${incident.serie || 'N/A'}</p> <div class="flex items-center gap-2 mt-1"> <span class="text-xs ${badgeColor} px-2 py-1 rounded-full flex items-center gap-1"> <i data-lucide="${badgeIcon}" class="w-3 h-3"></i> Reportado por: ${tipoReporte} </span> </div> </div> </div> <div class="flex items-center gap-3"> <div class="flex flex-col items-end gap-1 text-right"> <span class="text-xs font-semibold text-gray-500 flex items-center gap-1" title="Reportado: ${fecha} ${hora}"> <i data-lucide="calendar-clock" class="w-3 h-3"></i> ${elapsed} </span> <span class="status-badge text-white ${type === 'inoperativo' ? 'bg-red-600' : 'bg-amber-600'} flex items-center gap-1 py-1 px-2 rounded-full shadow-sm text-xs"> <i data-lucide="${urgencyIcon}" class="w-3 h-3"></i> ${statusText} </span> </div> <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 transition-transform"></i> </div> </div> </div> <div class="incident-details hidden"> <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4"> <div class="col-span-1"> <p class="text-sm font-semibold text-gray-500 flex items-center gap-1"> <i data-lucide="${machineIcon}" class="w-4 h-4 text-blue-600"></i> MÁQUINA </p> <h3 class="text-lg font-bold text-gray-900">${incident.modelo || 'Máquina Winsystems'}</h3> <p class="text-xs text-gray-500">S/N: ${incident.serie || 'N/A'}</p> </div> <div class="col-span-1"> <p class="text-sm font-semibold text-gray-500 flex items-center gap-1"> <i data-lucide="map-pin" class="w-4 h-4"></i> UBICACIÓN </p> <p class="text-md font-semibold text-gray-800">${incident.sala_mincetur || 'N/A'}</p> <p class="text-xs text-gray-500">${incident.distrito || ''}</p> </div> <div class="col-span-1 text-left md:text-right"> <p class="text-xs text-gray-400 mt-1">Reportado: ${fecha} ${hora}</p> ${incident.tecnico_reporta ? `<p class="text-xs text-gray-400">Por: ${incident.tecnico_reporta} (${tipoReporte})</p>` : ''} </div> </div> <div class="border-t border-gray-100 pt-4 mb-4"> <p class="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1"> <i data-lucide="file-text" class="w-4 h-4 text-gray-500"></i> Historial del Reporte: </p> <div class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100 report-details-box whitespace-pre-wrap text-justify"> ${detallesHTML} </div> </div> <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-4 p-3 bg-blue-50/50 rounded-lg border border-blue-100"> <select class="technician-select flex-grow text-sm" data-incident-id="${incident.id_maquina}"> <option value="" disabled selected>Selecciona un Técnico para asignar...</option> ${selectOptions} </select> <button data-incident='${JSON.stringify(incident)}' class="assign-button w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold shadow-md transition-colors" disabled > <i data-lucide="send" class="w-4 h-4"></i> Asignar </button> </div> </div> </div> `; }).join(''); container.innerHTML = htmlContent; lucide.createIcons();
+        }
+        
+        // renderTechniciansList (MODIFICADO)
+        function renderTechniciansList(technicians) {
+            const container = document.getElementById('tecnicos-container');
+            if (technicians.length === 0) { /* ... (empty state) ... */ return; }
 
-            if (incidents.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state bg-white p-8 rounded-lg text-center shadow-md col-span-full">
-                        <i data-lucide="sparkles" class="w-16 h-16 text-blue-400 mx-auto mb-4"></i>
-                        <h3 class="text-xl font-semibold text-gray-700 mb-2">¡Misión Cumplida!</h3>
-                        <p class="text-gray-500">No hay incidencias ${type === 'inoperativo' ? 'urgentes' : 'pendientes'} en la cola de asignación.</p>
-                    </div>
-                `;
-                lucide.createIcons();
-                return;
-            }
+            const now = new Date();
+            const currentTime = { hour: now.getHours(), minute: now.getMinutes() };
+            const dayOfWeek = now.getDay(); // 0=Dom, 1=Lun, ..., 6=Sab
 
-            const htmlContent = incidents.map((incident) => {
-                const reportDate = incident.fecha_reporte || 'N/A';
-                const reportTime = incident.hora_reporte || 'N/A';
+            const htmlContent = technicians.map(tech => {
+                // --- Lógica de Disponibilidad (copiada de Flutter) ---
+                const deGuardia = tech.de_guardia;
+                let isAvailable = false;
+                let availabilityText = "No Disponible";
+                let availabilityColorClass = "border-gray-400";
+                let statusDotClass = "bg-gray-400";
 
-                const fecha = reportDate !== 'N/A' ? new Date(reportDate + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
-                const hora = reportTime.substring(0, 5);
-                const elapsed = timeAgo(reportDate, reportTime);
-                
-                const availableTechs = technicians.filter(tech => tech.disponible !== false);
-                const selectOptions = availableTechs.map(tech => `<option value="${tech.id_usuario}">${tech.usuario}</option>`).join('');
+                if (deGuardia === true) {
+                    isAvailable = true;
+                    availabilityText = "Disponible (Guardia)";
+                    availabilityColorClass = "border-green-500";
+                    statusDotClass = "bg-green-500";
+                } else if (deGuardia === false) {
+                    isAvailable = false;
+                    availabilityText = "No Disponible (Guardia)";
+                    availabilityColorClass = "border-gray-400";
+                    statusDotClass = "bg-gray-400";
+                } else { // Seguir horario (de_guardia es null)
+                    let horarioString = null;
+                    if (dayOfWeek >= 1 && dayOfWeek <= 5) { // Lunes a Viernes
+                        horarioString = tech.horario_lv;
+                    } else if (dayOfWeek === 6) { // Sábado
+                        horarioString = tech.horario_sab;
+                    } // Domingo es No Disponible por defecto
+                    
+                    const horario = parseHorario(horarioString);
+                    if (horario.start && horario.end && isTimeWithinRange(currentTime, horario.start, horario.end)) {
+                        isAvailable = true;
+                        availabilityText = "Disponible (Horario)";
+                        availabilityColorClass = "border-green-500";
+                        statusDotClass = "bg-green-500";
+                    } else {
+                        availabilityText = "No Disponible (Horario)";
+                        availabilityColorClass = "border-red-500"; // Rojo si está fuera de horario
+                        statusDotClass = "bg-red-500";
+                    }
+                }
+                // --- Fin Lógica Disponibilidad ---
 
-                const detallesConcatenados = [
-                    incident.diag_ini ? ` ${incident.diag_ini}` : null,
-                    incident.trab_realizado ? `${incident.trab_realizado}` : null,
-                    incident.resul ? ` ${incident.resul}` : null
-                ].filter(Boolean).join('<br>');
-                const detallesHTML = detallesConcatenados || 'Sin detalles de diagnóstico o trabajo previo.';
-
-                const tipoReporte = incident.cargo_reporta || 'N/A';
-                const esSala = tipoReporte.toLowerCase().includes('sala');
-                const badgeColor = esSala ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800';
-                const badgeIcon = esSala ? 'building' : 'user';
+                // Solo mostramos el switch si el cargo es coordinador
+                const showSwitch = tech.cargo?.toLowerCase() === 'coordinador';
 
                 return `
-                    <div class="incident-card ${type} ${urgencyClass}">
-                        <div class="incident-header" onclick="toggleIncidentDetails(this)">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 ${type === 'inoperativo' ? 'bg-red-100' : 'bg-amber-100'} rounded-full flex items-center justify-center">
-                                        <i data-lucide="${machineIcon}" class="w-5 h-5 ${type === 'inoperativo' ? 'text-red-600' : 'text-amber-600'}"></i>
-                                    </div>
-                                    <div>
-                                        <h3 class="font-bold text-gray-900">${incident.sala_mincetur || 'N/A'}</h3>
-                                        <p class="text-sm text-gray-500">${incident.modelo || 'Máquina Winsystems'} - S/N: ${incident.serie || 'N/A'}</p>
-                                        <div class="flex items-center gap-2 mt-1">
-                                            <span class="text-xs ${badgeColor} px-2 py-1 rounded-full flex items-center gap-1">
-                                                <i data-lucide="${badgeIcon}" class="w-3 h-3"></i>
-                                                Reportado por: ${tipoReporte}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <div class="flex flex-col items-end gap-1 text-right">
-                                        <span class="text-xs font-semibold text-gray-500 flex items-center gap-1" title="Reportado: ${fecha} ${hora}">
-                                            <i data-lucide="calendar-clock" class="w-3 h-3"></i>
-                                            ${elapsed}
-                                        </span>
-                                        <span class="status-badge text-white ${type === 'inoperativo' ? 'bg-red-600' : 'bg-amber-600'} flex items-center gap-1 py-1 px-2 rounded-full shadow-sm text-xs">
-                                            <i data-lucide="${urgencyIcon}" class="w-3 h-3"></i> 
-                                            ${statusText}
-                                        </span>
-                                    </div>
-                                    <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 transition-transform"></i>
-                                </div>
-                            </div>
+                <div class="technician-card bg-white p-4 rounded-lg shadow-md border-l-4 ${availabilityColorClass}">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 ${isAvailable ? 'bg-green-100' : 'bg-gray-100'} rounded-full flex items-center justify-center">
+                            <i data-lucide="user" class="w-5 h-5 ${isAvailable ? 'text-green-600' : 'text-gray-500'}"></i>
                         </div>
-                        
-                        <div class="incident-details hidden">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                <div class="col-span-1">
-                                    <p class="text-sm font-semibold text-gray-500 flex items-center gap-1">
-                                        <i data-lucide="${machineIcon}" class="w-4 h-4 text-blue-600"></i> MÁQUINA
-                                    </p>
-                                    <h3 class="text-lg font-bold text-gray-900">${incident.modelo || 'Máquina Winsystems'}</h3>
-                                    <p class="text-xs text-gray-500">S/N: ${incident.serie || 'N/A'}</p>
-                                </div>
-                                <div class="col-span-1">
-                                    <p class="text-sm font-semibold text-gray-500 flex items-center gap-1">
-                                        <i data-lucide="map-pin" class="w-4 h-4"></i> UBICACIÓN
-                                    </p>
-                                    <p class="text-md font-semibold text-gray-800">${incident.sala_mincetur || 'N/A'}</p>
-                                    <p class="text-xs text-gray-500">${incident.distrito || ''}</p>
-                                </div>
-                                <div class="col-span-1 text-left md:text-right">
-                                    <p class="text-xs text-gray-400 mt-1">Reportado: ${fecha} ${hora}</p>
-                                    ${incident.tecnico_reporta ? `<p class="text-xs text-gray-400">Por: ${incident.tecnico_reporta} (${tipoReporte})</p>` : ''}
-                                </div>
-                            </div>
-                            <div class="border-t border-gray-100 pt-4 mb-4">
-                                <p class="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
-                                    <i data-lucide="file-text" class="w-4 h-4 text-gray-500"></i>
-                                    Historial del Reporte:
-                                </p>
-                                <div class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100 report-details-box whitespace-pre-wrap text-justify">
-                                    ${detallesHTML}
-                                </div>
-                            </div>
-                            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-4 p-3 bg-blue-50/50 rounded-lg border border-blue-100">
-                                <select class="technician-select flex-grow text-sm" data-incident-id="${incident.id_maquina}">
-                                    <option value="" disabled selected>Selecciona un Técnico para asignar...</option>
-                                    ${selectOptions}
-                                </select>
-                                <button 
-                                    data-incident='${JSON.stringify(incident)}' 
-                                    class="assign-button w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold shadow-md transition-colors"
-                                    disabled 
-                                >
-                                    <i data-lucide="send" class="w-4 h-4"></i>
-                                    Asignar
-                                </button>
-                            </div>
+                        <div class="min-w-0">
+                            <h3 class="font-semibold text-gray-800 truncate">${tech.usuario}</h3>
+                            <p class="text-sm ${isAvailable ? 'text-green-600' : 'text-gray-500'}">${tech.cargo}</p>
                         </div>
                     </div>
+                    <div class="text-xs text-gray-500 space-y-1 mb-3">
+                         <p><strong>L-V:</strong> ${tech.horario_lv || 'N/A'}</p>
+                         <p><strong>Sáb:</strong> ${tech.horario_sab || 'N/A'}</p>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="status-dot ${statusDotClass} w-3 h-3 rounded-full"></span>
+                            <span class="text-sm ${isAvailable ? 'text-gray-600' : 'text-gray-400'}">${availabilityText}</span>
+                        </div>
+                        ${showSwitch ? `
+                        <label class="availability-toggle" title="Anular horario con guardia">
+                            <input type="checkbox" ${deGuardia === true ? 'checked' : ''} 
+                                   data-current-state="${String(deGuardia)}"
+                                   data-tech-id="${tech.id_usuario}">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        ` : ''}
+                    </div>
+                </div>
                 `;
             }).join('');
 
             container.innerHTML = htmlContent;
             lucide.createIcons();
+            
+            // Configurar eventos de cambio de 'de_guardia'
+            setupDeGuardiaToggles();
         }
-
 
         // --- TOGGLE INCIDENT DETAILS ---
         function toggleIncidentDetails(element) {
@@ -1139,9 +891,92 @@
              document.querySelectorAll('.incident-card').forEach(card => { const select = card.querySelector('.technician-select'); const button = card.querySelector('.assign-button'); if (select && button) { select.addEventListener('change', () => { button.disabled = !select.value; }); button.addEventListener('click', async () => { const incidentData = JSON.parse(button.dataset.incident); const technicianId = select.value; if (!technicianId) { showToast('Por favor, selecciona un técnico.', 'error'); return; } button.disabled = true; button.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Asignando...'; lucide.createIcons(); await handleAssignment(incidentData, technicianId, card); }); } });
         }
 
-        // --- AVAILABILITY TOGGLES ---
-        function setupAvailabilityToggles() {
-             document.querySelectorAll('.availability-toggle input').forEach(toggle => { toggle.addEventListener('change', async function() { const techId = this.getAttribute('data-tech-id'); const isAvailable = this.checked; try { const { error } = await supabaseClient .from('tecnicos') .update({ disponible: isAvailable }) .eq('id_usuario', techId); if (error) throw error; showToast(`Técnico ${isAvailable ? 'marcado como disponible' : 'marcado como no disponible'}`); setTimeout(() => loadAssignmentPage(true), 500); } catch (error) { console.error("Error al actualizar disponibilidad:", error); showToast('Error al actualizar disponibilidad', 'error'); this.checked = !isAvailable; } }); });
+        // --- DE GUARDIA TOGGLES (MODIFICADO) ---
+        function setupDeGuardiaToggles() {
+            document.querySelectorAll('.availability-toggle input').forEach(toggle => {
+                // Guardar el estado actual en el dataset para la lógica de 3 estados
+                const tech = availableTechnicians.find(t => t.id_usuario === toggle.getAttribute('data-tech-id'));
+                if (tech) {
+                    const slider = toggle.closest('.availability-toggle')?.querySelector('.toggle-slider');
+                    if (tech.de_guardia === true) {
+                        toggle.dataset.currentState = 'true';
+                        toggle.checked = true;
+                        if(slider) slider.style.backgroundColor = '#10b981'; // Verde
+                    } else if (tech.de_guardia === false) {
+                        toggle.dataset.currentState = 'false';
+                        toggle.checked = false; 
+                        if(slider) slider.style.backgroundColor = '#dc2626'; // Rojo
+                    } else { // null
+                        toggle.dataset.currentState = 'null';
+                        toggle.checked = false; 
+                        if(slider) slider.style.backgroundColor = '#9ca3af'; // Gris para 'null'
+                    }
+                }
+                
+                toggle.addEventListener('change', async function() {
+                    const techId = this.getAttribute('data-tech-id');
+                    
+                    let newValue = null;
+                    if (this.dataset.currentState === 'null') {
+                        newValue = true; // De null (horario) pasa a true (en guardia)
+                    } else if (this.dataset.currentState === 'true') {
+                        newValue = false; // De true (en guardia) pasa a false (no disponible)
+                    } else { // dataset.currentState === 'false'
+                        newValue = null; // De false (no disponible) pasa a null (horario)
+                    }
+                    
+                    this.disabled = true; 
+
+                    try {
+                        const { error } = await supabaseClient
+                            .from('tecnicos')
+                            .update({ de_guardia: newValue }) // Actualiza 'de_guardia'
+                            .eq('id_usuario', techId);
+
+                        if (error) throw error;
+
+                        let msg = "Estado de guardia actualizado a 'Seguir Horario'";
+                        if (newValue === true) msg = "Técnico forzado a 'Disponible (Guardia)'";
+                        if (newValue === false) msg = "Técnico forzado a 'No Disponible (Guardia)'";
+                        showToast(msg);
+                        
+                        setTimeout(() => loadAssignmentPage(true), 500); // Recarga todo
+                    } catch (error) {
+                        console.error("Error al actualizar 'de_guardia':", error);
+                        showToast('Error al actualizar estado', 'error');
+                        // Revertir el cambio visual no es tan simple con 3 estados,
+                        // la recarga lo solucionará.
+                    } finally {
+                         setTimeout(() => { if(this) this.disabled = false; }, 500);
+                    }
+                });
+            });
+        }
+        
+        // --- JS HELPER FUNCTIONS (parseHorario, isTimeWithinRange) ---
+        function parseHorario(horarioString) {
+            if (horarioString == null || !horarioString.includes(' a ')) { return {start: null, end: null}; }
+            try {
+                const parts = horarioString.split(' a ');
+                if (parts.length !== 2) return {start: null, end: null};
+                const startParts = parts[0].split(':').map(Number);
+                const endParts = parts[1].split(':').map(Number);
+                if (startParts.length !== 2 || endParts.length !== 2) return {start: null, end: null};
+                return {
+                    start: { hour: startParts[0], minute: startParts[1] },
+                    end: { hour: endParts[0], minute: endParts[1] }
+                };
+            } catch (e) {
+                console.warn("Error parsing horario:", horarioString, e);
+                return {start: null, end: null};
+            }
+        }
+
+        function isTimeWithinRange(current, start, end) {
+            const nowMinutes = current.hour * 60 + current.minute;
+            const startMinutes = start.hour * 60 + start.minute;
+            const endMinutes = end.hour * 60 + end.minute;
+            return nowMinutes >= startMinutes && nowMinutes < endMinutes;
         }
 
         // --- ASSIGNMENT HANDLING ---
@@ -1155,7 +990,8 @@
         }
 
         function setupTechnicianSort() {
-            const sortBtn = document.getElementById('sort-tecnicos'); if (!sortBtn) return; sortBtn.setAttribute('data-sort-mode', 'name-asc'); sortBtn.innerHTML = '<i data-lucide="arrow-up-a-z" class="w-4 h-4"></i> Nombre (A-Z)'; lucide.createIcons(); sortBtn.addEventListener('click', function() { const container = document.getElementById('tecnicos-container'); const cards = Array.from(container.querySelectorAll('.technician-card')); const currentMode = this.getAttribute('data-sort-mode'); let nextMode = 'name-asc'; cards.sort((a, b) => { const nameA = a.querySelector('h3').textContent.trim(); const nameB = b.querySelector('h3').textContent.trim(); const availableA = a.querySelector('.availability-toggle input').checked; const availableB = b.querySelector('.availability-toggle input').checked; if (currentMode === 'name-asc') { nextMode = 'name-desc'; this.innerHTML = '<i data-lucide="arrow-down-z-a" class="w-4 h-4"></i> Nombre (Z-A)'; return nameB.localeCompare(nameA); } else if (currentMode === 'name-desc') { nextMode = 'available'; this.innerHTML = '<i data-lucide="user-check" class="w-4 h-4"></i> Disponibles'; if (availableA && !availableB) return -1; if (!availableA && availableB) return 1; return nameA.localeCompare(nameB); } else { nextMode = 'name-asc'; this.innerHTML = '<i data-lucide="arrow-up-a-z" class="w-4 h-4"></i> Nombre (A-Z)'; return nameA.localeCompare(nameB); } }); cards.forEach(card => container.appendChild(card)); this.setAttribute('data-sort-mode', nextMode); lucide.createIcons(); });
+            const sortBtn = document.getElementById('sort-tecnicos'); if (!sortBtn) return; sortBtn.setAttribute('data-sort-mode', 'name-asc'); sortBtn.innerHTML = '<i data-lucide="arrow-up-a-z" class="w-4 h-4"></i> Nombre (A-Z)'; lucide.createIcons(); sortBtn.addEventListener('click', function() { const container = document.getElementById('tecnicos-container'); const cards = Array.from(container.querySelectorAll('.technician-card')); const currentMode = this.getAttribute('data-sort-mode'); let nextMode = 'name-asc'; cards.sort((a, b) => { const nameA = a.querySelector('h3').textContent.trim(); const nameB = b.querySelector('h3').textContent.trim(); const availableA = a.querySelector('.status-dot.bg-green-500') !== null; // Revisa si está disponible por el color del punto
+             const availableB = b.querySelector('.status-dot.bg-green-500') !== null; if (currentMode === 'name-asc') { nextMode = 'name-desc'; this.innerHTML = '<i data-lucide="arrow-down-z-a" class="w-4 h-4"></i> Nombre (Z-A)'; return nameB.localeCompare(nameA); } else if (currentMode === 'name-desc') { nextMode = 'available'; this.innerHTML = '<i data-lucide="user-check" class="w-4 h-4"></i> Disponibles'; if (availableA && !availableB) return -1; if (!availableA && availableB) return 1; return nameA.localeCompare(nameB); } else { nextMode = 'name-asc'; this.innerHTML = '<i data-lucide="arrow-up-a-z" class="w-4 h-4"></i> Nombre (A-Z)'; return nameA.localeCompare(nameB); } }); cards.forEach(card => container.appendChild(card)); this.setAttribute('data-sort-mode', nextMode); lucide.createIcons(); });
         }
 
         // --- STARTUP ---
@@ -1167,16 +1003,16 @@
             document.getElementById('close-modal').addEventListener('click', closeCreateIncidentModal);
             document.getElementById('cancel-create').addEventListener('click', closeCreateIncidentModal);
 
-            // Configurar envío del formulario
+            // Configurar envío del formulario (MODIFICADO)
             document.getElementById('create-incident-form').addEventListener('submit', function (e) {
                 e.preventDefault();
                 const formData = {
-                    sala: document.getElementById('sala').value,
-                    serie: document.getElementById('serie').value,
-                    tecnico: document.getElementById('tecnico').value,
-                    diagnostico: document.getElementById('diagnostico').value
+                    sala: document.getElementById('sala-select').value,       // Lee del select
+                    maquina: document.getElementById('maquina-select').value, // Lee del select
+                    tecnico: document.getElementById('tecnico-select-modal').value, // Lee del select
+                    diagnostico: document.getElementById('diagnostico-modal').value
                 };
-                createNewIncident(formData);
+                createNewIncident(formData); // Llama a la función simplificada
             });
 
             // Configurar eventos de pestañas
