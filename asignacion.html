@@ -13,32 +13,24 @@
 
         :root {
             --ws-primary: #1e40af;
-            /* Blue-700 */
             --ws-secondary: #3b82f6;
-            /* Blue-500 */
             --ws-accent: #f97316;
-            /* Orange-600 */
             --ws-light: #f0f7ff;
             --ws-dark: #1e293b;
             --ws-red: #dc2626;
-            /* Red-600 */
             --ws-amber: #f59e0b;
-            /* Amber-600 */
         }
 
-        /* FIX FINAL para el indicador de Supabase Realtime (el botón verde) */
+        /* FIX FINAL para el indicador de Supabase Realtime */
         div[style*="background-color: rgb(34, 197, 94)"][style*="position: fixed"],
         #supabase-realtime-status-indicator {
-            /* Ocultar completamente, mover fuera del viewport y eliminar espacio */
             display: none !important;
             visibility: hidden !important;
             opacity: 0 !important;
             z-index: -9999 !important;
-            /* Asegura que no está sobre nada */
             width: 0 !important;
             height: 0 !important;
             pointer-events: none !important;
-            /* Evita que sea interactivo */
         }
 
         body {
@@ -49,27 +41,39 @@
 
         .incident-card {
             transition: all 0.3s ease;
-            border-left: 6px solid;
             border-radius: 0.75rem;
             background-color: white;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             opacity: 1;
             transform: translateY(0);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .incident-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 6px;
+        }
+
+        .incident-card.inoperativo::before {
+            background-color: var(--ws-red);
+        }
+
+        .incident-card.pendiente::before {
+            background-color: var(--ws-amber);
+        }
+
+        .incident-card.asignada::before {
+            background-color: var(--ws-primary);
         }
 
         .incident-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .incident-card.inoperativo {
-            border-left-color: var(--ws-red);
-            background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
-        }
-
-        .incident-card.pendiente {
-            border-left-color: var(--ws-amber);
-            background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
         }
 
         .status-badge {
@@ -120,7 +124,7 @@
 
         .report-details-box {
             line-height: 1.4;
-            /* La clase text-left en el HTML lo justifica */
+            text-align: justify;
         }
 
         .technician-card {
@@ -146,49 +150,6 @@
             50% {
                 opacity: 0.5;
             }
-        }
-
-        .incident-card.asignada {
-            border-left-color: var(--ws-primary);
-            background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);
-        }
-
-        .incident-card.asignada:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.1);
-        }
-
-        .incident-button {
-            transition: all 0.3s ease;
-            border-left: 6px solid;
-            border-radius: 0.5rem;
-            background-color: white;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-        }
-
-        .incident-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .incident-button.inoperativo {
-            border-left-color: var(--ws-red);
-        }
-
-        .incident-button.pendiente {
-            border-left-color: var(--ws-amber);
-        }
-
-        .incident-button.asignada {
-            border-left-color: var(--ws-primary);
-        }
-
-        .expand-all-btn {
-            transition: all 0.3s ease;
-        }
-
-        .expand-all-btn:hover {
-            transform: scale(1.05);
         }
 
         /* Modal Styles */
@@ -259,6 +220,255 @@
             min-height: 100px;
             resize: vertical;
         }
+
+        /* Nuevos estilos para pestañas */
+        .tab-container {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .tab-header {
+            display: flex;
+            border-bottom: 1px solid #e5e7eb;
+            overflow-x: auto;
+        }
+
+        .tab-button {
+            padding: 1rem 1.5rem;
+            font-weight: 500;
+            color: #6b7280;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tab-button:hover {
+            color: #374151;
+            background-color: #f9fafb;
+        }
+
+        .tab-button.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+            background-color: #f0f7ff;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 1.5rem;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Mejoras para tarjetas de incidencias */
+        .incident-header {
+            cursor: pointer;
+            padding: 1rem 1.5rem;
+        }
+
+        .incident-details {
+            padding: 0 1.5rem 1.5rem;
+            border-top: 1px solid #f3f4f6;
+        }
+
+        /* Barra de búsqueda */
+        .search-container {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+        }
+
+        /* Botones de acción rápida */
+        .quick-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .action-btn.primary {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            background-color: #2563eb;
+        }
+
+        .action-btn.secondary {
+            background-color: #f3f4f6;
+            color: #374151;
+        }
+
+        .action-btn.secondary:hover {
+            background-color: #e5e7eb;
+        }
+
+        /* Indicadores de estado mejorados */
+        .priority-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .priority-high {
+            background-color: #fef2f2;
+            color: #dc2626;
+        }
+
+        .priority-medium {
+            background-color: #fffbeb;
+            color: #d97706;
+        }
+
+        .priority-low {
+            background-color: #f0f9ff;
+            color: #0369a1;
+        }
+
+        /* Mejoras responsive */
+        @media (max-width: 768px) {
+            .tab-button {
+                padding: 0.75rem 1rem;
+                font-size: 0.875rem;
+            }
+
+            .tab-content {
+                padding: 1rem;
+            }
+
+            .incident-header {
+                padding: 1rem;
+            }
+
+            .incident-details {
+                padding: 0 1rem 1rem;
+            }
+        }
+
+        /* Nuevos estilos para disponibilidad de técnicos */
+        .availability-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .availability-toggle input {
+            display: none;
+        }
+
+        .availability-toggle .toggle-slider {
+            width: 44px;
+            height: 24px;
+            background-color: #d1d5db;
+            border-radius: 24px;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .availability-toggle .toggle-slider::before {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background-color: white;
+            top: 3px;
+            left: 3px;
+            transition: all 0.3s;
+        }
+
+        .availability-toggle input:checked+.toggle-slider {
+            background-color: #10b981;
+        }
+
+        .availability-toggle input:checked+.toggle-slider::before {
+            transform: translateX(20px);
+        }
+
+        /* Estilo para dos columnas */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .two-columns {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animación de puntos de carga */
+        .loading-dots::after {
+            content: ' .';
+            animation: dots 1.4s infinite;
+            animation-delay: .2s;
+            display: inline-block;
+        }
+
+        @keyframes dots {
+            0% {
+                content: ' .';
+            }
+
+            33% {
+                content: ' ..';
+            }
+
+            66% {
+                content: ' ...';
+            }
+
+            100% {
+                content: ' .';
+            }
+        }
     </style>
 </head>
 
@@ -280,7 +490,6 @@
         </div>
     </div>
 
-    <!-- Modal para crear nueva incidencia -->
     <div id="create-incident-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="p-6 border-b border-gray-200">
@@ -307,12 +516,10 @@
                                 placeholder="Ingrese la serie de la máquina" required>
                         </div>
 
-                        <!-- NUEVO CAMPO: Técnico -->
                         <div class="form-group">
                             <label for="tecnico" class="form-label">Técnico Asignado</label>
                             <select id="tecnico" class="form-input" required>
                                 <option value="" disabled selected>Seleccione un técnico</option>
-                                <!-- Las opciones se llenarán dinámicamente -->
                             </select>
                         </div>
 
@@ -343,19 +550,19 @@
         <header
             class="mb-8 md:mb-12 flex flex-wrap justify-between items-center bg-white rounded-2xl p-6 shadow-md border-b-4 border-blue-600">
             <div class="flex items-center space-x-4">
-                <img src="winsystems_logo.png" alt="Logo de Winsystems" class="h-10 md:h-12">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <i data-lucide="wrench" class="w-6 h-6 text-white"></i>
+                </div>
                 <div>
-                    <h1 class="text-xl md:text-2xl font-bold text-gray-900">Gestión de Tareas de Mantenimiento</h1>
-                    <p class="text-sm text-gray-500 font-medium">Asignación rápida de incidencias a técnicos disponibles
-                    </p>
+                    <h1 class="text-xl md:text-2xl font-bold text-gray-900">Gestión de Incidencias</h1>
+                    <p class="text-sm text-gray-500 font-medium">Asignación rápida y seguimiento de tareas</p>
                 </div>
             </div>
             <div class="flex items-center gap-4 mt-4 md:mt-0">
-                <!-- Botón para crear nueva incidencia -->
                 <button id="create-incident-btn"
                     class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all duration-300 flex items-center gap-2 text-sm">
                     <i data-lucide="plus" class="w-4 h-4"></i>
-                    Crear Incidencia
+                    Nueva Incidencia
                 </button>
                 <a href="./home.html"
                     class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-all duration-300 flex items-center gap-2 text-sm">
@@ -370,81 +577,101 @@
         </header>
 
         <div id="stats-container"
-            class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-10 opacity-0 transition-opacity duration-500">
+            class="grid grid-cols-2 lg:grid-cols-5 gap-6 mb-8 opacity-0 transition-opacity duration-500">
         </div>
 
-        <main class="space-y-10">
-            <section>
-                <div class="flex items-center gap-3 mb-6 border-b border-red-200 pb-2">
-                    <div class="bg-red-500 p-2 rounded-full">
-                        <i data-lucide="frown" class="w-6 h-6 text-white"></i>
-                    </div>
-                    <h2 class="text-xl font-bold text-gray-800">Urgente: Incidencias <span
-                            class="text-red-600">Inoperativas</span></h2>
-                    <span id="inoperativos-count"
-                        class="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-md">0</span>
-                    <button id="expand-all-inoperativos"
-                        class="expand-all-btn ml-auto bg-red-100 text-red-700 px-3 py-1 rounded-lg text-sm font-medium flex items-center gap-1">
-                        <i data-lucide="chevrons-down" class="w-4 h-4"></i>
-                        Expandir Todo
-                    </button>
-                </div>
-                <div id="inoperativos-container" class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                </div>
-            </section>
-
-            <section>
-                <div class="flex items-center gap-3 mb-6 border-b border-amber-200 pb-2">
-                    <div class="bg-amber-500 p-2 rounded-full">
-                        <i data-lucide="clock" class="w-6 h-6 text-white"></i>
-                    </div>
-                    <h2 class="text-xl font-bold text-gray-800">Pendientes de Asignación</h2>
+        <div class="tab-container mb-8">
+            <div class="tab-header">
+                <button class="tab-button active" data-tab="urgentes">
+                    <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                    Urgentes
+                    <span id="urgentes-count"
+                        class="ml-1 bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-xs">0</span>
+                </button>
+                <button class="tab-button" data-tab="pendientes">
+                    <i data-lucide="clock" class="w-4 h-4"></i>
+                    Pendientes
                     <span id="pendientes-count"
-                        class="bg-amber-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-md">0</span>
-                    <button id="expand-all-pendientes"
-                        class="expand-all-btn ml-auto bg-amber-100 text-amber-700 px-3 py-1 rounded-lg text-sm font-medium flex items-center gap-1">
-                        <i data-lucide="chevrons-down" class="w-4 h-4"></i>
-                        Expandir Todo
-                    </button>
-                </div>
-                <div id="pendientes-container" class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                </div>
-            </section>
-
-            <section>
-                <div class="flex items-center gap-3 mb-6 border-b border-green-200 pb-2">
-                    <div class="bg-green-500 p-2 rounded-full">
-                        <i data-lucide="users" class="w-6 h-6 text-white"></i>
-                    </div>
-                    <h2 class="text-xl font-bold text-gray-800">Técnicos Disponibles</h2>
-                    <span id="technicians-count"
-                        class="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-md">0</span>
-                </div>
-                <div id="technicians-container"
-                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                    <!-- Los técnicos se cargarán aquí dinámicamente -->
-                </div>
-            </section>
-
-            <section>
-                <div class="flex items-center gap-3 mb-6 border-b border-blue-200 pb-2">
-                    <div class="bg-blue-500 p-2 rounded-full">
-                        <i data-lucide="user-check" class="w-6 h-6 text-white"></i>
-                    </div>
-                    <h2 class="text-xl font-bold text-gray-800">Incidencias Asignadas</h2>
+                        class="ml-1 bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-xs">0</span>
+                </button>
+                <button class="tab-button" data-tab="asignadas">
+                    <i data-lucide="user-check" class="w-4 h-4"></i>
+                    Asignadas
                     <span id="asignadas-count"
-                        class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-md">0</span>
-                    <button id="expand-all-asignadas"
-                        class="expand-all-btn ml-auto bg-blue-100 text-blue-700 px-3 py-1 rounded-lg text-sm font-medium flex items-center gap-1">
+                        class="ml-1 bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs">0</span>
+                </button>
+                <button class="tab-button" data-tab="tecnicos">
+                    <i data-lucide="users" class="w-4 h-4"></i>
+                    Técnicos
+                    <span id="tecnicos-count"
+                        class="ml-1 bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs">0</span>
+                </button>
+            </div>
+
+            <div class="tab-content active" id="urgentes-tab">
+                <div class="quick-actions">
+                    <button id="expand-all-urgentes" class="action-btn secondary">
                         <i data-lucide="chevrons-down" class="w-4 h-4"></i>
                         Expandir Todo
                     </button>
                 </div>
-                <div id="asignadas-container" class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                    <!-- Las incidencias asignadas se cargarán aquí -->
+                <div class="search-container">
+                    <i data-lucide="search" class="search-icon w-4 h-4"></i>
+                    <input type="text" id="search-urgentes" class="search-input"
+                        placeholder="Buscar en incidencias urgentes...">
                 </div>
-            </section>
-        </main>
+                <div id="urgentes-container" class="two-columns">
+                </div>
+            </div>
+
+            <div class="tab-content" id="pendientes-tab">
+                <div class="quick-actions">
+                    <button id="expand-all-pendientes" class="action-btn secondary">
+                        <i data-lucide="chevrons-down" class="w-4 h-4"></i>
+                        Expandir Todo
+                    </button>
+                </div>
+                <div class="search-container">
+                    <i data-lucide="search" class="search-icon w-4 h-4"></i>
+                    <input type="text" id="search-pendientes" class="search-input"
+                        placeholder="Buscar en incidencias pendientes...">
+                </div>
+                <div id="pendientes-container" class="two-columns">
+                </div>
+            </div>
+
+            <div class="tab-content" id="asignadas-tab">
+                <div class="quick-actions">
+                    <button id="expand-all-asignadas" class="action-btn secondary">
+                        <i data-lucide="chevrons-down" class="w-4 h-4"></i>
+                        Expandir Todo
+                    </button>
+                </div>
+                <div class="search-container">
+                    <i data-lucide="search" class="search-icon w-4 h-4"></i>
+                    <input type="text" id="search-asignadas" class="search-input"
+                        placeholder="Buscar en incidencias asignadas...">
+                </div>
+                <div id="asignadas-container" class="two-columns">
+                </div>
+            </div>
+
+            <div class="tab-content" id="tecnicos-tab">
+                <div class="quick-actions">
+                    <button id="sort-tecnicos" class="action-btn secondary">
+                        <i data-lucide="arrow-up-down" class="w-4 h-4"></i>
+                        Ordenar
+                    </button>
+                </div>
+                <div class="search-container">
+                    <i data-lucide="search" class="search-icon w-4 h-4"></i>
+                    <input type="text" id="search-tecnicos" class="search-input" placeholder="Buscar técnicos...">
+                </div>
+                <div id="tecnicos-container"
+                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                </div>
+            </div>
+        </div>
 
         <footer class="mt-12 pt-6 border-t border-gray-200 text-center text-gray-500 text-sm">
             <p>Winsystems &copy; 2025 - Sistema de Gestión de Incidencias</p>
@@ -460,7 +687,7 @@
         let realtimeSubscription = null;
         let lastSuccessfulIncidents = [];
         let availableTechnicians = [];
-
+        let currentTab = 'urgentes';
 
         // --- UTILITY FUNCTIONS ---
         function getPeruDateTime() {
@@ -494,15 +721,13 @@
             const toast = document.getElementById('toast');
             const toastMessage = document.getElementById('toast-message');
 
-            // ✅ CORRECCIÓN 1: Agregar verificación de seguridad
             if (!toast) {
-                console.error("Error: Elemento #toast no encontrado. El toast no puede mostrarse.");
+                console.error("Error: Elemento #toast no encontrado.");
                 return;
             }
 
             const toastIcon = toast.querySelector('i');
 
-            // ✅ CORRECCIÓN 2: Verificar el icono
             if (!toastIcon) {
                 console.error("Error: Elemento <i> dentro de #toast no encontrado.");
                 return;
@@ -532,41 +757,78 @@
             document.getElementById('last-update').textContent = now.toLocaleTimeString('es-PE');
         }
 
+        /**
+         * Parsea una fecha y hora (de Lima) a un objeto Date de JS,
+         * forzando la zona horaria correcta.
+         */
+        function parseLimaDateTime(dateStr, timeStr) {
+            if (!dateStr || !timeStr) return null;
+            // Asumimos que la BBDD guarda en -05:00 (Lima)
+            const limaOffset = '-05:00';
+            try {
+                return new Date(`${dateStr}T${timeStr}${limaOffset}`);
+            } catch (e) {
+                console.warn("Fecha/hora no válida:", dateStr, timeStr);
+                return null;
+            }
+        }
+
+        /**
+         * Devuelve una cadena de tiempo relativo (ej. "hace 5 min")
+         */
+        function timeAgo(dateString, timeString) {
+            if (!dateString || !timeString) return 'fecha desconocida';
+
+            const incidentDate = parseLimaDateTime(dateString, timeString);
+            if (!incidentDate) return 'fecha inválida';
+
+            const now = new Date();
+            const seconds = Math.floor((now - incidentDate) / 1000);
+
+            if (isNaN(seconds) || seconds < 0) return 'recién';
+
+            let interval = seconds / 31536000; // años
+            if (interval > 1) return `hace ${Math.floor(interval)} años`;
+            interval = seconds / 2592000; // meses
+            if (interval > 1) return `hace ${Math.floor(interval)} mes(es)`;
+            interval = seconds / 86400; // días
+            if (interval > 1) return `hace ${Math.floor(interval)} días`;
+            interval = seconds / 3600; // horas
+            if (interval > 1) return `hace ${Math.floor(interval)} h`;
+            interval = seconds / 60; // minutos
+            if (interval > 1) return `hace ${Math.floor(interval)} min`;
+
+            return `hace ${Math.floor(seconds)} seg`;
+        }
+
+        // --- TAB MANAGEMENT ---
+        function switchTab(tabName) {
+            // Actualizar botones de pestaña
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+            // Actualizar contenido de pestaña
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+
+            currentTab = tabName;
+        }
+
         // --- MODAL FUNCTIONS ---
         function openCreateIncidentModal() {
             const modal = document.getElementById('create-incident-modal');
             modal.classList.add('active');
-
-            // Cargar técnicos en el select
             loadTechniciansForModal();
-
-            // Limpiar formulario
             document.getElementById('create-incident-form').reset();
         }
-
-        function loadTechniciansForModal() {
-            const select = document.getElementById('tecnico');
-            select.innerHTML = '<option value="" disabled selected>Seleccione un técnico</option>';
-
-            if (availableTechnicians.length === 0) {
-                select.innerHTML += '<option value="" disabled>No hay técnicos disponibles</option>';
-                return;
-            }
-
-            availableTechnicians.forEach(tech => {
-                const option = document.createElement('option');
-                option.value = tech.id_usuario;
-                option.textContent = tech.usuario;
-                select.appendChild(option);
-            });
-        }
-
 
         function closeCreateIncidentModal() {
             const modal = document.getElementById('create-incident-modal');
             modal.classList.remove('active');
-
-            // Limpiar formulario
             document.getElementById('create-incident-form').reset();
         }
 
@@ -579,7 +841,10 @@
                 return;
             }
 
-            availableTechnicians.forEach(tech => {
+            // Filtrar solo técnicos disponibles
+            const availableTechs = availableTechnicians.filter(tech => tech.disponible !== false);
+
+            availableTechs.forEach(tech => {
                 const option = document.createElement('option');
                 option.value = tech.id_usuario;
                 option.textContent = tech.usuario;
@@ -606,7 +871,7 @@
                 return;
             }
 
-            await loadAssignmentPage(false); // Carga inicial
+            await loadAssignmentPage(false);
         }
 
         function setupRealtimeSubscription(callback) {
@@ -614,7 +879,6 @@
                 supabaseClient.removeChannel(realtimeSubscription);
             }
 
-            // Suscripción para INSERT en detalle
             const insertChannel = supabaseClient.channel('detalle-insert')
                 .on(
                     'postgres_changes',
@@ -624,7 +888,6 @@
                         table: 'detalle'
                     },
                     (payload) => {
-                        // Si es una asignación, recargar
                         if (payload.new.estado === 'En Progreso' || payload.new.estado === 'Asignado') {
                             setTimeout(() => callback(true), 1000);
                         }
@@ -632,7 +895,6 @@
                 )
                 .subscribe();
 
-            // Suscripción para UPDATE en detalle
             const updateChannel = supabaseClient.channel('detalle-update')
                 .on(
                     'postgres_changes',
@@ -642,7 +904,6 @@
                         table: 'detalle'
                     },
                     (payload) => {
-                        // Si cambió a estado de asignación, recargar
                         if (payload.new.estado === 'En Progreso' || payload.new.estado === 'Asignado') {
                             setTimeout(() => callback(true), 1000);
                         }
@@ -650,7 +911,6 @@
                 )
                 .subscribe();
 
-            // Suscripción para INSERT en trabajos
             const trabajosChannel = supabaseClient.channel('trabajos-insert')
                 .on(
                     'postgres_changes',
@@ -674,31 +934,25 @@
             if (!isRealtime && loadingOverlay) loadingOverlay.style.display = 'flex';
 
             try {
-                // Fetch data
                 const [pendingIncidents, technicians, assignedIncidents] = await Promise.all([
                     fetchPendingIncidents(),
                     fetchTechnicians(),
                     fetchAssignedIncidents()
                 ]);
 
-                // Guardar técnicos para el modal (IMPORTANTE)
                 availableTechnicians = technicians;
-
-                // Renderizar la vista con los nuevos datos
                 renderStatistics(pendingIncidents, technicians, assignedIncidents);
                 renderIncidents(pendingIncidents, technicians);
                 renderTechniciansList(technicians);
                 renderAssignedIncidents(assignedIncidents);
                 updateLastUpdateTime();
-
-                // Guardar como la última data válida
                 lastSuccessfulIncidents = pendingIncidents;
 
             } catch (error) {
                 console.error("Error loading assignment page:", error);
                 showToast("Error crítico al cargar los datos. Verifique la conexión a Supabase.", "error");
             } finally {
-                if (loadingOverlay) {
+                if (loadingOverlay && !isRealtime) {
                     loadingOverlay.style.opacity = '0';
                     setTimeout(() => {
                         loadingOverlay.style.display = 'none';
@@ -708,11 +962,9 @@
         }
 
         async function fetchPendingIncidents() {
-            // Llama a la RPC que devuelve el estado actual de las máquinas
             const { data, error } = await supabaseClient.rpc('get_latest_machine_details');
 
             if (error) {
-                // Lanzar error para ser capturado por loadAssignmentPage
                 throw new Error("Error en RPC get_latest_machine_details: " + error.message);
             }
 
@@ -720,7 +972,6 @@
 
             const pending = data.filter(item => item.estado === 'Inoperativo' || item.estado === 'Pendiente');
 
-            // Ordenar del más reciente al más antiguo (DESC)
             pending.sort((a, b) => {
                 const timeA = `${a.fecha_reporte || a.fecha} ${a.hora_reporte || '00:00:00'}`;
                 const timeB = `${b.fecha_reporte || b.fecha} ${b.hora_reporte || '00:00:00'}`;
@@ -737,15 +988,15 @@
             try {
                 const { data, error } = await supabaseClient
                     .from('detalle')
-                    .select(`id_detalle, id_maquina, id_trabajo, diag_ini, estado, tipo_trabajo, trab_realizado, resul, 
-                        trabajos(id_trabajo, hora_inicio, id_usuario, id_responsable, 
-                            tecnicos(id_usuario, usuario, cel)
-                        ), 
-                        maquinas(id_maquina, serie, modelo, id_sala, 
-                            sala(id_sala, sala, sala_mincetur, distrito, provincia, departamento)
-                        )
-                    `) // ⬅️ SE ELIMINÓ EL `!inner`
-                    .in('estado', ['En Progreso', 'Asignado'])
+                    .select(`id_detalle, id_maquina, id_trabajo, diag_ini, estado, tipo_trabajo, trab_realizado, resul, 
+                        trabajos(id_trabajo, hora_inicio, fecha, id_usuario, id_responsable, 
+                            tecnicos(id_usuario, usuario, cel, cargo) 
+                        ), 
+                        maquinas(id_maquina, serie, modelo, id_sala, 
+                            sala(id_sala, sala, sala_mincetur:sala, distrito) 
+                        )
+                    `)
+                    .in('estado', ['En Progreso', 'Asignado']) // "En Progreso" también está aquí
                     .order('id_detalle', { ascending: false });
 
                 if (error) throw error;
@@ -759,7 +1010,7 @@
         async function fetchTechnicians() {
             const { data, error } = await supabaseClient
                 .from('tecnicos')
-                .select('id_usuario, usuario')
+                .select('id_usuario, usuario, disponible')
                 .in('cargo', ['Tecnico', 'Coordinador'])
                 .order('usuario');
 
@@ -770,8 +1021,6 @@
             return data;
         }
 
-        // --- CREATE INCIDENT FUNCTION ---
-        // --- CREATE INCIDENT FUNCTION ---
         async function createNewIncident(formData) {
             try {
                 console.log("📝 Iniciando creación de incidencia:", formData);
@@ -779,7 +1028,7 @@
                 const { fecha, hora } = getPeruDateTime();
                 console.log("🕐 Fecha y hora generadas:", fecha, hora);
 
-                // 1. Primero, obtener o crear la sala
+                // 1. Obtener o crear la sala
                 console.log("🔍 Buscando/creando sala:", formData.sala);
                 const { data: salaData, error: salaError } = await supabaseClient
                     .from('sala')
@@ -890,7 +1139,6 @@
                 showToast('¡Incidencia creada y asignada exitosamente!');
                 closeCreateIncidentModal();
 
-                // Recargar la página para mostrar la nueva incidencia
                 setTimeout(() => loadAssignmentPage(true), 1000);
 
             } catch (error) {
@@ -908,9 +1156,11 @@
             const totalTechnicians = technicians.length;
             const totalAsignadas = assignedIncidents.length;
 
-            document.getElementById('inoperativos-count').textContent = inoperativos;
+            // Actualizar contadores en las pestañas
+            document.getElementById('urgentes-count').textContent = inoperativos;
             document.getElementById('pendientes-count').textContent = pendientes;
             document.getElementById('asignadas-count').textContent = totalAsignadas;
+            document.getElementById('tecnicos-count').textContent = totalTechnicians;
 
             const stats = [
                 { title: 'Total Pendientes', value: totalPendientes, icon: 'list-todo', color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -920,22 +1170,21 @@
                 { title: 'Asignadas en Progreso', value: totalAsignadas, icon: 'user-check', color: 'text-indigo-600', bg: 'bg-indigo-50' }
             ];
 
-            // Actualizar el grid para 5 columnas
-            container.className = 'grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-10 opacity-0 transition-opacity duration-500';
+            container.className = 'grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8 opacity-0 transition-opacity duration-500';
 
             container.innerHTML = stats.map(stat => `
-        <div class="stats-card border-l-4 ${stat.color.replace('text-', 'border-')}">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-gray-500 font-medium">${stat.title}</p>
-                    <p class="text-3xl font-extrabold text-gray-900 mt-1">${stat.value}</p>
+                <div class="stats-card border-l-4 ${stat.color.replace('text-', 'border-')}">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500 font-medium">${stat.title}</p>
+                            <p class="text-3xl font-extrabold text-gray-900 mt-1">${stat.value}</p>
+                        </div>
+                        <div class="p-3 rounded-full ${stat.bg}">
+                            <i data-lucide="${stat.icon}" class="w-7 h-7 ${stat.color}"></i>
+                        </div>
+                    </div>
                 </div>
-                <div class="p-3 rounded-full ${stat.bg}">
-                    <i data-lucide="${stat.icon}" class="w-7 h-7 ${stat.color}"></i>
-                </div>
-            </div>
-        </div>
-    `).join('');
+            `).join('');
 
             container.classList.remove('opacity-0');
             container.classList.add('opacity-100');
@@ -943,59 +1192,62 @@
         }
 
         function renderIncidents(incidents, technicians) {
-            // Limpiar contenedores antes de rellenar
-            document.getElementById('inoperativos-container').innerHTML = '';
-            document.getElementById('pendientes-container').innerHTML = '';
-
             const inoperativos = incidents.filter(i => i.estado === 'Inoperativo');
             const pendientes = incidents.filter(i => i.estado === 'Pendiente');
 
-            renderIncidentGroup(inoperativos, technicians, 'inoperativos-container', 'inoperativo');
+            renderIncidentGroup(inoperativos, technicians, 'urgentes-container', 'inoperativo');
             renderIncidentGroup(pendientes, technicians, 'pendientes-container', 'pendiente');
 
             setupAssignmentListeners();
         }
 
         function renderTechniciansList(technicians) {
-            const container = document.getElementById('technicians-container');
-            const countElement = document.getElementById('technicians-count');
-
-            if (countElement) {
-                countElement.textContent = technicians.length;
-            }
+            const container = document.getElementById('tecnicos-container');
 
             if (technicians.length === 0) {
                 container.innerHTML = `
-            <div class="empty-state bg-white p-6 rounded-lg text-center shadow-md">
-                <i data-lucide="users" class="w-12 h-12 text-gray-400 mx-auto mb-3"></i>
-                <h3 class="text-lg font-semibold text-gray-700 mb-2">No hay técnicos disponibles</h3>
-                <p class="text-gray-500">No se encontraron técnicos en el sistema.</p>
-            </div>
-        `;
+                    <div class="empty-state bg-white p-8 rounded-lg text-center shadow-md col-span-full border-t-4 border-amber-400">
+                        <i data-lucide="user-x" class="w-16 h-16 text-amber-500 mx-auto mb-4"></i>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">No se encontraron técnicos</h3>
+                        <p class="text-gray-500 mb-4">No hay técnicos con cargo "Tecnico" o "Coordinador" registrados en el sistema.</p>
+                        <p class="text-sm text-gray-400">(Si esto es un error, contacte al administrador)</p>
+                    </div>
+                `;
                 lucide.createIcons();
                 return;
             }
 
-            const htmlContent = technicians.map(tech => `
-        <div class="technician-card bg-white p-4 rounded-lg shadow-md border-l-4 border-green-500 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <i data-lucide="user" class="w-5 h-5 text-green-600"></i>
+            const htmlContent = technicians.map(tech => {
+                const isAvailable = tech.disponible !== false;
+                return `
+                <div class="technician-card bg-white p-4 rounded-lg shadow-md border-l-4 ${isAvailable ? 'border-green-500' : 'border-gray-400'}">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 ${isAvailable ? 'bg-green-100' : 'bg-gray-100'} rounded-full flex items-center justify-center">
+                            <i data-lucide="user" class="w-5 h-5 ${isAvailable ? 'text-green-600' : 'text-gray-500'}"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-800">${tech.usuario}</h3>
+                            <p class="text-sm ${isAvailable ? 'text-green-600' : 'text-gray-500'}">${isAvailable ? 'Disponible' : 'No disponible'}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="status-dot ${isAvailable ? 'bg-green-500' : 'bg-gray-400'} w-3 h-3 rounded-full"></span>
+                            <span class="text-sm ${isAvailable ? 'text-gray-600' : 'text-gray-400'}">${isAvailable ? 'Disponible' : 'No disponible'}</span>
+                        </div>
+                        <label class="availability-toggle">
+                            <input type="checkbox" ${isAvailable ? 'checked' : ''} data-tech-id="${tech.id_usuario}">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
                 </div>
-                <div>
-                    <h3 class="font-semibold text-gray-800">${tech.usuario}</h3>
-                    <p class="text-sm text-gray-500">Técnico especializado</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-2">
-                <span class="status-dot bg-green-500 w-3 h-3 rounded-full"></span>
-                <span class="text-sm text-gray-600">Disponible</span>
-            </div>
-        </div>
-    `).join('');
+            `}).join('');
 
             container.innerHTML = htmlContent;
             lucide.createIcons();
+
+            // Configurar eventos de cambio de disponibilidad
+            setupAvailabilityToggles();
         }
 
         function renderAssignedIncidents(assignedIncidents) {
@@ -1007,26 +1259,36 @@
 
             if (!assignedIncidents || assignedIncidents.length === 0) {
                 container.innerHTML = `
-            <div class="empty-state col-span-full bg-white p-8 rounded-lg text-center shadow-md">
-                <i data-lucide="user-check" class="w-16 h-16 text-blue-400 mx-auto mb-4"></i>
-                <h3 class="text-xl font-semibold text-gray-700 mb-2">Sin asignaciones activas</h3>
-                <p class="text-gray-500">No hay incidencias con estado "En Progreso" o "Asignado".</p>
-                <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <p class="text-sm text-blue-700">
-                        Cuando asignes una incidencia a un técnico, aparecerá aquí automáticamente.
-                    </p>
-                </div>
-            </div>
-        `;
+                    <div class="empty-state bg-white p-8 rounded-lg text-center shadow-md">
+                        <i data-lucide="user-check" class="w-16 h-16 text-blue-400 mx-auto mb-4"></i>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">Sin asignaciones activas</h3>
+                        <p class="text-gray-500">No hay incidencias con estado "En Progreso" o "Asignado".</p>
+                        <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            <p class="text-sm text-blue-700">
+                                Cuando asignes una incidencia a un técnico, aparecerá aquí automáticamente.
+                            </p>
+                        </div>
+                    </div>
+                `;
                 lucide.createIcons();
                 return;
             }
 
             const htmlContent = assignedIncidents.map((incident) => {
-                // Manejar diferentes estructuras de datos
                 const machine = incident.maquinas || {};
+                const sala = machine.sala || {};
                 const trabajo = incident.trabajos || {};
                 const tecnico = incident.tecnicos || trabajo.tecnicos || {};
+                const tipoReporte = tecnico.cargo || 'N/A';
+                const esSala = tipoReporte.toLowerCase().includes('sala');
+                const badgeColor = esSala ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800';
+                const badgeIcon = esSala ? 'building' : 'user';
+                const reportadoPorHTML = `
+                <span class="text-xs ${badgeColor} px-2 py-1 rounded-full flex items-center gap-1">
+                    <i data-lucide="${badgeIcon}" class="w-3 h-3"></i>
+                    Reportado por: ${tipoReporte}
+                </span>
+            `;
 
                 const reportDate = incident.fecha_reporte || 'N/A';
                 const reportTime = incident.hora_reporte || 'N/A';
@@ -1041,83 +1303,86 @@
                 const detallesHTML = incident.diag_ini || 'Sin detalles de diagnóstico.';
 
                 return `
-            <div class="incident-button asignada p-4 mb-4">
-                <div class="flex items-center justify-between cursor-pointer" onclick="toggleIncidentDetails(this)">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <i data-lucide="laptop-minimal-check" class="w-5 h-5 text-blue-600"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-gray-900">${machine.sala_mincetur || 'N/A'}</h3>
-                            <p class="text-sm text-gray-500">${machine.modelo || 'Máquina Winsystems'} - S/N: ${machine.serie || 'N/A'}</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <span class="status-badge text-white bg-blue-600 flex items-center gap-1 py-1 px-3 rounded-full shadow-sm text-sm">
-                            <i data-lucide="user-check" class="w-4 h-4"></i> 
-                            ${incident.estado || 'Asignada'}
-                        </span>
-                        <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 transition-transform"></i>
-                    </div>
-                </div>
-                
-                <div class="incident-details mt-4 hidden">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <div class="col-span-1">
-                            <p class="text-sm font-semibold text-gray-500 flex items-center gap-1">
-                                <i data-lucide="laptop-minimal-check" class="w-4 h-4 text-blue-600"></i> MÁQUINA
-                            </p>
-                            <h3 class="text-lg font-bold text-gray-900">${machine.modelo || 'Máquina Winsystems'}</h3>
-                            <p class="text-xs text-gray-500">S/N: ${machine.serie || 'N/A'}</p>
-                            <p class="text-xs text-gray-400">ID Detalle: ${incident.id_detalle}</p>
-                        </div>
-
-                        <div class="col-span-1">
-                            <p class="text-sm font-semibold text-gray-500 flex items-center gap-1">
-                                <i data-lucide="map-pin" class="w-4 h-4"></i> UBICACIÓN
-                            </p>
-                            <p class="text-md font-semibold text-gray-800">${machine.sala_mincetur || 'N/A'}</p>
-                            <p class="text-xs text-gray-500">${machine.distrito || ''}</p>
-                        </div>
-
-                        <div class="col-span-1 text-left md:text-right">
-                            <span class="status-badge text-white bg-blue-600 flex items-center justify-end md:justify-start gap-1 w-fit ml-auto py-1 px-3 rounded-full shadow-sm">
-                                <i data-lucide="user-check" class="w-4 h-4"></i> 
-                                ${incident.estado || 'Asignada'}
-                            </span>
-                            <p class="text-xs text-gray-400 mt-1">Reportado: ${fechaReporte} ${horaReporte}</p>
-                            <p class="text-xs text-gray-400">Asignado: ${fechaAsignacion} ${horaAsignacion}</p>
-                        </div>
-                    </div>
-
-                    <div class="border-t border-gray-100 pt-4 mb-4">
-                        <p class="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
-                            <i data-lucide="file-text" class="w-4 h-4 text-gray-500"></i>
-                            Diagnóstico Inicial:
-                        </p>
-                        <div class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100 report-details-box">
-                            ${detallesHTML}
-                        </div>
-                    </div>
-                    
-                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                                <i data-lucide="user" class="w-4 h-4 text-green-600"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm font-semibold text-gray-700">Técnico Asignado</p>
-                                <p class="text-lg font-bold text-green-600">${tecnico.usuario || 'Por asignar'}</p>
+                    <div class="incident-card asignada">
+                        <div class="incident-header" onclick="toggleIncidentDetails(this)">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                        <i data-lucide="laptop-minimal-check" class="w-5 h-5 text-blue-600"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-gray-900">${sala.sala_mincetur || 'N/A'}</h3>
+                                        <p class="text-sm text-gray-500">${machine.modelo || 'Máquina Winsystems'} - S/N: ${machine.serie || 'N/A'}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <span class="status-badge text-white bg-blue-600 flex items-center gap-1 py-1 px-3 rounded-full shadow-sm text-sm">
+                                        <i data-lucide="user-check" class="w-4 h-4"></i> 
+                                        ${incident.estado || 'Asignada'}
+                                    </span>
+                                    <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 transition-transform"></i>
+                                </div>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2 text-sm text-gray-500">
-                            <i data-lucide="clock" class="w-4 h-4"></i>
-                            <span>${incident.estado || 'En progreso'}</span>
+                        
+                        <div class="incident-details hidden">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                <div class="col-span-1">
+                                    <p class="text-sm font-semibold text-gray-500 flex items-center gap-1">
+                                        <i data-lucide="laptop-minimal-check" class="w-4 h-4 text-blue-600"></i> MÁQUINA
+                                    </p>
+                                    <h3 class="text-lg font-bold text-gray-900">${machine.modelo || 'Máquina Winsystems'}</h3>
+                                    <p class="text-xs text-gray-500">S/N: ${machine.serie || 'N/A'}</p>
+                                    <p class="text-xs text-gray-400">ID Detalle: ${incident.id_detalle}</p>
+                                </div>
+
+                                <div class="col-span-1">
+                                    <p class="text-sm font-semibold text-gray-500 flex items-center gap-1">
+                                        <i data-lucide="map-pin" class="w-4 h-4"></i> UBICACIÓN
+                                    </p>
+                                    <p class="text-md font-semibold text-gray-800">${sala.sala_mincetur || 'N/A'}</p>
+                                    <p class="text-xs text-gray-500">${sala.distrito || ''}</p>
+                                </div>
+
+                                <div class="col-span-1 text-left md:text-right">
+                                    <p class="text-xs text-gray-400 mt-1">Reportado: ${fechaReporte} ${horaReporte}</p>
+                                    <p class="text-xs text-gray-400">Asignado: ${fechaAsignacion} ${horaAsignacion}</p>
+                                    <div class="col-span-1 text-left md:text-right">
+                                    <p class="text-xs text-gray-400 mt-1">Reportado: ${fechaReporte} ${horaReporte}</p>
+                                        <p class="text-xs text-gray-400">Por: ${tecnico.usuario || 'N/A'}</p>
+                                    <p class="text-xs text-gray-400">Asignado: ${fechaAsignacion} ${horaAsignacion}</p>
+                                </div>
+                                </div>
+                            </div>
+
+                            <div class="border-t border-gray-100 pt-4 mb-4">
+                                <p class="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+                                    <i data-lucide="file-text" class="w-4 h-4 text-gray-500"></i>
+                                    Diagnóstico Inicial:
+                                </p>
+                                <div class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100 report-details-box">
+                                    ${detallesHTML}
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                        <i data-lucide="user" class="w-4 h-4 text-green-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-gray-700">Técnico Asignado</p>
+                                        <p class="text-lg font-bold text-green-600">${tecnico.usuario || 'Por asignar'}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 text-sm text-gray-500">
+                                    <i data-lucide="clock" class="w-4 h-4"></i>
+                                    <span>${incident.estado || 'En progreso'}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        `;
+                `;
             }).join('');
 
             container.innerHTML = htmlContent;
@@ -1129,12 +1394,11 @@
             const statusText = type === 'inoperativo' ? 'Inoperativo' : 'Pendiente';
             const urgencyIcon = type === 'inoperativo' ? 'bolt' : 'clock';
             const urgencyClass = type === 'inoperativo' ? 'attention-alert' : '';
-            // Icono de Máquina de Slot (Ruleta)
             const machineIcon = 'laptop-minimal-check';
 
             if (incidents.length === 0) {
                 container.innerHTML = `
-                    <div class="empty-state col-span-full bg-white p-8 rounded-lg text-center shadow-md">
+                    <div class="empty-state bg-white p-8 rounded-lg text-center shadow-md">
                         <i data-lucide="sparkles" class="w-16 h-16 text-blue-400 mx-auto mb-4"></i>
                         <h3 class="text-xl font-semibold text-gray-700 mb-2">¡Misión Cumplida!</h3>
                         <p class="text-gray-500">No hay incidencias ${type === 'inoperativo' ? 'urgentes' : 'pendientes'} en la cola de asignación.</p>
@@ -1148,10 +1412,16 @@
                 const reportDate = incident.fecha_reporte || incident.fecha || 'N/A';
                 const reportTime = incident.hora_reporte || incident.hora || 'N/A';
 
+                // Usamos la fecha/hora con formato para el tooltip
                 const fecha = reportDate !== 'N/A' ? new Date(reportDate + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
                 const hora = reportTime.substring(0, 5);
 
-                const selectOptions = technicians.map(tech =>
+                // Usamos la fecha/hora sin formato para la función timeAgo
+                const elapsed = timeAgo(reportDate, reportTime);
+
+                // Filtrar solo técnicos disponibles
+                const availableTechs = technicians.filter(tech => tech.disponible !== false);
+                const selectOptions = availableTechs.map(tech =>
                     `<option value="${tech.id_usuario}">${tech.usuario}</option>`
                 ).join('');
 
@@ -1163,28 +1433,50 @@
 
                 const detallesHTML = detallesConcatenados || 'Sin detalles de diagnóstico o trabajo previo.';
 
+                // Determinar tipo de reporte y estilos
+                const tipoReporte = incident.cargo_reporta || 'N/A';
+                const esSala = tipoReporte.toLowerCase().includes('sala');
+                const badgeColor = esSala ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800';
+                const badgeIcon = esSala ? 'building' : 'users';
+
                 return `
-                    <div class="incident-button ${type} ${urgencyClass} p-4 mb-4">
-                        <div class="flex items-center justify-between cursor-pointer" onclick="toggleIncidentDetails(this)">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 ${type === 'inoperativo' ? 'bg-red-100' : 'bg-amber-100'} rounded-full flex items-center justify-center">
-                                    <i data-lucide="${machineIcon}" class="w-5 h-5 ${type === 'inoperativo' ? 'text-red-600' : 'text-amber-600'}"></i>
+                    <div class="incident-card ${type} ${urgencyClass}">
+                        <div class="incident-header" onclick="toggleIncidentDetails(this)">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 ${type === 'inoperativo' ? 'bg-red-100' : 'bg-amber-100'} rounded-full flex items-center justify-center">
+                                        <i data-lucide="${machineIcon}" class="w-5 h-5 ${type === 'inoperativo' ? 'text-red-600' : 'text-amber-600'}"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-gray-900">${incident.sala_mincetur || 'N/A'}</h3>
+                                        <p class="text-sm text-gray-500">${incident.modelo || 'Máquina Winsystems'} - S/N: ${incident.serie || 'N/A'}</p>
+                                        <div class="flex items-center gap-2 mt-1">
+                                            <span class="text-xs ${badgeColor} px-2 py-1 rounded-full flex items-center gap-1">
+                                                <i data-lucide="${badgeIcon}" class="w-3 h-3"></i>
+                                                Reportado por: ${tipoReporte}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 class="font-bold text-gray-900">${incident.sala_mincetur || 'N/A'}</h3>
-                                    <p class="text-sm text-gray-500">${incident.modelo || 'Máquina Winsystems'} - S/N: ${incident.serie || 'N/A'}</p>
+                                
+                                <div class="flex items-center gap-3">
+                                    <div class="flex flex-col items-end gap-1 text-right">
+                                        <span class="text-xs font-semibold text-gray-500 flex items-center gap-1" title="Reportado: ${fecha} ${hora}">
+                                            <i data-lucide="calendar-clock" class="w-3 h-3"></i>
+                                            ${elapsed}
+                                        </span>
+                                        <span class="status-badge text-white ${type === 'inoperativo' ? 'bg-red-600' : 'bg-amber-600'} flex items-center gap-1 py-1 px-2 rounded-full shadow-sm text-xs">
+                                            <i data-lucide="${urgencyIcon}" class="w-3 h-3"></i> 
+                                            ${statusText}
+                                        </span>
+                                    </div>
+                                    <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 transition-transform"></i>
                                 </div>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <span class="status-badge text-white ${type === 'inoperativo' ? 'bg-red-600' : 'bg-amber-600'} flex items-center gap-1 py-1 px-3 rounded-full shadow-sm text-sm">
-                                    <i data-lucide="${urgencyIcon}" class="w-4 h-4"></i> 
-                                    ${statusText}
-                                </span>
-                                <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 transition-transform"></i>
+
                             </div>
                         </div>
                         
-                        <div class="incident-details mt-4 hidden">
+                        <div class="incident-details hidden">
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                 <div class="col-span-1">
                                     <p class="text-sm font-semibold text-gray-500 flex items-center gap-1">
@@ -1203,12 +1495,8 @@
                                 </div>
 
                                 <div class="col-span-1 text-left md:text-right">
-                                    <span class="status-badge text-white ${type === 'inoperativo' ? 'bg-red-600' : 'bg-amber-600'} flex items-center justify-end md:justify-start gap-1 w-fit ml-auto py-1 px-3 rounded-full shadow-sm">
-                                        <i data-lucide="${urgencyIcon}" class="w-4 h-4"></i> 
-                                        ${statusText}
-                                    </span>
                                     <p class="text-xs text-gray-400 mt-1">Reportado: ${fecha} ${hora}</p>
-                                    <p class="text-xs text-gray-400">Por: ${incident.tecnico_reporta || 'N/A'}</p>
+                                    ${incident.tecnico_reporta ? `<p class="text-xs text-gray-400">Por: ${incident.tecnico_reporta} (${tipoReporte})</p>` : ''}
                                 </div>
                             </div>
 
@@ -1247,7 +1535,8 @@
 
         // --- TOGGLE INCIDENT DETAILS ---
         function toggleIncidentDetails(element) {
-            const details = element.parentElement.querySelector('.incident-details');
+            const card = element.closest('.incident-card');
+            const details = card.querySelector('.incident-details');
             const icon = element.querySelector('i[data-lucide="chevron-down"]');
 
             if (details.classList.contains('hidden')) {
@@ -1261,13 +1550,12 @@
 
         // --- EXPAND ALL FUNCTIONALITY ---
         function setupExpandAllButtons() {
-            // Inoperativos
-            document.getElementById('expand-all-inoperativos').addEventListener('click', function () {
-                const container = document.getElementById('inoperativos-container');
+            // Urgentes
+            document.getElementById('expand-all-urgentes').addEventListener('click', function () {
+                const container = document.getElementById('urgentes-container');
                 const isExpanded = this.getAttribute('data-expanded') === 'true';
 
                 if (isExpanded) {
-                    // Collapse all
                     container.querySelectorAll('.incident-details').forEach(detail => {
                         detail.classList.add('hidden');
                     });
@@ -1277,7 +1565,6 @@
                     this.setAttribute('data-expanded', 'false');
                     this.innerHTML = '<i data-lucide="chevrons-down" class="w-4 h-4"></i> Expandir Todo';
                 } else {
-                    // Expand all
                     container.querySelectorAll('.incident-details').forEach(detail => {
                         detail.classList.remove('hidden');
                     });
@@ -1296,7 +1583,6 @@
                 const isExpanded = this.getAttribute('data-expanded') === 'true';
 
                 if (isExpanded) {
-                    // Collapse all
                     container.querySelectorAll('.incident-details').forEach(detail => {
                         detail.classList.add('hidden');
                     });
@@ -1306,7 +1592,6 @@
                     this.setAttribute('data-expanded', 'false');
                     this.innerHTML = '<i data-lucide="chevrons-down" class="w-4 h-4"></i> Expandir Todo';
                 } else {
-                    // Expand all
                     container.querySelectorAll('.incident-details').forEach(detail => {
                         detail.classList.remove('hidden');
                     });
@@ -1325,7 +1610,6 @@
                 const isExpanded = this.getAttribute('data-expanded') === 'true';
 
                 if (isExpanded) {
-                    // Collapse all
                     container.querySelectorAll('.incident-details').forEach(detail => {
                         detail.classList.add('hidden');
                     });
@@ -1335,7 +1619,6 @@
                     this.setAttribute('data-expanded', 'false');
                     this.innerHTML = '<i data-lucide="chevrons-down" class="w-4 h-4"></i> Expandir Todo';
                 } else {
-                    // Expand all
                     container.querySelectorAll('.incident-details').forEach(detail => {
                         detail.classList.remove('hidden');
                     });
@@ -1350,7 +1633,7 @@
         }
 
         function setupAssignmentListeners() {
-            document.querySelectorAll('.incident-button').forEach(card => {
+            document.querySelectorAll('.incident-card').forEach(card => {
                 const select = card.querySelector('.technician-select');
                 const button = card.querySelector('.assign-button');
 
@@ -1378,6 +1661,34 @@
             });
         }
 
+        // --- AVAILABILITY TOGGLES ---
+        function setupAvailabilityToggles() {
+            document.querySelectorAll('.availability-toggle input').forEach(toggle => {
+                toggle.addEventListener('change', async function () {
+                    const techId = this.getAttribute('data-tech-id');
+                    const isAvailable = this.checked;
+
+                    try {
+                        const { error } = await supabaseClient
+                            .from('tecnicos')
+                            .update({ disponible: isAvailable })
+                            .eq('id_usuario', techId);
+
+                        if (error) throw error;
+
+                        showToast(`Técnico ${isAvailable ? 'marcado como disponible' : 'marcado como no disponible'}`);
+
+                        // Actualizar la lista de técnicos
+                        setTimeout(() => loadAssignmentPage(true), 500);
+                    } catch (error) {
+                        console.error("Error al actualizar disponibilidad:", error);
+                        showToast('Error al actualizar disponibilidad', 'error');
+                        this.checked = !isAvailable; // Revertir el cambio
+                    }
+                });
+            });
+        }
+
         // --- ASSIGNMENT HANDLING ---
         async function handleAssignment(incident, technicianId, cardElement) {
             const { fecha, hora } = getPeruDateTime();
@@ -1391,7 +1702,7 @@
                         id_usuario: technicianId,
                         fecha: fecha,
                         hora_inicio: hora,
-                        hora_fin: hora // Misma hora para inicio y fin
+                        hora_fin: hora
                     })
                     .select()
                     .single();
@@ -1413,12 +1724,10 @@
 
                 showToast(`¡Tarea ${incident.serie} asignada con éxito!`);
 
-                // Animar y remover la tarjeta, luego recargar la lista
                 cardElement.style.opacity = '0';
                 cardElement.style.transform = 'translateY(-20px) scale(0.95)';
                 setTimeout(() => {
                     cardElement.remove();
-                    // Forzar recarga para actualizar contadores y lista
                     loadAssignmentPage(true);
                 }, 300);
 
@@ -1426,12 +1735,81 @@
                 console.error("Error al asignar la tarea:", error);
                 showToast(`Error al asignar: ${error.message}`, 'error');
 
-                // Re-enable button
                 const button = cardElement.querySelector('.assign-button');
                 button.disabled = false;
                 button.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> Asignar';
                 lucide.createIcons();
             }
+        }
+
+        // --- SEARCH & SORT FUNCTIONS ---
+        function setupSearchFilters() {
+            const addFilter = (inputId, containerId, cardSelector) => {
+                const input = document.getElementById(inputId);
+                if (!input) return;
+
+                input.addEventListener('input', (e) => {
+                    const searchTerm = e.target.value.toLowerCase().trim();
+                    const cards = document.querySelectorAll(`#${containerId} ${cardSelector}`);
+
+                    cards.forEach(card => {
+                        const cardText = card.textContent.toLowerCase();
+                        if (cardText.includes(searchTerm)) {
+                            card.style.display = 'block';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                });
+            };
+
+            addFilter('search-urgentes', 'urgentes-container', '.incident-card');
+            addFilter('search-pendientes', 'pendientes-container', '.incident-card');
+            addFilter('search-asignadas', 'asignadas-container', '.incident-card');
+            addFilter('search-tecnicos', 'tecnicos-container', '.technician-card');
+        }
+
+        function setupTechnicianSort() {
+            const sortBtn = document.getElementById('sort-tecnicos');
+            if (!sortBtn) return;
+
+            sortBtn.setAttribute('data-sort-mode', 'name-asc'); // Initial state
+            sortBtn.innerHTML = '<i data-lucide="arrow-up-a-z" class="w-4 h-4"></i> Nombre (A-Z)';
+            lucide.createIcons();
+
+            sortBtn.addEventListener('click', function () {
+                const container = document.getElementById('tecnicos-container');
+                const cards = Array.from(container.querySelectorAll('.technician-card'));
+                const currentMode = this.getAttribute('data-sort-mode');
+                let nextMode = 'name-asc';
+
+                cards.sort((a, b) => {
+                    const nameA = a.querySelector('h3').textContent.trim();
+                    const nameB = b.querySelector('h3').textContent.trim();
+                    const availableA = a.querySelector('.availability-toggle input').checked;
+                    const availableB = b.querySelector('.availability-toggle input').checked;
+
+                    if (currentMode === 'name-asc') {
+                        nextMode = 'name-desc';
+                        this.innerHTML = '<i data-lucide="arrow-down-z-a" class="w-4 h-4"></i> Nombre (Z-A)';
+                        return nameB.localeCompare(nameA);
+                    } else if (currentMode === 'name-desc') {
+                        nextMode = 'available';
+                        this.innerHTML = '<i data-lucide="user-check" class="w-4 h-4"></i> Disponibles';
+                        if (availableA && !availableB) return -1;
+                        if (!availableA && availableB) return 1;
+                        return nameA.localeCompare(nameB); // Fallback to name
+                    } else { // currentMode === 'available'
+                        nextMode = 'name-asc';
+                        this.innerHTML = '<i data-lucide="arrow-up-a-z" class="w-4 h-4"></i> Nombre (A-Z)';
+                        return nameA.localeCompare(nameB);
+                    }
+                });
+
+                cards.forEach(card => container.appendChild(card));
+                this.setAttribute('data-sort-mode', nextMode);
+                lucide.createIcons();
+            });
         }
 
         // --- STARTUP ---
@@ -1444,20 +1822,25 @@
             document.getElementById('cancel-create').addEventListener('click', closeCreateIncidentModal);
 
             // Configurar envío del formulario
-            // Configurar envío del formulario
             document.getElementById('create-incident-form').addEventListener('submit', function (e) {
                 e.preventDefault();
 
                 const formData = {
                     sala: document.getElementById('sala').value,
                     serie: document.getElementById('serie').value,
-                    tecnico: document.getElementById('tecnico').value, // Técnico asignado
+                    tecnico: document.getElementById('tecnico').value,
                     diagnostico: document.getElementById('diagnostico').value
-                    // Fecha y hora se generarán automáticamente
-                    // Estado será "En Progreso"
                 };
 
                 createNewIncident(formData);
+            });
+
+            // Configurar eventos de pestañas
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', function () {
+                    const tabName = this.getAttribute('data-tab');
+                    switchTab(tabName);
+                });
             });
 
             // 1. Inicia el proceso de autenticación y carga
@@ -1471,13 +1854,18 @@
             // 3. Configura los botones de expandir todo
             setupExpandAllButtons();
 
-            // 4. Auto-refresh de respaldo
+            // 4. NUEVO: Configura filtros de búsqueda
+            setupSearchFilters();
+
+            // 5. NUEVO: Configura el botón de ordenar técnicos
+            setupTechnicianSort();
+
+            // 6. Auto-refresh de respaldo (MODIFICADO a 'true' para ser suave)
             setInterval(() => {
-                loadAssignmentPage(false);
+                loadAssignmentPage(true); // 'true' evita mostrar el loading overlay
             }, 30000);
         });
     </script>
 </body>
 
 </html>
-
