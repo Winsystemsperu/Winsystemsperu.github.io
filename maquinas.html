@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Métricas</title>
+    <title>Dashboard de Métricas - Winsystems</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -13,169 +12,412 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --ws-primary: #1e40af;
+            --ws-secondary: #3b82f6;
+            --ws-accent: #f97316;
+            --ws-light: #f0f7ff;
+            --ws-dark: #1e293b;
+        }
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5;
+            background: linear-gradient(135deg, #f0f7ff 0%, #e0f2fe 100%);
+            min-height: 100vh;
         }
 
-        #loading-overlay {
-            position: fixed;
+        .stats-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid;
+            background: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats-card::before {
+            content: '';
+            position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(240, 242, 245, 0.8);
-            display: flex;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--ws-primary), var(--ws-accent));
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .stats-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .chart-container:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .loading-dots::after {
+            content: '';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--ws-primary), var(--ws-secondary));
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .icon-container {
+            transition: all 0.3s ease;
+        }
+
+        .stats-card:hover .icon-container {
+            transform: scale(1.1);
+        }
+
+        /* Modal specific styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 100; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
             justify-content: center;
             align-items: center;
-            z-index: 9999;
         }
 
-        .tooltip-container {
-            position: relative;
-            display: inline-block;
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 24px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+            animation: slideIn 0.3s ease-out;
         }
 
-        .tooltip-bubble {
-            visibility: hidden;
-            width: 400px;
-            max-width: 50vw;
-            background-color: #262626;
-            color: #fff;
-            text-align: left;
-            white-space: normal;
-            border-radius: 6px;
-            padding: 8px 12px;
-            position: absolute;
-            z-index: 20;
-            opacity: 0;
-            transition: opacity 0.3s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            top: 50%;
-            left: calc(100% + 10px);
-            transform: translateY(-50%);
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
-        .tooltip-bubble::after {
-            content: "";
-            position: absolute;
-            top: 50%;
-            right: 100%;
-            margin-top: -5px;
-            border-width: 5px;
-            border-style: solid;
-            border-color: transparent #262626 transparent transparent;
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
         }
 
-        .tooltip-container:hover .tooltip-bubble {
-            visibility: visible;
-            opacity: 1;
+        .close-button:hover,
+        .close-button:focus {
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Tooltip style */
+        [title] {
+            cursor: help;
         }
     </style>
 </head>
 
 <body class="text-gray-800">
 
-    <div id="loading-overlay">
+    <div id="loading-overlay" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center">
         <div class="text-center">
-            <i data-lucide="loader-2" class="animate-spin h-12 w-12 text-blue-600"></i>
-            <p class="mt-4 text-lg font-semibold text-gray-700">Cargando Métricas...</p>
+            <div class="relative mb-6">
+                <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+                <i data-lucide="bar-chart-3" class="w-8 h-8 text-blue-600 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">Cargando Métricas</h3>
+            <p class="text-gray-600">Calculando últimos estados<span class="loading-dots"></span></p>
         </div>
     </div>
 
-    <div class="container mx-auto p-4 md:p-8 opacity-0" id="main-content">
-        <header class="mb-6 flex flex-wrap justify-between items-center">
-            <div class="flex items-center space-x-4">
-                <img src= winsystems_logo.png
-                    alt="Logo de Winsystems" class="h-24">
-                <div>
-                    <h1 id="main-title" class="text-3xl font-bold text-gray-900">Métricas de Máquinas</h1>
-                    <button id="reset-view-btn" class="hidden mt-2 text-sm text-blue-600 hover:underline">&larr; Volver
-                        a la vista general</button>
-                    <p id="main-subtitle" class="text-gray-500">Análisis interactivo de la operación.</p>
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl opacity-0" id="main-content">
+        <header class="mb-8 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="bg-gradient-to-br from-ws-primary to-ws-secondary p-3 rounded-2xl shadow-sm">
+                        <i data-lucide="bar-chart-3" class="w-8 h-8 text-white"></i>
+                    </div>
+                    <div>
+                        <h1 id="main-title" class="text-2xl md:text-3xl font-bold text-gray-900">Dashboard de Métricas</h1>
+                        <p id="main-subtitle" class="text-gray-600 mt-1">Último estado por máquina - Análisis actualizado</p>
+                    </div>
                 </div>
-            </div>
-            <div class="flex items-center space-x-4 mt-4 md:mt-0">
-                <a href="./home.html" class="text-blue-600 hover:underline flex items-center gap-2"><i
-                        data-lucide="arrow-left"></i> Volver al Inicio</a>
-                <button id="logout-button" title="Cerrar Sesión"
-                    class="p-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition"><i
-                        data-lucide="log-out" class="w-5 h-5"></i></button>
+                <div class="flex items-center gap-3">
+                    <button id="reset-view-btn" class="hidden bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-all duration-300 flex items-center gap-2">
+                        <i data-lucide="refresh-ccw" class="w-4 h-4"></i>
+                        Vista General
+                    </button>
+                    <a href="./home.html" class="bg-ws-primary text-white px-4 py-2 rounded-lg hover:bg-ws-secondary transition-all duration-300 flex items-center gap-2 group">
+                        <i data-lucide="arrow-left" class="w-4 h-4 group-hover:-translate-x-1 transition-transform"></i>
+                        Volver al Inicio
+                    </a>
+                </div>
             </div>
         </header>
 
-        <div id="filters-section" class="bg-white p-4 rounded-xl shadow-md mb-8 flex flex-wrap items-end gap-4">
-            <div class="flex-grow"><label for="start-date" class="block text-sm font-medium text-gray-700">Fecha
-                    Inicio</label><input type="date" id="start-date"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+        <div class="filter-section p-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <div>
+                    <label for="start-date" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i data-lucide="calendar" class="w-4 h-4 inline mr-1"></i>
+                        Fecha Inicio
+                    </label>
+                    <input type="date" id="start-date" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-ws-primary focus:ring-ws-primary/20 transition-colors">
+                </div>
+                <div>
+                    <label for="end-date" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i data-lucide="calendar" class="w-4 h-4 inline mr-1"></i>
+                        Fecha Fin
+                    </label>
+                    <input type="date" id="end-date" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-ws-primary focus:ring-ws-primary/20 transition-colors">
+                </div>
+                <div id="gabinete-filter-container">
+                    <label for="type-filter" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i data-lucide="filter" class="w-4 h-4 inline mr-1"></i>
+                        Tipo de Gabinete
+                    </label>
+                    <select id="type-filter" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-ws-primary focus:ring-ws-primary/20 transition-colors">
+                        <option>Todos</option>
+                    </select>
+                </div>
+                <button id="apply-filters" class="btn-primary px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 h-[42px]">
+                    <i data-lucide="sliders" class="w-4 h-4"></i>
+                    Aplicar Filtros
+                </button>
             </div>
-            <div class="flex-grow"><label for="end-date" class="block text-sm font-medium text-gray-700">Fecha
-                    Fin</label><input type="date" id="end-date"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-            </div>
-            <div id="gabinete-filter-container" class="flex-grow"><label for="type-filter"
-                    class="block text-sm font-medium text-gray-700">Tipo de Gabinete</label><select id="type-filter"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                    <option>Todos</option>
-                </select></div>
-            <button id="apply-filters"
-                class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 flex items-center gap-2"><i
-                    data-lucide="filter" class="w-4 h-4"></i> Aplicar</button>
         </div>
 
-        <div id="maquinas-dashboard">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div class="bg-white p-6 rounded-xl shadow-md flex items-center space-x-4">
-                    <div class="bg-blue-100 p-3 rounded-full"><i data-lucide="server" class="text-blue-600"></i></div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            <div class="stats-card p-6 rounded-xl fade-in" data-status="Total">
+                <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-gray-500 text-sm">Total Atendidas</p>
-                        <p id="total-maquinas" class="text-2xl font-bold">0</p>
+                        <p class="text-gray-500 text-sm font-medium">Total Máquinas</p>
+                        <p id="total-maquinas" class="text-2xl font-bold text-gray-800 mt-1">0</p>
+                    </div>
+                    <div class="icon-container bg-blue-100 p-3 rounded-full">
+                        <i data-lucide="server" class="w-6 h-6 text-blue-600"></i>
                     </div>
                 </div>
-                <div class="bg-white p-6 rounded-xl shadow-md flex items-center space-x-4">
-                    <div class="bg-green-100 p-3 rounded-full"><i data-lucide="check-circle" class="text-green-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-gray-500 text-sm">Operativas</p>
-                        <p id="total-operativas" class="text-2xl font-bold">0</p>
-                    </div>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-md flex items-center space-x-4">
-                    <div class="bg-red-100 p-3 rounded-full"><i data-lucide="alert-triangle" class="text-red-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-gray-500 text-sm">Inoperativas</p>
-                        <p id="total-inoperativas" class="text-2xl font-bold">0</p>
-                    </div>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-md flex items-center space-x-4">
-                    <div class="bg-yellow-100 p-3 rounded-full"><i data-lucide="clock" class="text-yellow-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-gray-500 text-sm">Pendientes</p>
-                        <p id="total-pendientes" class="text-2xl font-bold">0</p>
-                    </div>
+                <div class="mt-3 flex items-center text-xs text-gray-500">
+                    <i data-lucide="cpu" class="w-4 h-4 mr-1 text-blue-500"></i>
+                    <span>Máquinas únicas atendidas</span>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-md">
-                    <h2 id="top-salas-title" class="text-xl font-semibold mb-4">Top 15 Salas Más Visitadas</h2>
-                    <div class="h-96"><canvas id="topSalasChart"></canvas></div>
+            <div class="stats-card p-6 rounded-xl fade-in" data-status="Operativo">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Operativas</p>
+                        <p id="total-operativas" class="text-2xl font-bold text-gray-800 mt-1">0</p>
+                    </div>
+                    <div class="icon-container bg-green-100 p-3 rounded-full">
+                        <i data-lucide="check-circle" class="w-6 h-6 text-green-600"></i>
+                    </div>
                 </div>
-                <div class="bg-white p-6 rounded-xl shadow-md">
-                    <h2 id="top-trabajos-title" class="text-xl font-semibold mb-4">Top 5 Tipos de Trabajo</h2>
-                    <div class="h-96"><canvas id="topTrabajosChart"></canvas></div>
+                <div class="mt-3 flex items-center text-xs text-gray-500">
+                    <span class="status-indicator bg-green-500"></span>
+                    <span>Último estado: Operativo</span>
                 </div>
             </div>
 
-            <div id="sala-details-container" class="hidden mt-8">
-                <div class="bg-white p-6 rounded-xl shadow-md">
-                    <h2 id="sala-details-title" class="text-xl font-semibold mb-4">Detalles</h2>
-                    <div id="sala-details-table" class="overflow-x-auto"></div>
+            <div class="stats-card p-6 rounded-xl fade-in" data-status="Inoperativo">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Inoperativas</p>
+                        <p id="total-inoperativas" class="text-2xl font-bold text-gray-800 mt-1">0</p>
+                    </div>
+                    <div class="icon-container bg-red-100 p-3 rounded-full">
+                        <i data-lucide="alert-triangle" class="w-6 h-6 text-red-600"></i>
+                    </div>
                 </div>
+                <div class="mt-3 flex items-center text-xs text-gray-500">
+                    <span class="status-indicator bg-red-500"></span>
+                    <span>Último estado: Inoperativo</span>
+                </div>
+            </div>
+
+            <div class="stats-card p-6 rounded-xl fade-in" data-status="Pendiente">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Pendientes</p>
+                        <p id="total-pendientes" class="text-2xl font-bold text-gray-800 mt-1">0</p>
+                    </div>
+                    <div class="icon-container bg-yellow-100 p-3 rounded-full">
+                        <i data-lucide="clock" class="w-6 h-6 text-yellow-600"></i>
+                    </div>
+                </div>
+                <div class="mt-3 flex items-center text-xs text-gray-500">
+                    <span class="status-indicator bg-yellow-500"></span>
+                    <span>Último estado: Pendiente</span>
+                </div>
+            </div>
+
+            <div id="card-sin-estado" data-status="Sin Estado" 
+                 class="stats-card p-6 rounded-xl fade-in cursor-pointer group">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Sin Estado</p>
+                        <p id="total-sin-estado" class="text-2xl font-bold text-gray-800 mt-1">0</p>
+                    </div>
+                    <div class="icon-container bg-gray-100 p-3 rounded-full group-hover:bg-gray-200 transition-colors">
+                        <i data-lucide="help-circle" class="w-6 h-6 text-gray-600"></i>
+                    </div>
+                </div>
+                <div class="mt-3 flex items-center text-xs text-gray-500">
+                    <span class="status-indicator bg-gray-400"></span>
+                    <span>Estado no definido</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <div class="lg:col-span-2 chart-container p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 id="top-salas-title" class="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                        <i data-lucide="building" class="w-5 h-5 text-ws-primary"></i>
+                        Top 15 Salas Más Visitadas
+                    </h2>
+                    <div class="text-sm text-gray-500 flex items-center gap-1">
+                        <i data-lucide="mouse-pointer" class="w-4 h-4"></i>
+                        <span>Haz clic para filtrar</span>
+                    </div>
+                </div>
+                <div class="h-96">
+                    <canvas id="topSalasChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 id="top-trabajos-title" class="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                        <i data-lucide="pie-chart" class="w-5 h-5 text-ws-primary"></i>
+                        Distribución por Estado
+                    </h2>
+                    <div class="text-sm text-gray-500 flex items-center gap-1">
+                        <i data-lucide="check-square" class="w-4 h-4"></i>
+                        <span>Último estado por máquina</span>
+                    </div>
+                </div>
+                <div class="h-96">
+                    <canvas id="estadosChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="lg:col-span-2 chart-container p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 id="top-repuestos-title" class="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                        <i data-lucide="wrench" class="w-5 h-5 text-ws-accent"></i>
+                        Top 15 Repuestos Cambiados
+                    </h2>
+                    <div class="text-sm text-gray-500 flex items-center gap-1">
+                        <i data-lucide="mouse-pointer" class="w-4 h-4"></i>
+                        <span>Haz clic para ver detalles</span>
+                    </div>
+                </div>
+                <div class="h-96">
+                    <canvas id="topRepuestosChart"></canvas>
+                </div>
+                <div class="text-right mt-4">
+                    <button id="show-all-repuestos-btn" class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                        <i data-lucide="list-plus" class="w-4 h-4 mr-2"></i>
+                        Ver todos los repuestos...
+                    </button>
+                </div>
+            </div>
+            
+        </div>
+
+        <div id="sala-details-container" class="hidden">
+            <div class="chart-container p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 id="sala-details-title" class="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                        <i data-lucide="list" class="w-5 h-5 text-ws-primary"></i>
+                        Detalles del Reporte
+                    </h2>
+                    <button onclick="document.getElementById('sala-details-container').classList.add('hidden')" 
+                            class="text-gray-500 hover:text-gray-700 transition-colors">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <div id="sala-details-table" class="overflow-x-auto"></div>
+            </div>
+        </div>
+
+        
+    </div>
+
+    <div id="repuestos-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-repuestos-modal">&times;</span>
+            <div class="flex items-center gap-3 mb-6">
+                <div class="bg-orange-100 p-2 rounded-full">
+                    <i data-lucide="box" class="w-6 h-6 text-orange-600"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800">Repuestos Cambiados (Histórico)</h2>
+            </div>
+            <p id="repuestos-modal-summary" class="text-gray-600 mb-6 border-b pb-4"></p>
+            <div id="repuestos-modal-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto pr-2">
+                </div>
+            <div class="mt-8 text-center text-sm text-gray-500">
+                <p>Este listado incluye todos los repuestos detectados en los reportes de "trabajos realizados" dentro del rango de fechas seleccionado.</p>
             </div>
         </div>
     </div>
@@ -185,11 +427,14 @@
         const SUPABASE_URL = 'https://qobquktxvhlvtrpeopji.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvYnF1a3R4dmhsdnRycGVvcGppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU2OTc4NDYsImV4cCI6MjA2MTI3Mzg0Nn0.rnubNUWSWEomj5Xwvr65kZLK7Ig_bLC74ajFh9cksFc';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        Chart.register(ChartDataLabels);
 
-        let topSalasChartInstance, topTrabajosChartInstance;
+        let topSalasChartInstance, estadosChartInstance;
+        let topRepuestosChartInstance; 
         let selectedSalas = [];
-        let selectedWorkTypes = [];
+        let allReportDetails = []; // Guarda los resultados de getLastStateBySerie
+        let rawMachineStatesData = []; // Guarda TODOS los datos de fetchMachineStates
+        let lastStatesBySerie = new Map();
+        let currentAllRepuestos = [];
 
         // --- LÓGICA DE AYUDA ---
         function getGabineteTypeBySerie(serie) {
@@ -201,6 +446,38 @@
             return 'Otro';
         }
 
+        // --- FUNCIÓN CLAVE: Obtener último estado por serie ---
+        function getLastStateBySerie(data) {
+            const seriesMap = new Map();
+            console.log('--- getLastStateBySerie: Recibiendo datos para ordenar ---', data);
+
+            const sortedData = [...data].sort((a, b) => {
+                try {
+                    const dateA = a && a.trabajos ? a.trabajos.fecha : null;
+                    const dateB = b && b.trabajos ? b.trabajos.fecha : null;
+                    if (!dateB) return -1;
+                    if (!dateA) return 1;
+                    return new Date(dateB) - new Date(dateA);
+                } catch (e) {
+                    console.error('--- ERROR EN SORT de getLastStateBySerie ---', e, a, b);
+                    return 0; 
+                }
+            });
+
+            sortedData.forEach(item => {
+                if (item && item.maquinas && item.maquinas.serie) {
+                    const serie = item.maquinas.serie;
+                    if (!seriesMap.has(serie)) {
+                        seriesMap.set(serie, item);
+                    }
+                } else {
+                    console.warn('Item sin .maquinas.serie encontrado:', item);
+                }
+            });
+
+            return Array.from(seriesMap.values());
+        }
+
         // --- SESIÓN E INICIALIZACIÓN ---
         async function checkSession() {
             const { data: { session } } = await supabaseClient.auth.getSession();
@@ -208,20 +485,26 @@
             initializePage();
         }
 
-        async function logout() {
-            await supabaseClient.auth.signOut();
-            window.location.href = './index.html';
-        }
-
         async function initializePage() {
-            document.getElementById('logout-button').addEventListener('click', logout);
             document.getElementById('apply-filters').addEventListener('click', applyFilters);
-            document.getElementById('reset-view-btn').addEventListener('click', () => applyFilters());
+            document.getElementById('reset-view-btn').addEventListener('click', () => {
+                applyFilters();
+                document.getElementById('sala-details-container').classList.add('hidden');
+            });
+            document.getElementById('show-all-repuestos-btn').addEventListener('click', showAllRepuestosModal);
+            document.getElementById('close-repuestos-modal').addEventListener('click', () => document.getElementById('repuestos-modal').style.display = 'none');
+            window.addEventListener('click', (event) => {
+                if (event.target == document.getElementById('repuestos-modal')) {
+                    document.getElementById('repuestos-modal').style.display = 'none';
+                }
+            });
+
             setDefaultDates();
             populateGabineteFilter();
             await applyFilters();
             document.getElementById('main-content').classList.remove('opacity-0');
             document.getElementById('loading-overlay').style.display = 'none';
+            addCardClickListeners();
             lucide.createIcons();
         }
 
@@ -251,7 +534,6 @@
         async function applyFilters() {
             document.getElementById('loading-overlay').style.display = 'flex';
             selectedSalas = [];
-            selectedWorkTypes = [];
             updateTitles();
 
             const startDate = document.getElementById('start-date').value;
@@ -259,15 +541,28 @@
             const typeFilter = document.getElementById('type-filter').value;
 
             try {
-                const [machineStatesData, topSalasData, topTrabajosData] = await Promise.all([
-                    fetchMachineStates(startDate, endDate, typeFilter),
-                    fetchTopSalas(startDate, endDate, typeFilter),
-                    fetchTopTrabajos(startDate, endDate, typeFilter)
-                ]);
-                updateMachineStatesUI(machineStatesData);
+                // Fetch all data
+                const fetchedMachineStates = await fetchMachineStates(startDate, endDate, typeFilter);
+                rawMachineStatesData = fetchedMachineStates; // Store raw data
+
+                const topSalasData = await fetchTopSalas(startDate, endDate, typeFilter);
+                
+                console.log('--- applyFilters: Datos crudos de fetchMachineStates ---');
+                console.log(rawMachineStatesData);
+                
+                const allRepuestos = analyzeRepuestos(rawMachineStatesData); // Analyze raw data
+                currentAllRepuestos = allRepuestos;
+                const topRepuestosData = [...allRepuestos].sort((a,b) => b.cantidad - a.cantidad).slice(0, 15);
+                
+                const lastStatesData = getLastStateBySerie(rawMachineStatesData); // Process for last states
+                allReportDetails = lastStatesData; // Update global for card clicks
+                lastStatesBySerie = new Map(lastStatesData.map(item => [item.maquinas.serie, item]));
+                
+                updateMachineStatesUI(lastStatesData);
                 updateTopSalasUI(topSalasData);
-                updateTopTrabajosUI(topTrabajosData);
-                document.getElementById('sala-details-container').classList.add('hidden');
+                updateEstadosChart(lastStatesData);
+                updateTopRepuestosUI(topRepuestosData); 
+                document.getElementById('sala-details-container').classList.add('hidden'); // Hide details on filter apply
             } catch (error) {
                 console.error("Error al aplicar filtros:", error);
             } finally {
@@ -277,80 +572,389 @@
 
         // --- FUNCIONES DE BÚSQUEDA DE DATOS ---
         async function fetchMachineStates(startDate, endDate, typeFilter, salaNames = []) {
-            let query = supabaseClient.from('detalle').select(`estado, maquinas!inner(id_maquina, serie), trabajos!inner(fecha, sala!inner(sala_mincetur))`).gte('trabajos.fecha', startDate).lte('trabajos.fecha', endDate);
+            
+            // --- INICIO DE CORRECCIÓN (Columnas en 'detalle' + Bug de Supabase + diag_ini) ---
+            let query = supabaseClient.from('detalle')
+                .select(`
+                    estado, 
+                    tipo_trabajo,
+                    trab_realizado, 
+                    resul,
+                    diag_ini, 
+                    maquinas!inner(id_maquina, serie), 
+                    trabajos(
+                        id_trabajo, 
+                        fecha, 
+                        sala!inner(sala_mincetur), 
+                        tecnicos(usuario)
+                    )
+                `) 
+            // --- FIN DE CORRECCIÓN ---
+                .gte('trabajos.fecha', startDate)
+                .lte('trabajos.fecha', endDate)
+                .order('fecha', { foreignTable: 'trabajos' });
+
             if (salaNames.length > 0) {
-                query = query.in('trabajos.sala.sala_mincetur', salaNames);
+                 query = query.in('trabajos.sala.sala_mincetur', salaNames);
             }
+
             const { data, error } = await query.limit(10000);
-            if (error) { console.error("Error fetching machine states:", error); return []; }
-            let filteredData = data;
+
+            if (error) {
+                console.error("Error fetching machine states:", error);
+                return [];
+            }
+
+            const filteredData = data.filter(item => item.trabajos);
+            
             if (typeFilter && typeFilter !== 'Todos') {
-                filteredData = data.filter(item => getGabineteTypeBySerie(item.maquinas.serie) === typeFilter);
+                return filteredData.filter(item => getGabineteTypeBySerie(item.maquinas.serie) === typeFilter);
             }
-            const latestDetails = {};
-            for (const detail of filteredData) {
-                const machineId = detail.maquinas.id_maquina;
-                if (!latestDetails[machineId] || new Date(detail.trabajos.fecha) > new Date(latestDetails[machineId].trabajos.fecha)) {
-                    latestDetails[machineId] = detail;
-                }
-            }
-            return Object.values(latestDetails);
+
+            return filteredData;
         }
 
         async function fetchTopSalas(startDate, endDate, typeFilter) {
-            let query = supabaseClient.from('trabajos').select('sala(sala_mincetur), detalle!inner(maquinas!inner(serie))').gte('fecha', startDate).lte('fecha', endDate);
+            let query = supabaseClient.from('trabajos')
+                .select('sala(sala_mincetur), detalle!inner(maquinas!inner(serie))')
+                .gte('fecha', startDate)
+                .lte('fecha', endDate);
+
             const { data, error } = await query.limit(10000);
-            if (error) { console.error("Error fetching top salas:", error); return []; }
+            
+            if (error) { 
+                console.error("Error fetching top salas:", error); 
+                return []; 
+            }
+            
             let filteredData = data;
             if (typeFilter && typeFilter !== 'Todos') {
-                filteredData = data.filter(t => t.detalle.some(d => getGabineteTypeBySerie(d.maquinas.serie) === typeFilter));
+                filteredData = data.filter(t => 
+                    t.detalle.some(d => getGabineteTypeBySerie(d.maquinas.serie) === typeFilter)
+                );
             }
+            
             const salaVisits = filteredData.reduce((acc, t) => {
-                if (t.sala && t.sala.sala_mincetur) { acc[t.sala.sala_mincetur] = (acc[t.sala.sala_mincetur] || 0) + 1; }
+                if (t.sala && t.sala.sala_mincetur) { 
+                    acc[t.sala.sala_mincetur] = (acc[t.sala.sala_mincetur] || 0) + 1; 
+                }
                 return acc;
             }, {});
-            return Object.entries(salaVisits).map(([nombre_sala, visitas]) => ({ nombre_sala, visitas })).sort((a, b) => b.visitas - a.visitas).slice(0, 15);
+            
+            return Object.entries(salaVisits)
+                .map(([nombre_sala, visitas]) => ({ nombre_sala, visitas }))
+                .sort((a, b) => b.visitas - a.visitas)
+                .slice(0, 15);
         }
 
-        async function fetchTopTrabajos(startDate, endDate, typeFilter, salaNames = []) {
-            let query = supabaseClient.from('detalle').select('tipo_trabajo, maquinas!inner(serie), trabajos!inner(fecha, sala!inner(sala_mincetur))').gte('trabajos.fecha', startDate).lte('trabajos.fecha', endDate);
-            if (salaNames.length > 0) {
-                query = query.in('trabajos.sala.sala_mincetur', salaNames);
-            }
-            const { data, error } = await query.limit(10000);
-            if (error) { console.error("Error fetching top trabajos:", error); return []; }
-            let filteredData = data;
-            if (typeFilter && typeFilter !== 'Todos') {
-                filteredData = data.filter(item => getGabineteTypeBySerie(item.maquinas.serie) === typeFilter);
-            }
-            const workTypeCounts = filteredData.reduce((acc, d) => {
-                if (d.tipo_trabajo) { acc[d.tipo_trabajo] = (acc[d.tipo_trabajo] || 0) + 1; }
-                return acc;
-            }, {});
-            return Object.entries(workTypeCounts).map(([tipo, count]) => ({ tipo, count })).sort((a, b) => b.count - a.count).slice(0, 5);
+        // --- FUNCIÓN MODIFICADA: Analizar repuestos (con sinónimos) ---
+        function analyzeRepuestos(data) {
+            console.log('--- analyzeRepuestos: Recibiendo datos para analizar ---', data);
+            
+            const repuestos_map = {
+                'Pantalla/Monitor': /\b(monitor|pantalla)\b/i,
+                'RAM/Memoria': /\b(ram|memoria)\b/i,
+                'Touchscreen': /\b(touchscreen|tactil)\b/i,
+                'Disco Duro/SSD': /\b(disco duro|hdd|ssd)\b/i,
+                'Cooler/Ventilador': /\b(cooler|ventilador|disipador)\b/i,
+                'Procesador/CPU': /\b(procesador|cpu)\b/i,
+                'tarjeta': /\b(tarjeta)\b/i,
+                'billetero': /\b(billetero)\b/i,
+                'ups': /\b(ups)\b/i,
+                'mainboard': /\b(mainboard)\b/i,
+                'cable': /\b(cable)\b/i,
+                'led': /\b(led)\b/i,
+                'mux': /\b(mux)\b/i,
+                'fuente': /\b(fuente)\b/i,
+                'sensor': /\b(sensor)\b/i,
+                'botonera': /\b(botonera)\b/i,
+                'impresora': /\b(impresora)\b/i,
+                'conector': /\b(conector)\b/i,
+                'switch': /\b(switch)\b/i,
+                'wibu': /\b(wibu)\b/i,
+                'crc': /\b(crc)\b/i,
+                'placa': /\b(placa)\b/i,
+                'boton': /\b(boton)\b/i,
+                'bateria': /\b(bateria)\b/i,
+                'portafusibles': /\b(portafusibles)\b/i,
+                'unidad optica': /\b(unidad optica)\b/i,
+                'lector': /\b(lector)\b/i,
+                'controlador': /\b(controlador)\b/i,
+                'chip': /\b(chip)\b/i
+            };
+            
+            const accion_regex = /\b(cambi[oaó]|reemplaz[oaó]|sustitu|reponer|repuso|cambiandose)\b/i;
+            const repuesto_counts = {};
+
+            data.forEach(item => {
+                if (!item) {
+                    console.warn('analyzeRepuestos: Saltando item nulo.');
+                    return; 
+                }
+                const texto_realizado = item.trab_realizado || '';
+                const texto_resultado = item.resul || '';
+                
+                const texto_completo = texto_realizado + ' ' + texto_resultado;
+
+                if (!accion_regex.test(texto_completo)) {
+                    return;
+                }
+
+                for (const [key, repuesto_regex] of Object.entries(repuestos_map)) {
+                    if (repuesto_regex.test(texto_completo)) {
+                        repuesto_counts[key] = (repuesto_counts[key] || 0) + 1;
+                    }
+                }
+            });
+
+            console.log('--- analyzeRepuestos: Conteos finales ---', repuesto_counts);
+
+            return Object.entries(repuesto_counts)
+                .map(([repuesto, cantidad]) => ({ repuesto, cantidad }));
         }
 
-        async function fetchDetailsForWorkType(workTypes) {
-            const startDate = document.getElementById('start-date').value;
-            const endDate = document.getElementById('end-date').value;
-            const typeFilter = document.getElementById('type-filter').value;
-            let query = supabaseClient.from('detalle')
-                .select(`estado, trabajos!inner(id_trabajo, fecha, sala!inner(sala_mincetur), tecnicos(usuario)), maquinas!inner(serie)`)
-                .in('tipo_trabajo', workTypes)
-                .gte('trabajos.fecha', startDate)
-                .lte('trabajos.fecha', endDate);
-            if (selectedSalas.length > 0) {
-                query = query.in('trabajos.sala.sala_mincetur', selectedSalas);
+        function generateOrangeGradient(count) {
+            const colors = []; 
+            const s = { r: 249, g: 115, b: 22 }, e = { r: 253, g: 186, b: 116 };
+            if (count <= 1) { 
+                return [`rgba(${s.r}, ${s.g}, ${s.b}, 0.8)`];
             }
-            const { data, error } = await query.order('fecha', { foreignTable: 'trabajos', ascending: false }).limit(10000);
-            if (error) { console.error("Error fetching details for work type:", error); return []; }
-            if (typeFilter && typeFilter !== 'Todos') {
-                return data.filter(item => getGabineteTypeBySerie(item.maquinas.serie) === typeFilter);
+            for (let i = 0; i < count; i++) { 
+                const r = i / (count - 1); 
+                colors.push(`rgba(${Math.round(s.r + r * (e.r - s.r))}, ${Math.round(s.g + r * (e.g - s.g))}, ${Math.round(s.b + r * (e.b - s.b))}, 0.8)`); 
             }
-            return data;
+            return colors;
+        }
+        
+        // --- FUNCIÓN MODIFICADA: updateTopRepuestosUI (con onClick) ---
+        function updateTopRepuestosUI(data) {
+            const ctx = document.getElementById('topRepuestosChart').getContext('2d');
+            const backgroundColors = generateOrangeGradient(data.length);
+
+            if (topRepuestosChartInstance) topRepuestosChartInstance.destroy();
+            
+            topRepuestosChartInstance = new Chart(ctx, {
+                type: 'bar', 
+                data: { 
+                    labels: data.map(s => s.repuesto), 
+                    datasets: [{ 
+                        data: data.map(s => s.cantidad), 
+                        backgroundColor: backgroundColors,
+                        borderRadius: 4,
+                        borderWidth: 0
+                    }] 
+                },
+                options: {
+                    indexAxis: 'y', 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    onHover: (e, el) => e.native.target.style.cursor = el[0] ? 'pointer' : 'default', // Cursor pointer
+                    
+                    // --- INICIO DE MODIFICACIÓN: onClick para filtrar ---
+                    onClick: (event) => {
+                        const points = topRepuestosChartInstance.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
+                        if (points.length) {
+                            const repuestoName = topRepuestosChartInstance.data.labels[points[0].index];
+                            filterAndShowRepuestoDetails(repuestoName);
+                            document.getElementById('reset-view-btn').classList.remove('hidden'); // Mostrar botón reset
+                        }
+                    },
+                    // --- FIN DE MODIFICACIÓN ---
+
+                    plugins: { 
+                        legend: { display: false }, 
+                        datalabels: { 
+                            anchor: 'end', 
+                            align: 'end',
+                            color: '#374151',
+                            font: { weight: 'bold' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: (context) => `Repuesto: ${context[0].label}`,
+                                label: (context) => `Cambios: ${context.parsed.x}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'N° de Cambios/Reemplazos'
+                            },
+                            grid: { color: 'rgba(0,0,0,0.1)' },
+                            ticks: { color: '#6B7280' }
+                        },
+                        y: {
+                            grid: { color: 'rgba(0,0,0,0.1)' },
+                            ticks: { color: '#6B7280' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- NUEVA FUNCIÓN: Filtrar y mostrar detalles por repuesto ---
+        function filterAndShowRepuestoDetails(repuestoName) {
+            console.log(`Filtrando por repuesto: ${repuestoName}`);
+            
+            // Usar la expresión regular del mapa para filtrar correctamente (maneja sinónimos)
+            const repuestoRegex = getRegexForRepuesto(repuestoName);
+            const accion_regex = /\b(cambi[oaó]|reemplaz[oaó]|sustitu|reponer|repuso|cambiandose)\b/i;
+
+            const filteredData = rawMachineStatesData.filter(item => {
+                const texto_realizado = item.trab_realizado || '';
+                const texto_resultado = item.resul || '';
+                const texto_completo = texto_realizado + ' ' + texto_resultado;
+
+                return accion_regex.test(texto_completo) && repuestoRegex.test(texto_completo);
+            });
+
+            const title = `Reportes donde se cambió: "${repuestoName}" (${filteredData.length} encontrados)`;
+            renderDetailsTable(title, filteredData); // Renderiza la tabla con los reportes filtrados
+        }
+
+        // --- Helper para obtener la Regex correcta (incluye sinónimos) ---
+        function getRegexForRepuesto(repuestoName) {
+            const repuestos_map = {
+                'Pantalla/Monitor': /\b(monitor|pantalla)\b/i,
+                'RAM/Memoria': /\b(ram|memoria)\b/i,
+                'Touchscreen': /\b(touchscreen|tactil)\b/i,
+                'Disco Duro/SSD': /\b(disco duro|hdd|ssd)\b/i,
+                'Cooler/Ventilador': /\b(cooler|ventilador|disipador)\b/i,
+                'Procesador/CPU': /\b(procesador|cpu)\b/i,
+                'tarjeta': /\b(tarjeta)\b/i,
+                'billetero': /\b(billetero)\b/i,
+                'ups': /\b(ups)\b/i,
+                'mainboard': /\b(mainboard)\b/i,
+                'cable': /\b(cable)\b/i,
+                'led': /\b(led)\b/i,
+                'mux': /\b(mux)\b/i,
+                'fuente': /\b(fuente)\b/i,
+                'sensor': /\b(sensor)\b/i,
+                'botonera': /\b(botonera)\b/i,
+                'impresora': /\b(impresora)\b/i,
+                'conector': /\b(conector)\b/i,
+                'switch': /\b(switch)\b/i,
+                'wibu': /\b(wibu)\b/i,
+                'crc': /\b(crc)\b/i,
+                'placa': /\b(placa)\b/i,
+                'boton': /\b(boton)\b/i,
+                'bateria': /\b(bateria)\b/i,
+                'portafusibles': /\b(portafusibles)\b/i,
+                'unidad optica': /\b(unidad optica)\b/i,
+                'lector': /\b(lector)\b/i,
+                'controlador': /\b(controlador)\b/i,
+                'chip': /\b(chip)\b/i
+            };
+            return repuestos_map[repuestoName] || new RegExp(`\\b${repuestoName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i');
+        }
+
+
+        function showAllRepuestosModal() {
+            const modal = document.getElementById('repuestos-modal');
+            const summary = document.getElementById('repuestos-modal-summary');
+            const listDiv = document.getElementById('repuestos-modal-list');
+
+            if (currentAllRepuestos.length === 0) {
+                summary.textContent = "No se detectaron cambios de repuestos en los reportes para el rango de fechas seleccionado.";
+                listDiv.innerHTML = `<div class="col-span-full text-center py-8 text-gray-500">
+                                        <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 text-gray-400"></i>
+                                        <p>Ningún repuesto cambiado encontrado.</p>
+                                     </div>`;
+            } else {
+                const totalChanges = currentAllRepuestos.reduce((sum, item) => sum + item.cantidad, 0);
+                const uniqueRepuestos = currentAllRepuestos.length;
+
+                summary.innerHTML = `<p class="font-semibold text-lg">En total, se registraron <span class="text-ws-accent">${totalChanges} cambios</span> de <span class="text-ws-accent">${uniqueRepuestos} tipos de repuestos únicos</span> dentro del periodo seleccionado.</p>
+                                     <p class="text-sm mt-2">Aquí puedes ver el detalle de cada repuesto y cuántas veces se ha cambiado:</p>`;
+
+                const sortedRepuestos = [...currentAllRepuestos].sort((a, b) => b.cantidad - a.cantidad);
+
+                listDiv.innerHTML = ''; 
+                sortedRepuestos.forEach(item => {
+                    const icon = getRepuestoIcon(item.repuesto);
+                    listDiv.innerHTML += `
+                        <div class="flex items-center p-3 bg-gray-50 rounded-lg shadow-sm">
+                            <div class="flex-shrink-0 p-2 bg-orange-100 rounded-full mr-3">
+                                <i data-lucide="${icon}" class="w-5 h-5 text-orange-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-md font-semibold text-gray-800 capitalize">${item.repuesto}</p>
+                                <p class="text-sm text-gray-600">Cambiado <span class="font-bold">${item.cantidad}</span> veces</p>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            modal.style.display = 'flex';
+            lucide.createIcons();
+        }
+
+        function getRepuestoIcon(repuesto) {
+            const icons = {
+                'Pantalla/Monitor': 'monitor',
+                'RAM/Memoria': 'memory-stick',
+                'Touchscreen': 'hand-touch',
+                'Disco Duro/SSD': 'hard-drive',
+                'Cooler/Ventilador': 'fan',
+                'Procesador/CPU': 'cpu',
+                'tarjeta': 'chip',
+                'billetero': 'wallet',
+                'ups': 'power',
+                'mainboard': 'motherboard',
+                'cable': 'cable',
+                'led': 'lightbulb',
+                'mux': 'git-fork',
+                'fuente': 'battery-charging',
+                'sensor': 'radar',
+                'botonera': 'gamepad',
+                'impresora': 'printer',
+                'conector': 'plug',
+                'switch': 'toggle-left',
+                'wibu': 'key',
+                'crc': 'bug',
+                'placa': 'circuit-board',
+                'boton': 'circle',
+                'bateria': 'battery-full',
+                'portafusibles': 'box',
+                'unidad optica': 'disc',
+                'lector': 'scan',
+                'controlador': 'sliders',
+                'chip': 'chip',
+            };
+            return icons[repuesto] || 'box'; 
         }
 
         // --- UI UPDATES & CHARTS ---
+        function addCardClickListeners() {
+            const cards = document.querySelectorAll('.stats-card[data-status]'); 
+            cards.forEach(card => {
+                card.addEventListener('click', () => {
+                    const status = card.dataset.status;
+                    let filteredData;
+                    let title;
+
+                    const definidos = ['Operativo', 'Inoperativo', 'Pendiente'];
+
+                    if (status === 'Total') {
+                        filteredData = Array.from(lastStatesBySerie.values());
+                        title = `Todas las máquinas (${filteredData.length}) con último estado en el rango`;
+                    } else if (status === 'Sin Estado') {
+                        filteredData = Array.from(lastStatesBySerie.values()).filter(item => 
+                            !item.estado || !definidos.includes(item.estado)
+                        );
+                        title = `Máquinas con estado vacío o no definido (último estado)`;
+                    } else {
+                        filteredData = Array.from(lastStatesBySerie.values()).filter(item => item.estado === status);
+                        title = `Máquinas con último estado: "${status}"`;
+                    }
+                    renderDetailsTable(title, filteredData); // Usa los datos ya filtrados por último estado
+                });
+            });
+        }
+
         function updateTitles() {
             const titleEl = document.getElementById('main-title');
             const subtitleEl = document.getElementById('main-subtitle');
@@ -359,52 +963,43 @@
             if (selectedSalas.length > 0) {
                 let titleText = `Métricas para: ${selectedSalas.length > 2 ? `${selectedSalas.length} salas` : selectedSalas.join(', ')}`;
                 titleEl.textContent = titleText;
-                subtitleEl.textContent = `Mostrando datos filtrados para esta selección.`;
+                subtitleEl.textContent = `Último estado por máquina - Vista filtrada`;
                 resetBtn.classList.remove('hidden');
             } else {
-                titleEl.textContent = 'Métricas de Máquinas';
-                subtitleEl.textContent = 'Análisis interactivo de la operación.';
-                resetBtn.classList.add('hidden');
+                titleEl.textContent = 'Dashboard de Métricas';
+                subtitleEl.textContent = 'Último estado por máquina - Análisis actualizado';
+                // No ocultamos el botón si hay un filtro de repuesto activo
+                // resetBtn.classList.add('hidden'); 
             }
-        }
-
-        async function updateDashboardForSelection() {
-            document.getElementById('loading-overlay').style.display = 'flex';
-            updateTitles();
-
-            const startDate = document.getElementById('start-date').value;
-            const endDate = document.getElementById('end-date').value;
-            const typeFilter = document.getElementById('type-filter').value;
-
-            const [machineStates, topSalas, topTrabajos] = await Promise.all([
-                fetchMachineStates(startDate, endDate, typeFilter, selectedSalas),
-                fetchTopSalas(startDate, endDate, typeFilter),
-                fetchTopTrabajos(startDate, endDate, typeFilter, selectedSalas)
-            ]);
-
-            updateMachineStatesUI(machineStates);
-            updateTopSalasUI(topSalas);
-            updateTopTrabajosUI(topTrabajos, selectedSalas);
-
-            if (selectedWorkTypes.length > 0) {
-                await showDetailsForWorkType();
-            } else {
-                document.getElementById('sala-details-container').classList.add('hidden');
-            }
-
-            document.getElementById('loading-overlay').style.display = 'none';
         }
 
         function updateMachineStatesUI(data) {
+            allReportDetails = data;
+
+            const definidos = ['Operativo', 'Inoperativo', 'Pendiente'];
+
+            const operativos = data.filter(m => m.estado === 'Operativo').length;
+            const inoperativos = data.filter(m => m.estado === 'Inoperativo').length;
+            const pendientes = data.filter(m => m.estado === 'Pendiente').length;
+            const sinEstado = data.filter(m => !m.estado || !definidos.includes(m.estado)).length;
+
             document.getElementById('total-maquinas').textContent = data.length;
-            document.getElementById('total-operativas').textContent = data.filter(m => m.estado === 'Operativo').length;
-            document.getElementById('total-inoperativas').textContent = data.filter(m => m.estado === 'Inoperativo').length;
-            document.getElementById('total-pendientes').textContent = data.filter(m => m.estado === 'Pendiente').length;
+            document.getElementById('total-operativas').textContent = operativos;
+            document.getElementById('total-inoperativas').textContent = inoperativos;
+            document.getElementById('total-pendientes').textContent = pendientes;
+            document.getElementById('total-sin-estado').textContent = sinEstado;
         }
 
         function generateBlueGradient(count) {
-            const colors = []; const s = { r: 59, g: 130, b: 246 }, e = { r: 191, g: 219, b: 254 };
-            for (let i = 0; i < count; i++) { const r = i / (count - 1) || 0; colors.push(`rgba(${Math.round(s.r + r * (e.r - s.r))}, ${Math.round(s.g + r * (e.g - s.g))}, ${Math.round(s.b + r * (e.b - s.b))}, 0.8)`); }
+            const colors = []; 
+            const s = { r: 59, g: 130, b: 246 }, e = { r: 191, g: 219, b: 254 };
+            if (count <= 1) { 
+                return [`rgba(${s.r}, ${s.g}, ${s.b}, 0.8)`];
+            }
+            for (let i = 0; i < count; i++) { 
+                const r = i / (count - 1); 
+                colors.push(`rgba(${Math.round(s.r + r * (e.r - s.r))}, ${Math.round(s.g + r * (e.g - s.g))}, ${Math.round(s.b + r * (e.b - s.b))}, 0.8)`); 
+            }
             return colors;
         }
 
@@ -415,11 +1010,24 @@
             const backgroundColors = data.map((s, i) => selectedSalas.includes(s.nombre_sala) ? selectedColor : baseColors[i]);
 
             if (topSalasChartInstance) topSalasChartInstance.destroy();
+            
             topSalasChartInstance = new Chart(ctx, {
-                type: 'bar', data: { labels: data.map(s => s.nombre_sala), datasets: [{ data: data.map(s => s.visitas), backgroundColor: backgroundColors }] },
+                type: 'bar', 
+                data: { 
+                    labels: data.map(s => s.nombre_sala), 
+                    datasets: [{ 
+                        data: data.map(s => s.visitas), 
+                        backgroundColor: backgroundColors,
+                        borderRadius: 4,
+                        borderWidth: 0
+                    }] 
+                },
                 options: {
-                    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                    indexAxis: 'y', 
+                    responsive: true, 
+                    maintainAspectRatio: false,
                     onHover: (e, el) => e.native.target.style.cursor = el[0] ? 'pointer' : 'default',
+                    
                     onClick: async (event) => {
                         const points = topSalasChartInstance.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
                         if (points.length) {
@@ -430,146 +1038,247 @@
                             } else {
                                 selectedSalas.splice(selectionIndex, 1);
                             }
-                            selectedWorkTypes = [];
-                            await updateDashboardForSelection();
-                        }
-                    },
-                    plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'end' } }
-                }
-            });
-        }
+                            
+                            await updateDashboardForSelection(); 
 
-        function updateTopTrabajosUI(data, salaNames = []) {
-            const ctx = document.getElementById('topTrabajosChart').getContext('2d');
-            const chartTitleEl = document.getElementById('top-trabajos-title');
-            chartTitleEl.textContent = salaNames.length > 0 ? `Top Trabajos en Salas Selecc.` : 'Top 5 Tipos de Trabajo';
-            const baseColor = '#3B82F6';
-            const selectedColor = '#1E40AF';
-            const backgroundColors = data.map(d => selectedWorkTypes.includes(d.tipo) ? selectedColor : baseColor);
+                            // --- INICIO MODIFICACIÓN: Mostrar/Ocultar tabla en click de sala ---
+                            const filteredData = Array.from(lastStatesBySerie.values()); 
+                            let title;
 
-            if (topTrabajosChartInstance) topTrabajosChartInstance.destroy();
-            topTrabajosChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: data.map(d => d.tipo), datasets: [{ data: data.map(d => d.count), backgroundColor: backgroundColors }] },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    onHover: (e, el) => e.native.target.style.cursor = el[0] ? 'pointer' : 'default',
-                    onClick: (event) => {
-                        const points = topTrabajosChartInstance.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
-                        if (points.length) {
-                            const workType = topTrabajosChartInstance.data.labels[points[0].index];
-                            const selectionIndex = selectedWorkTypes.indexOf(workType);
-                            if (selectionIndex === -1) {
-                                selectedWorkTypes.push(workType);
+                            if (selectedSalas.length === 0) {
+                                title = "Detalle de todas las máquinas (Vista General)";
+                                document.getElementById('sala-details-container').classList.add('hidden'); 
+                                document.getElementById('reset-view-btn').classList.add('hidden'); // Ocultar reset si no hay filtro
                             } else {
-                                selectedWorkTypes.splice(selectionIndex, 1);
+                                if (selectedSalas.length > 2) {
+                                    title = `Detalle de máquinas para ${selectedSalas.length} salas`;
+                                } else {
+                                    title = `Detalle de máquinas para: ${selectedSalas.join(', ')}`;
+                                }
+                                renderDetailsTable(title, filteredData); // Mostrar tabla
+                                document.getElementById('reset-view-btn').classList.remove('hidden'); // Asegurar que reset esté visible
                             }
-                            updateTopTrabajosUI(data, salaNames);
-                            showDetailsForWorkType();
+                            // --- FIN MODIFICACIÓN ---
                         }
                     },
-                    plugins: { legend: { display: false }, datalabels: { anchor: 'center', align: 'center', color: 'white', font: { weight: 'bold' } } }
+
+                    plugins: { 
+                        legend: { display: false }, 
+                        datalabels: { 
+                            anchor: 'end', 
+                            align: 'end',
+                            color: '#374151',
+                            font: { weight: 'bold' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: (context) => `Sala: ${context[0].label}`,
+                                label: (context) => `Visitas: ${context.parsed.x}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Número de Visitas'
+                            },
+                            grid: { color: 'rgba(0,0,0,0.1)' },
+                            ticks: { color: '#6B7280' }
+                        },
+                        y: {
+                            grid: { color: 'rgba(0,0,0,0.1)' },
+                            ticks: { color: '#6B7280' }
+                        }
+                    }
                 }
             });
         }
 
-        async function showDetailsForWorkType() {
-            const container = document.getElementById('sala-details-container');
-            if (selectedWorkTypes.length === 0) {
-                container.classList.add('hidden');
-                return;
-            }
+        function updateEstadosChart(data) {
+            const ctx = document.getElementById('estadosChart').getContext('2d');
+            
+            const estadoCounts = {
+                'Operativo': 0,
+                'Inoperativo': 0,
+                'Pendiente': 0,
+                'Sin Estado': 0
+            };
+
+            data.forEach(m => {
+                if (m.estado === 'Operativo') estadoCounts['Operativo']++;
+                else if (m.estado === 'Inoperativo') estadoCounts['Inoperativo']++;
+                else if (m.estado === 'Pendiente') estadoCounts['Pendiente']++;
+                else estadoCounts['Sin Estado']++;
+            });
+
+            const labels = Object.keys(estadoCounts);
+            const counts = Object.values(estadoCounts);
+            
+            const backgroundColors = [
+                'rgba(34, 197, 94, 0.8)',   // Verde para Operativo
+                'rgba(239, 68, 68, 0.8)',   // Rojo para Inoperativo
+                'rgba(245, 158, 11, 0.8)',  // Amarillo para Pendiente
+                'rgba(156, 163, 175, 0.8)'  // Gris para Sin Estado
+            ];
+
+            if (estadosChartInstance) estadosChartInstance.destroy();
+            
+            estadosChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: counts,
+                        backgroundColor: backgroundColors,
+                        borderWidth: 2,
+                        borderColor: 'white'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        datalabels: {
+                            color: 'white',
+                            font: {
+                                weight: 'bold',
+                                size: 12
+                            },
+                            formatter: (value, context) => {
+                                const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                if (total === 0) return '0%';
+                                const percentage = ((value / total)* 100).toFixed(1);
+                                if (percentage < 5) return ''; 
+                                return `${percentage}%`;
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    if (total === 0) return `${context.label}: 0 máquinas (0%)`;
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return `${context.label}: ${context.parsed} máquinas (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function updateDashboardForSelection() {
             document.getElementById('loading-overlay').style.display = 'flex';
-            let title = `Detalle para: "${selectedWorkTypes.join(', ')}"`;
-            if (selectedSalas.length > 0) {
-                const salaTitlePart = selectedSalas.length > 2 ? `${selectedSalas.length} salas` : selectedSalas.join(', ');
-                title += ` en ${salaTitlePart}`;
-            }
-            const data = await fetchDetailsForWorkType(selectedWorkTypes);
-            renderDetailsTable(title, data);
+            updateTitles();
+
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            const typeFilter = document.getElementById('type-filter').value;
+
+            // Fetch data based on selected salas
+            const machineStates = await fetchMachineStates(startDate, endDate, typeFilter, selectedSalas);
+            rawMachineStatesData = machineStates; // Update raw data based on selection for repuesto analysis
+
+            // Fetch top salas always without sala filter for the chart
+            const topSalas = await fetchTopSalas(startDate, endDate, typeFilter);
+
+            console.log('--- updateDashboardForSelection: Datos crudos de fetchMachineStates ---');
+            console.log(rawMachineStatesData);
+
+            const allRepuestos = analyzeRepuestos(rawMachineStatesData);
+            currentAllRepuestos = allRepuestos;
+            const topRepuestosData = [...allRepuestos].sort((a,b) => b.cantidad - a.cantidad).slice(0, 15);
+
+            const lastStatesData = getLastStateBySerie(rawMachineStatesData);
+            allReportDetails = lastStatesData; // Update global for card clicks
+            lastStatesBySerie = new Map(lastStatesData.map(item => [item.maquinas.serie, item]));
+
+            updateMachineStatesUI(lastStatesData);
+            updateTopSalasUI(topSalas); // Update chart with overall top salas
+            updateEstadosChart(lastStatesData);
+            updateTopRepuestosUI(topRepuestosData); 
+
             document.getElementById('loading-overlay').style.display = 'none';
         }
 
+        // --- FUNCIÓN MODIFICADA: renderDetailsTable (con tooltips) ---
         function renderDetailsTable(title, data) {
             const container = document.getElementById('sala-details-container');
             const tableDiv = document.getElementById('sala-details-table');
             document.getElementById('sala-details-title').textContent = title;
+            
             if (!data || data.length === 0) {
-                tableDiv.innerHTML = '<p class="text-center text-gray-500">No se encontraron registros.</p>';
+                tableDiv.innerHTML = '<div class="text-center py-8 text-gray-500"><i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 text-gray-400"></i><p>No se encontraron datos para esta selección.</p></div>';
                 container.classList.remove('hidden');
+                lucide.createIcons();
                 return;
             }
 
-            let tableHTML = `<table class="min-w-full"><thead class="bg-gray-50"><tr>
-        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
-        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Serie</th>
-        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sala</th>
-        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Técnico</th>
-        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Gabinete</th>
-        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado Final</th>
-        </tr></thead><tbody class="bg-white">`;
+            let tableHTML = `<div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Serie</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sala</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Técnico</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gabinete</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado Final</th>
+            </tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
 
-            // 1. Contamos cuántas máquinas hay en cada reporte (id_trabajo)
-            const trabajoIdCounts = data.reduce((acc, item) => {
-                const id = item.trabajos.id_trabajo;
-                acc[id] = (acc[id] || 0) + 1;
-                return acc;
-            }, {});
-
-            // 2. Creamos una lista solo con los IDs de los reportes que se repiten
-            const repeatedTrabajoIds = new Set();
-            for (const id in trabajoIdCounts) {
-                if (trabajoIdCounts[id] > 1) {
-                    repeatedTrabajoIds.add(parseInt(id, 10));
-                }
-            }
-
-            data.sort((a, b) => b.trabajos.id_trabajo - a.trabajos.id_trabajo || new Date(b.trabajos.fecha) - new Date(a.trabajos.fecha));
-
-            let lastTrabajoId = null;
-            let colorIndex = 0;
-
-            // --- AQUÍ PUEDES CAMBIAR LOS COLORES ---
-            // He elegido colores más vistosos para que notes la diferencia.
-            const groupColors = ['bg-yellow-100', 'bg-teal-100'];
-            const defaultColor = 'bg-white';
-            // -----------------------------------------
+            // Helper para limpiar texto para el tooltip
+            const cleanText = (text) => text ? text.replace(/"/g, '&quot;').replace(/\n/g, ' ') : 'N/A';
 
             data.forEach(item => {
-                const currentTrabajoId = item.trabajos.id_trabajo;
-                let rowColor = defaultColor; // Por defecto, la fila es blanca
+                const fecha = item.trabajos.fecha ? new Date(item.trabajos.fecha + 'T00:00:00').toLocaleDateString('es-ES') : 'N/A';
+                const serie = item.maquinas ? item.maquinas.serie : 'N/A';
+                const sala = item.trabajos.sala ? item.trabajos.sala.sala_mincetur : 'N/A';
+                const tecnico = item.trabajos.tecnicos ? item.trabajos.tecnicos.usuario : 'N/A';
+                const gabinete = getGabineteTypeBySerie(serie);
+                const estado = item.estado || 'Sin estado';
 
-                // Solo aplicamos color si el reporte actual es uno de los que se repiten
-                if (repeatedTrabajoIds.has(currentTrabajoId)) {
-                    if (currentTrabajoId !== lastTrabajoId) {
-                        colorIndex = 1 - colorIndex; // Alternamos el color para cada nuevo grupo
-                        lastTrabajoId = currentTrabajoId;
-                    }
-                    rowColor = groupColors[colorIndex];
-                }
+                // --- INICIO MODIFICACIÓN: Crear contenido del tooltip ---
+                const diagIni = cleanText(item.diag_ini);
+                const trabRealizado = cleanText(item.trab_realizado);
+                const resul = cleanText(item.resul);
+                const tooltipContent = `DIAG: ${diagIni} | TRAB: ${trabRealizado} | RES: ${resul}`;
+                // --- FIN MODIFICACIÓN ---
 
-                const fecha = new Date(item.trabajos.fecha + 'T00:00:00').toLocaleDateString('es-ES');
-                const gabineteType = getGabineteTypeBySerie(item.maquinas.serie);
-                const tecnicoName = item.trabajos.tecnicos ? item.trabajos.tecnicos.usuario : 'No asignado';
-
-                tableHTML += `<tr class="${rowColor}">
-            <td class="px-4 py-4 border-t border-gray-200">${fecha}</td>
-            <td class="px-4 py-4 border-t border-gray-200">${item.maquinas.serie}</td>
-            <td class="px-4 py-4 border-t border-gray-200">${item.trabajos.sala.sala_mincetur}</td>
-            <td class="px-4 py-4 border-t border-garay-200">${tecnicoName}</td>
-            <td class="px-4 py-4 border-t border-gray-200">${gabineteType}</td>
-            <td class="px-4 py-4 border-t border-gray-200">${item.estado}</td>
-        </tr>`;
+                tableHTML += `<tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-mono font-medium text-gray-900">${serie}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${fecha}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${sala}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${tecnico}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${gabinete}</td>
+                    <td class="px-4 py-4 whitespace-nowrap">
+                        <span title="${tooltipContent}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            estado === 'Operativo' ? 'bg-green-100 text-green-800' :
+                            estado === 'Inoperativo' ? 'bg-red-100 text-red-800' :
+                            estado === 'Pendiente' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-gray-100 text-gray-800'
+                        }">
+                            ${estado}
+                        </span>
+                    </td>
+                </tr>`;
             });
-            tableHTML += `</tbody></table>`;
+            
+            tableHTML += `</tbody></table></div>`;
             tableDiv.innerHTML = tableHTML;
             container.classList.remove('hidden');
             container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            lucide.createIcons();
         }
+
         // --- STARTUP ---
         document.addEventListener('DOMContentLoaded', checkSession);
     </script>
 </body>
-
 </html>
-
