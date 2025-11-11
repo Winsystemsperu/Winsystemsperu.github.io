@@ -195,7 +195,7 @@
             // Reemplaza - con viñetas y \n con <br>
             return value
                 .replace(/^- /gm, '• ') 
-                .replace(/\n/g, '<br>');
+                .replace(/\n/g, ' ');
         }
         
         async function simpleCheckSession() {
@@ -440,4 +440,5 @@
 </body>
 
 </html>
+
 
