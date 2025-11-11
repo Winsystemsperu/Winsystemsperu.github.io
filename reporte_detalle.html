@@ -296,7 +296,7 @@
                     (diag ? `Diagnóstico: ${formatDbTextToHtml(diag)}` : ''),
                     (trab ? `Trabajo: ${formatDbTextToHtml(trab)}` : ''),
                     (res ? `Resultado: ${formatDbTextToHtml(res)}` : '')
-                ].filter(Boolean).join('<br><br>'); // Usamos <br> para separar
+                ].filter(Boolean).join(' '); // Usamos <br> para separar
 
                 detailsHTML += `
                     <div class="border border-gray-300 rounded-lg overflow-hidden mb-4 detail-box">
@@ -440,3 +440,4 @@
 </body>
 
 </html>
+
