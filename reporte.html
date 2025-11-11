@@ -100,7 +100,7 @@
 
         <header class="mb-6 flex flex-wrap justify-between items-center">
             <div class="flex items-center space-x-4">
-                <img src= winsystems_logo.png
+                <img src="https://winsystems.com.pe/wp-content/uploads/2022/01/logo-winsystems-2022.png"
                     alt="Logo de Winsystems" class="h-24">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900">Reporte Detallado de Operaciones</h1>
@@ -193,6 +193,17 @@
             </div>
         </div>
 
+        <div class="mb-4">
+            <label for="general-search" class="sr-only">Búsqueda General</label>
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
+                </div>
+                <input type="search" id="general-search"
+                    class="block w-full p-3 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Buscar por código, serie, sala, técnico, estado, empresa...">
+            </div>
+        </div>
         <div id="reporte-dashboard" class="bg-white p-6 rounded-xl shadow-md">
             <div class="overflow-x-auto">
                 <table id="admin-report-table" class="min-w-full divide-y divide-gray-200">
@@ -211,6 +222,7 @@
 
         let allDepartamentos = [], allSalas = [], allWorkTypes = [], allEstados = [];
         let currentRecords = [];
+        let rawFetchedData = []; // NUEVO: Almacena los datos brutos de la consulta
         let reportMode = 'estado'; // Modalidad por defecto es 'estado'
 
         // --- HELPERS ---
@@ -224,6 +236,7 @@
             };
         }
         const debouncedApplyFilters = debounce(applyFilters);
+        const debouncedRender = debounce(renderFilteredTable, 300); // NUEVO: Debounce solo para renderizar
 
         // NUEVO: Función para filtrar opciones en el multiselect
         function filterOptions(inputId, itemClass) {
@@ -251,7 +264,7 @@
             const isChecked = e.target.checked;
             reportMode = isChecked ? 'detallado' : 'estado';
             updateModeSwitchUI(reportMode);
-            debouncedApplyFilters();
+            debouncedRender(); // MODIFICADO: Llama a render, no a applyFilters
         }
 
         function updateModeSwitchUI(mode) {
@@ -316,6 +329,9 @@
             document.getElementById('start-date').addEventListener('change', debouncedApplyFilters);
             document.getElementById('end-date').addEventListener('change', debouncedApplyFilters);
             document.getElementById('report-mode-switch').addEventListener('change', handleModeToggle);
+            
+            // NUEVO: Event listener para el buscador general
+            document.getElementById('general-search').addEventListener('input', debouncedRender);
 
             setDefaultDates();
 
@@ -565,8 +581,8 @@
         // --- DATA FETCHING & RENDERING ---
         async function applyFilters() {
             document.getElementById('loading-overlay').style.display = 'flex';
-            const reportData = await fetchReportData();
-            updateReportTableUI(reportData);
+            rawFetchedData = await fetchReportData(); // MODIFICADO: Almacena en la variable global
+            renderFilteredTable(); // MODIFICADO: Llama a la función de renderizado
             document.getElementById('loading-overlay').style.display = 'none';
         }
 
@@ -579,7 +595,8 @@
 
             let query = supabaseClient
                 .from('detalle')
-                .select('estado, diag_ini, trab_realizado, resul, tipo_trabajo, maquinas!inner(serie, modelo, gabinete), trabajos!inner(fecha, tecnicos(usuario, correo, cel, cargo), sala!inner(id_sala, sala_mincetur, empresa, departamento, provincia, distrito))')
+                // MODIFICADO: Añadido id_trabajo y codigo
+                .select('estado, diag_ini, trab_realizado, resul, tipo_trabajo, maquinas!inner(serie, modelo, gabinete), trabajos!inner(id_trabajo, codigo, fecha, tecnicos(usuario, correo, cel, cargo), sala!inner(id_sala, sala_mincetur, empresa, departamento, provincia, distrito))')
                 .gte('trabajos.fecha', startDate)
                 .lte('trabajos.fecha', endDate);
 
@@ -610,6 +627,8 @@
                 return;
             }
             const dataToExport = currentRecords.map(item => ({
+                // NUEVA COLUMNA
+                'Código Reporte': item.trabajos.codigo || 'N/A',
                 'Fecha': new Date(item.trabajos.fecha + 'T00:00:00').toLocaleDateString('es-ES'),
                 'Estado': item.estado,
                 'Serie Máquina': item.maquinas?.serie || 'N/A',
@@ -632,20 +651,36 @@
             XLSX.writeFile(workbook, "Reporte_Operaciones.xlsx");
         }
 
-        function updateReportTableUI(data) {
+        // MODIFICADO: La lógica de renderizado se movió a esta función
+        function renderFilteredTable() {
+            const data = rawFetchedData; // Usa los datos globales
             const table = document.getElementById('admin-report-table');
             if (!table) return;
             const tableHead = table.querySelector('thead');
             const tableBody = table.querySelector('tbody');
             const selectedEstados = getSelectedIds('.estado-checkbox');
 
+            // MODIFICADO: Añadidas columnas "Código" y "Acciones" (11 columnas total)
             tableHead.innerHTML =
-                `<tr><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Slot/Ruleta</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Serie</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sala</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Incidencia</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Técnico Asignado</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Razón Social</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ubicación</th></tr>`;
+                `<tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Slot/Ruleta</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Serie</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sala</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Incidencia</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Técnico Asignado</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Razón Social</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ubicación</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                </tr>`;
             tableBody.innerHTML = '';
 
             if (!data || data.length === 0) {
                 tableBody.innerHTML =
-                    `<tr><td colspan="9" class="text-center py-4 text-gray-500">No se encontraron datos para los filtros seleccionados.</td></tr>`;
+                    // MODIFICADO: colspan="11"
+                    `<tr><td colspan="11" class="text-center py-4 text-gray-500">No se encontraron datos para los filtros seleccionados.</td></tr>`;
                 return;
             }
 
@@ -683,27 +718,64 @@
                     recordsToDisplay = data;
                 }
             }
+
+            // --- NUEVO: FILTRO DE BÚSQUEDA GENERAL ---
+            const searchTerm = document.getElementById('general-search').value.toLowerCase().trim();
+            let filteredRecords = recordsToDisplay;
+
+            if (searchTerm) {
+                filteredRecords = recordsToDisplay.filter(item => {
+                    const codigo = (item.trabajos.codigo || '').toLowerCase();
+                    const serie = (item.maquinas?.serie || '').toLowerCase();
+                    const sala = (item.trabajos.sala?.sala_mincetur || '').toLowerCase();
+                    const tecnico = (item.trabajos.tecnicos?.usuario || '').toLowerCase();
+                    const estado = (item.estado || '').toLowerCase();
+                    const modelo = (item.maquinas?.modelo || '').toLowerCase();
+                    const gabinete = (item.maquinas?.gabinete || '').toLowerCase();
+                    const empresa = (item.trabajos.sala?.empresa || '').toLowerCase();
+
+                    return codigo.includes(searchTerm) ||
+                            serie.includes(searchTerm) ||
+                            sala.includes(searchTerm) ||
+                            tecnico.includes(searchTerm) ||
+                            estado.includes(searchTerm) ||
+                            modelo.includes(searchTerm) ||
+                            gabinete.includes(searchTerm) ||
+                            empresa.includes(searchTerm);
+                });
+            }
+            // --- FIN FILTRO DE BÚSQUEDA ---
             
             // Ordenar la lista final (más reciente primero)
-            recordsToDisplay.sort((a, b) => new Date(b.trabajos.fecha) - new Date(a.trabajos.fecha));
-            currentRecords = recordsToDisplay; // Actualizar registros para exportación
+            filteredRecords.sort((a, b) => new Date(b.trabajos.fecha) - new Date(a.trabajos.fecha));
+            currentRecords = filteredRecords; // Actualizar registros para exportación
 
-            if (recordsToDisplay.length === 0) {
-                const message = reportMode === 'estado' 
-                    ? 'No se encontraron máquinas con el estado final seleccionado.' 
-                    : 'No se encontraron reportes con el estado seleccionado.';
+            if (filteredRecords.length === 0) {
+                let message = 'No se encontraron registros para los filtros seleccionados.';
+                if (searchTerm) {
+                    message = 'No se encontraron coincidencias para su búsqueda.';
+                } else if (reportMode === 'estado') {
+                    message = 'No se encontraron máquinas con el estado final seleccionado.';
+                }
+                
                 tableBody.innerHTML =
-                    `<tr><td colspan="9" class="text-center py-4 text-gray-500">${message}</td></tr>`;
+                    // MODIFICADO: colspan="11"
+                    `<tr><td colspan="11" class="text-center py-4 text-gray-500">${message}</td></tr>`;
                 return;
             }
 
-            recordsToDisplay.forEach(item => {
+            filteredRecords.forEach(item => {
                 const tr = document.createElement('tr');
                 tr.className = {
                     'Operativo': 'status-operativo',
                     'Inoperativo': 'status-inoperativo',
                     'Pendiente': 'status-pendiente'
                 }[item.estado] || '';
+
+                // NUEVOS DATOS
+                const codigo = item.trabajos.codigo || 'N/A';
+                const idTrabajo = item.trabajos.id_trabajo;
+
                 const fecha = new Date(item.trabajos.fecha + 'T00:00:00').toLocaleDateString('es-ES', {
                     day: '2-digit',
                     month: 'short'
@@ -729,7 +801,9 @@
                     .sala?.distrito
                 ].filter(Boolean).join(', ');
 
+                // MODIFICADO: Añadidas las nuevas <td>
                 tr.innerHTML = `
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${codigo}</td>
                     <td class="px-4 py-4 whitespace-nowrap text-sm">${fecha}</td>
                     <td class="px-4 py-4 whitespace-nowrap text-sm">${modeloGabinete}</td>
                     <td class="px-4 py-4 whitespace-nowrap text-sm">${serie}</td>
@@ -739,6 +813,14 @@
                     <td class="px-4 py-4 whitespace-nowrap text-sm">${item.estado || 'N/A'}</td>
                     <td class="px-4 py-4 whitespace-nowrap text-sm">${razonSocial}</td>
                     <td class="px-4 py-4 whitespace-nowrap text-sm">${ubicacion}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-center">
+                        <a href="./reporte_detalle.html?id=${idTrabajo}" 
+                           target="_blank" 
+                           title="Ver PDF"
+                           class="inline-flex items-center p-2 rounded-md text-gray-500 hover:text-blue-600 hover:bg-gray-100 transition">
+                            <i data-lucide="file-text" class="w-4 h-4"></i>
+                        </a>
+                    </td>
                 `;
                 tableBody.appendChild(tr);
             });
@@ -751,4 +833,3 @@
 </body>
 
 </html>
-
