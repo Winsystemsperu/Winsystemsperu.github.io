@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viendo Reporte...</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Usamos la fuente Roboto para que coincida con el PDF */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #333; /* Fondo gris oscuro para la vista previa */
+        }
+        
+        /* Contenedor del reporte (simula la hoja A4) */
+        #report-container {
+            width: 210mm; /* Ancho A4 */
+            min-height: 297mm; /* Alto A4 */
+            margin: 2rem auto; /* Centrado con margen */
+            padding: 40pt 40pt 30pt 40pt; /* Padding como el PDF (40pt arriba/lados, 30pt abajo) */
+            background-color: white;
+            color: black;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            box-sizing: border-box; 
+            
+            /* ▼▼▼ CORRECCIÓN DE PIE DE PÁGINA ▼▼▼ */
+            /* Usamos Flexbox para empujar el footer hacia abajo */
+            display: flex;
+            flex-direction: column;
+            /* ▲▲▲ FIN CORRECCIÓN ▲▲▲ */
+        }
+
+        /* Estilos de Impresión */
+        @media print {
+            body {
+                background-color: white;
+                margin: 0;
+                padding: 0;
+            }
+            #print-controls {
+                display: none; /* Oculta el botón de imprimir */
+            }
+            #report-container {
+                margin: 0;
+                padding: 40pt 40pt 30pt 40pt; /* Mantenemos el padding para la impresión */
+                box-shadow: none;
+                border: none;
+                width: 100%;
+                height: 100%;
+                min-height: auto;
+            }
+            .detail-box {
+                break-inside: avoid;
+            }
+            #report-signatures {
+                break-inside: avoid;
+            }
+        }
+        
+        /* Estilos para el loader */
+        #loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            height: 100vh;
+        }
+        #loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #fff;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #error-container {
+            color: #ff8a80;
+            background-color: #2a0000;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ff8a80;
+            display: none; 
+        }
+    </style>
+</head>
+<body>
+
+    <div id="print-controls" class="sticky top-0 left-0 w-full bg-gray-800 p-4 text-center z-10">
+        <button id="print-button" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 flex items-center gap-2 mx-auto">
+            <i data-lucide="printer" class="w-4 h-4"></i> Imprimir (o Guardar como PDF)
+        </button>
+    </div>
+
+    <div id="loading-container">
+        <div id="loading-spinner"></div>
+        <h2 class="text-xl font-semibold mt-4">Generando Reporte...</h2>
+        <p>Obteniendo datos del servidor...</p>
+    </div>
+
+    <div id="error-container" class="w-1/2 mx-auto my-10">
+        <h3>Error al Generar el PDF</h3>
+        <p id="error-message"></p>
+        <button onclick="window.history.back()">Volver</button>
+    </div>
+
+    <div id="report-container" class="hidden">
+        <header id="report-header"></header>
+        
+        <main id="report-main" class="flex-grow"> 
+            <div id="report-title-container"></div> 
+            <div id="report-info-grid"></div>
+            <div id="report-details-title"></div>
+            <div id="report-details-body"></div>
+        </main>
+        
+        <footer id="report-footer"> 
+            <div id="report-signatures"></div>
+            <div id="report-page-footer"></div>
+        </footer>
+        </div>
+
+
+    <script>
+        // --- CONFIGURACIÓN DE SUPABASE ---
+        const SUPABASE_URL = 'https://qobquktxvhlvtrpeopji.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvYnF1a3R4dmhsdnRycGVvcGppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU2OTc4NDYsImV4cCI6MjA2MTI3Mzg0Nn0.rnubNUWSWEomj5Xwvr65kZLK7Ig_bLC74ajFh9cksFc';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // ▼▼▼ CORRECCIÓN DE LOGO ▼▼▼
+        // Usamos la ruta relativa que nos diste
+        const LOGO_URL = 'winsystems_logo.png'; 
+        // ▲▲▲ FIN CORRECCIÓN ▲▲▲
+
+        // --- FUNCIONES DE AYUDA ---
+        function handleError(message) {
+            console.error(message);
+            document.getElementById('loading-container').style.display = 'none';
+            document.getElementById('print-controls').style.display = 'none';
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('error-container').style.display = 'block';
+        }
+
+        function safeText(value, defaultString = 'N/A') {
+            const isEmpty = value === null || typeof value === 'undefined' || String(value).trim() === '';
+            if (isEmpty) {
+                return defaultString;
+            }
+            // Escapar HTML
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function getSignatureImage(rawData) {
+            if (!rawData || typeof rawData !== 'string' || rawData.length < 20) {
+                return null;
+            }
+            try {
+                return `data:image/png;base64,${rawData}`;
+            } catch (e) {
+                console.error("Error decodificando firma:", e);
+                return null;
+            }
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            try {
+                const [year, month, day] = dateString.split('-');
+                if (!year || !month || !day) return dateString;
+                return `${day}/${month}/${year}`;
+            } catch (e) {
+                return dateString;
+            }
+        }
+        
+        // Función para formatear el texto de la base de datos a HTML
+        function formatDbTextToHtml(value) {
+            if (!value || value.trim() === '') return '';
+            // Reemplaza - con viñetas y \n con <br>
+            return value
+                .replace(/^- /gm, '• ') 
+                .replace(/\n/g, '<br>');
+        }
+        
+        async function simpleCheckSession() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                console.log("No hay sesión, redirigiendo al login...");
+                window.location.href = './index.html';
+                return false; 
+            }
+            console.log("Sesión verificada.");
+            return true; 
+        }
+
+        /**
+         * Función principal para renderizar el reporte en HTML
+         */
+        function renderReport(trabajo, detalles) {
+            const numeroInforme = safeText(trabajo.codigo, safeText(trabajo.id_trabajo, 'N/A'));
+
+            // --- 1. CABECERA ---
+            const headerHTML = `
+                <div class="flex justify-between items-start">
+                    <img src="${LOGO_URL}" alt="Logo Winsystems" style="width: 82.5pt; height: 39pt;">
+                    <div class="bg-[#004A99] text-white text-xs font-bold py-2 px-3 rounded" style="font-size: 10pt;">
+                        Reporte N°: ${numeroInforme}
+                    </div>
+                </div>
+            `;
+            document.getElementById('report-header').innerHTML = headerHTML;
+
+            // --- 2. TÍTULO Y LÍNEA ---
+            // ▼▼▼ CORRECCIÓN: LÍNEA AÑADIDA ARRIBA DEL TÍTULO ▼▼▼
+            document.getElementById('report-title-container').innerHTML = `
+                <hr class="border-t-2 border-black mt-4">
+                <h1 class="text-center text-xl font-bold pt-4 pb-8" style="font-size: 16pt;">INFORME DE SERVICIO TÉCNICO</h1>
+            `;
+            // ▲▲▲ FIN CORRECCIÓN ▲▲▲
+
+            // --- 3. DATOS (GRID) ---
+            const sala = trabajo.sala || {};
+            const ubicacion = [sala.distrito, sala.provincia, sala.departamento].filter(Boolean).join(' - ');
+            const infoGridHTML = `
+                <div class="grid grid-cols-2 gap-x-8 text-xs" style="font-size: 9pt;">
+                    <div>
+                        <h2 class="text-[#004A99] font-bold mb-3" style="font-size: 9pt;">DATOS DEL REPORTE</h2>
+                        <div class="flex mb-2">
+                            <span class="font-bold inline-block" style="width: 60pt;">Fecha:</span>
+                            <span class="text-gray-700">${formatDate(trabajo.fecha)}</span>
+                        </div>
+                        <div class="flex">
+                            <span class="font-bold inline-block" style="width: 60pt;">Horario:</span>
+                            <span class="text-gray-700">${safeText(trabajo.hora_inicio)} - ${safeText(trabajo.hora_fin)}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h2 class="text-[#004A99] font-bold mb-3" style="font-size: 9pt;">DATOS DEL CLIENTE</h2>
+                        <div class="flex mb-2">
+                            <span class="font-bold inline-block" style="width: 60pt;">Sala:</span>
+                            <span class="text-gray-700">${safeText(sala.sala)}</span>
+                        </div>
+                        <div class="flex mb-2">
+                            <span class="font-bold inline-block" style="width: 60pt;">Dirección:</span>
+                            <span class="text-gray-700 flex-1">${safeText(sala.direccion)}</span>
+                        </div>
+                        <div class="flex">
+                            <span class="font-bold inline-block" style="width: 60pt;">Ubicación:</span>
+                            <span class="text-gray-700 flex-1">${safeText(ubicacion, '')}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('report-info-grid').innerHTML = infoGridHTML;
+
+            // --- 4. DETALLES DEL SERVICIO ---
+            document.getElementById('report-details-title').innerHTML = `
+                <h2 class="text-[#004A99] font-bold mt-8 mb-3" style="font-size: 10pt;">DETALLES DEL SERVICIO</h2>
+            `;
+
+            // ▼▼▼ CORRECCIÓN DE ALINEACIÓN DE DETALLES ▼▼▼
+            let detailsHTML = '';
+            detalles.forEach(detalle => {
+                const maquina = detalle.maquinas || {};
+                const maquinaInfo = [
+                    `Serie: ${safeText(maquina.serie)}`,
+                    `Modelo: ${safeText(maquina.modelo)}`,
+                    `Gabinete: ${safeText(maquina.gabinete)}`,
+                    `Juego: ${safeText(maquina.juego)}`,
+                ].join(' | ');
+
+                // Traemos los valores
+                const diag = safeText(detalle.diag_ini, '');
+                const trab = safeText(detalle.trab_realizado, '');
+                const res = safeText(detalle.resul, '');
+                
+                // Construimos el bloque de texto SIN negritas en las etiquetas
+                // y con el formato de viñetas y saltos de línea
+                const detalleTextos = [
+                    (diag ? `Diagnóstico: ${formatDbTextToHtml(diag)}` : ''),
+                    (trab ? `Trabajo: ${formatDbTextToHtml(trab)}` : ''),
+                    (res ? `Resultado: ${formatDbTextToHtml(res)}` : '')
+                ].filter(Boolean).join('<br><br>'); // Usamos <br> para separar
+
+                detailsHTML += `
+                    <div class="border border-gray-300 rounded-lg overflow-hidden mb-4 detail-box">
+                        <div class="bg-[#004A99] text-white p-2 text-sm font-bold" style="font-size: 8.5pt;">
+                            ${maquinaInfo}
+                        </div>
+                        <div class="grid grid-cols-[1fr_100px]">
+                            <div class="p-3" style="font-size: 7.5pt;">
+                                <div class="font-bold mb-2" style="font-size: 8pt;">Detalle del Servicio</div>
+                                
+                                <div class="text-gray-700 whitespace-pre-wrap">
+                                    ${safeText(detalleTextos, '') || 'Sin detalles.'}
+                                </div>
+                            </div>
+                            <div class="p-3">
+                                <div class="font-bold mb-1" style="font-size: 8pt;">Tipo</div>
+                                <div class="text-gray-700 mb-4" style="font-size: 7.5pt;">
+                                    ${safeText(detalle.tipo_trabajo, '')}
+                                </div>
+                                <div class="font-bold mb-1" style="font-size: 8pt;">Estado</div>
+                                <div class="text-gray-700" style="font-size: 7.5pt;">
+                                    ${safeText(detalle.estado, '')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('report-details-body').innerHTML = detailsHTML;
+            // ▲▲▲ FIN CORRECCIÓN ▲▲▲
+            
+            // --- 5. FIRMAS ---
+            const tecnico = trabajo.tecnicos || {};
+            const responsable = trabajo.responsable_trabajo || {};
+            const firmaTecnicoImg = getSignatureImage(tecnico.firma);
+            const firmaResponsableImg = getSignatureImage(trabajo.firma);
+
+            const signaturesHTML = `
+                <div class="grid grid-cols-2 gap-16 mt-16 text-xs" style="font-size: 8pt;">
+                    <div class="text-center">
+                        ${firmaTecnicoImg ? 
+                            `<img src="${firmaTecnicoImg}" alt="Firma Técnico" class="h-10 mx-auto">` : 
+                            '<div class="h-10 flex items-center justify-center text-gray-500">[Firma no disponible]</div>'
+                        }
+                        <div class="border-t border-black w-48 mx-auto mt-2"></div>
+                        <div class="font-bold mt-2">Firma del Técnico</div>
+                        <div>${safeText(tecnico.usuario)}</div>
+                        <div>DNI: ${safeText(tecnico.docum)}</div>
+                        <div>Cargo: ${safeText(tecnico.cargo, 'Técnico')}</div>
+                    </div>
+                    <div class="text-center">
+                        ${firmaResponsableImg ? 
+                            `<img src="${firmaResponsableImg}" alt="Firma Responsable" class="h-10 mx-auto">` : 
+                            '<div class="h-10 flex items-center justify-center text-gray-500">[Firma no disponible]</div>'
+                        }
+                        <div class="border-t border-black w-48 mx-auto mt-2"></div>
+                        <div class="font-bold mt-2">Firma del Responsable</div>
+                        <div>${safeText(responsable.nombre)}</div>
+                        <div>DNI: ${safeText(responsable.docu)}</div>
+                        <div>Cargo: ${safeText(responsable.cargo)}</div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('report-signatures').innerHTML = signaturesHTML;
+
+            // --- 6. FOOTER ---
+            document.getElementById('report-page-footer').innerHTML = `
+                <div class="flex justify-between text-gray-500 mt-16 pt-4 border-t" style="font-size: 8pt;">
+                    <span>Win Systems Gaming S.A.C. - RUC: 20601965617</span>
+                    <span>Página 1 de 1</span>
+                </div>
+            `;
+        }
+        
+        /**
+         * Función de arranque
+         */
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // 1. Comprobar si hay una sesión simple
+                const isLoggedIn = await simpleCheckSession();
+                if (!isLoggedIn) {
+                    return; 
+                }
+
+                // 2. Obtener ID de la URL
+                const params = new URLSearchParams(window.location.search);
+                const trabajoId = params.get('id');
+                if (!trabajoId) {
+                    throw new Error("No se proporcionó un ID de trabajo en la URL (ej. ?id=123)");
+                }
+
+                // 3. Obtener datos de Supabase
+                // ▼▼▼ CORRECCIÓN: Quitamos repuestos y progresivos de la consulta ▼▼▼
+                const [trabajoResponse, detallesResponse] = await Promise.all([
+                    supabaseClient
+                        .from('trabajos')
+                        .select('*, sala(*), tecnicos(*), responsable_trabajo:responsable(*)') 
+                        .eq('id_trabajo', trabajoId)
+                        .single(),
+                    
+                    supabaseClient
+                        .from('detalle')
+                        // Simplificamos la consulta ya que no se usan en este reporte
+                        .select('*, maquinas(*)')
+                        .eq('id_trabajo', trabajoId)
+                ]);
+                // ▲▲▲ FIN CORRECCIÓN ▲▲▲
+
+                // 4. Manejar errores de Supabase
+                if (trabajoResponse.error) throw new Error(`Error al cargar trabajo: ${trabajoResponse.error.message}`);
+                if (detallesResponse.error) throw new Error(`Error al cargar detalles: ${detallesResponse.error.message}`);
+                
+                const trabajoData = trabajoResponse.data;
+                const detallesData = detallesResponse.data;
+                
+                if (!trabajoData) throw new Error(`No se encontró el trabajo con ID: ${trabajoId}`);
+
+                // 5. Renderizar el reporte en la página
+                renderReport(trabajoData, detallesData);
+
+                // 6. Ocultar loader y mostrar reporte
+                document.getElementById('loading-container').style.display = 'none';
+                document.getElementById('report-container').classList.remove('hidden');
+
+                // 7. Configurar botón de imprimir e iconos
+                document.getElementById('print-button').addEventListener('click', () => {
+                    window.print();
+                });
+                lucide.createIcons();
+                
+                // 8. Actualizar el título de la página
+                document.title = `Reporte ${safeText(trabajoData.codigo, trabajoId)}`;
+
+            } catch (error) {
+                handleError(error.message);
+            }
+        });
+
+    </script>
+</body>
+</html>
