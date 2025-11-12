@@ -100,7 +100,7 @@
 
         <header class="mb-6 flex flex-wrap justify-between items-center">
             <div class="flex items-center space-x-4">
-                <img src= winsystems_logo.png
+                <img src= winsystem_logo.png
                     alt="Logo de Winsystems" class="h-24">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900">Reporte Detallado de Operaciones</h1>
@@ -132,7 +132,7 @@
         </header>
 
         <div id="filters-section"
-            class="bg-white p-4 rounded-xl shadow-md mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 xl:grid-cols-6 gap-4 items-end">
+            class="bg-white p-4 rounded-xl shadow-md mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4 items-end">
             <div class="flex-grow">
                 <label for="start-date" class="block text-sm font-medium text-gray-700">Fecha Inicio</label>
                 <input type="date" id="start-date"
@@ -164,7 +164,7 @@
                     </button>
                     <div id="sala-filter-options"
                         class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md text-base ring-1 ring-black ring-opacity-5 overflow-auto pb-1">
-                        </div>
+                    </div>
                 </div>
             </div>
             <div id="work-type-filter-container" class="flex-grow">
@@ -176,7 +176,20 @@
                     </button>
                     <div id="work-type-filter-options"
                         class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md text-base ring-1 ring-black ring-opacity-5 overflow-auto pb-1">
-                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tipo-maquina-filter-container" class="flex-grow">
+                <label class="block text-sm font-medium text-gray-700">Tipo de Máquina</label>
+                <div class="relative mt-1">
+                    <button id="tipo-maquina-filter-btn"
+                        class="w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default">
+                        <span id="tipo-maquina-filter-text" class="block truncate">Todos</span>
+                    </button>
+                    <div id="tipo-maquina-filter-options"
+                        class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto">
+                    </div>
                 </div>
             </div>
             <div id="estado-filter-container" class="flex-grow">
@@ -221,9 +234,10 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let allDepartamentos = [], allSalas = [], allWorkTypes = [], allEstados = [];
+        let allTiposMaquina = [];
         let currentRecords = [];
-        let rawFetchedData = []; // NUEVO: Almacena los datos brutos de la consulta
-        let reportMode = 'estado'; // Modalidad por defecto es 'estado'
+        let rawFetchedData = [];
+        let reportMode = 'estado';
 
         // --- HELPERS ---
         function debounce(func, delay = 400) {
@@ -236,79 +250,73 @@
             };
         }
         const debouncedApplyFilters = debounce(applyFilters);
-        const debouncedRender = debounce(renderFilteredTable, 300); // NUEVO: Debounce solo para renderizar
+        const debouncedRender = debounce(renderFilteredTable, 300);
 
-        // NUEVO: Función para filtrar opciones en el multiselect
         function filterOptions(inputId, itemClass) {
             const input = document.getElementById(inputId);
             const filter = input.value.toUpperCase();
             
-            // Selecciona todos los items filtrables con la clase específica
             const items = document.querySelectorAll(`.${itemClass}`); 
             
             items.forEach(item => {
-                // Obtiene el texto del span dentro del label
                 const textValue = item.querySelector('.option-text').textContent || item.querySelector('.option-text').innerText;
                 if (textValue.toUpperCase().indexOf(filter) > -1) {
-                    item.style.display = "flex"; // Muestra el item
+                    item.style.display = "flex";
                 } else {
-                    item.style.display = "none"; // Oculta el item
+                    item.style.display = "none";
                 }
             });
         }
-        // --- FIN HELPERS ---
 
+        function getTipoMaquina(serie) {
+            const s = String(serie || '').trim();
+            const len = s.length;
+            if (len === 4) return 'ruleta';
+            if (len === 5) return 'slot';
+            if (len === 6) return 'pc';
+            return 'otro';
+        }
 
         // --- MODE TOGGLE LOGIC ---
         function handleModeToggle(e) {
             const isChecked = e.target.checked;
             reportMode = isChecked ? 'detallado' : 'estado';
             updateModeSwitchUI(reportMode);
-            debouncedRender(); // MODIFICADO: Llama a render, no a applyFilters
+            debouncedRender(); 
         }
 
         function updateModeSwitchUI(mode) {
             const estadoText = document.getElementById('mode-text-estado');
             const detalladoText = document.getElementById('mode-text-detallado');
             
-            // Estilos para Modo Estado
             if (mode === 'estado') {
                 estadoText.classList.add('font-semibold', 'text-gray-800');
                 estadoText.classList.remove('text-gray-500');
                 detalladoText.classList.remove('font-semibold', 'text-gray-800');
                 detalladoText.classList.add('text-gray-500');
-                // Desactiva el filtro de Estado en modo Estado para que solo filtre el último estado
+                
                 document.getElementById('estado-filter-container').classList.remove('opacity-50');
                 document.getElementById('estado-filter-btn').disabled = false;
             } 
-            // Estilos para Modo Detallado
             else {
                 detalladoText.classList.add('font-semibold', 'text-gray-800');
                 detalladoText.classList.remove('text-gray-500');
                 estadoText.classList.remove('font-semibold', 'text-gray-800');
                 estadoText.classList.add('text-gray-500');
-                // Activa el filtro de Estado en modo Detallado
+                
                 document.getElementById('estado-filter-container').classList.remove('opacity-50');
                 document.getElementById('estado-filter-btn').disabled = false;
             }
         }
-        // --- END MODE TOGGLE LOGIC ---
-
 
         // --- SESSION & INITIALIZATION ---
         async function checkSession() {
-            const {
-                data: {
-                    session
-                }
-            } = await supabaseClient.auth.getSession();
+            const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) {
                 window.location.href = './index.html';
                 return;
             }
-            const {
-                data: tecnicoData
-            } = await supabaseClient.from('tecnicos').select('cargo').eq('id_usuario', session.user.id).single();
+            const { data: tecnicoData } = await supabaseClient.from('tecnicos').select('cargo').eq('id_usuario', session.user.id).single();
             const userRole = tecnicoData?.cargo?.toLowerCase();
             if (userRole === 'sala') {
                 alert('Acceso denegado.');
@@ -330,8 +338,14 @@
             document.getElementById('end-date').addEventListener('change', debouncedApplyFilters);
             document.getElementById('report-mode-switch').addEventListener('change', handleModeToggle);
             
-            // NUEVO: Event listener para el buscador general
             document.getElementById('general-search').addEventListener('input', debouncedRender);
+            
+            document.getElementById('departamento-filter-btn').addEventListener('click', () => document.getElementById('departamento-filter-options').classList.toggle('hidden'));
+            document.getElementById('sala-filter-btn').addEventListener('click', () => document.getElementById('sala-filter-options').classList.toggle('hidden'));
+            document.getElementById('work-type-filter-btn').addEventListener('click', () => document.getElementById('work-type-filter-options').classList.toggle('hidden'));
+            document.getElementById('estado-filter-btn').addEventListener('click', () => document.getElementById('estado-filter-options').classList.toggle('hidden'));
+            
+            document.getElementById('tipo-maquina-filter-btn').addEventListener('click', () => document.getElementById('tipo-maquina-filter-options').classList.toggle('hidden'));
 
             setDefaultDates();
 
@@ -339,8 +353,16 @@
                 populateDepartamentoFilter(),
                 populateSalaFilter(),
                 populateWorkTypeFilter(),
-                populateEstadoFilter()
+                populateEstadoFilter(),
+                populateTipoMaquinaFilter()
             ]);
+            
+            updateDepartamentoFilterText();
+            updateSalaFilterText();
+            updateWorkTypeFilterText();
+            updateEstadoFilterText();
+            updateTipoMaquinaFilterText();
+        
             await applyFilters();
 
             updateModeSwitchUI(reportMode);
@@ -348,7 +370,6 @@
             document.getElementById('loading-overlay').style.display = 'none';
             lucide.createIcons();
 
-            // Realtime Subscription
             const channel = supabaseClient
                 .channel('reporte-detallado')
                 .on('postgres_changes', {
@@ -378,10 +399,7 @@
         }
 
         async function populateDepartamentoFilter() {
-            const {
-                data,
-                error
-            } = await supabaseClient.from('sala').select('departamento');
+            const { data, error } = await supabaseClient.from('sala').select('departamento');
             if (error) {
                 console.error('Error fetching departamentos:', error);
                 return;
@@ -401,10 +419,7 @@
         }
 
         async function populateSalaFilter() {
-            const {
-                data,
-                error
-            } = await supabaseClient.from('sala').select('id_sala, sala_mincetur').order('sala_mincetur');
+            const { data, error } = await supabaseClient.from('sala').select('id_sala, sala_mincetur').order('sala_mincetur');
             if (error) {
                 console.error('Error fetching salas:', error);
                 return;
@@ -418,15 +433,12 @@
                 checkboxClass: 'sala-checkbox',
                 allSelectorId: 'select-all-salas',
                 updateTextFn: updateSalaFilterText,
-                searchable: true // Habilita el buscador
+                searchable: true
             });
         }
 
         async function populateWorkTypeFilter() {
-            const {
-                data,
-                error
-            } = await supabaseClient.from('detalle').select('tipo_trabajo');
+            const { data, error } = await supabaseClient.from('detalle').select('tipo_trabajo');
             if (error) {
                 console.error('Error fetching work types:', error);
                 return;
@@ -442,15 +454,12 @@
                 checkboxClass: 'work-type-checkbox',
                 allSelectorId: 'select-all-work-types',
                 updateTextFn: updateWorkTypeFilterText,
-                searchable: true // Habilita el buscador
+                searchable: true
             });
         }
 
         async function populateEstadoFilter() {
-            const {
-                data,
-                error
-            } = await supabaseClient.from('detalle').select('estado');
+            const { data, error } = await supabaseClient.from('detalle').select('estado');
             if (error) {
                 console.error('Error fetching estados:', error);
                 return;
@@ -469,7 +478,26 @@
             });
         }
 
-        // --- MULTI-SELECT UI LOGIC (ACTUALIZADO) ---
+        async function populateTipoMaquinaFilter() {
+            allTiposMaquina = [
+                { id: 'ruleta', nombre: 'Ruleta' },
+                { id: 'slot', nombre: 'Slot' },
+                { id: 'pc', nombre: 'Pc Controller' },
+                { id: 'otro', nombre: 'Otro' }
+            ];
+            
+            createMultiSelect({
+                container: document.getElementById('tipo-maquina-filter-options'),
+                items: allTiposMaquina,
+                idField: 'id',
+                nameField: 'nombre',
+                checkboxClass: 'tipo-maquina-checkbox',
+                allSelectorId: 'select-all-tipos-maquina',
+                updateTextFn: updateTipoMaquinaFilterText
+            });
+        }
+
+        // --- MULTI-SELECT UI LOGIC ---
         function createMultiSelect({
             container,
             items,
@@ -478,15 +506,14 @@
             checkboxClass,
             allSelectorId,
             updateTextFn,
-            searchable = false // NUEVO parámetro
+            searchable = false 
         }) {
             container.innerHTML = '';
             
-            const itemClass = `${checkboxClass}-item`; // Clase única para los elementos a filtrar
-            const searchId = `${checkboxClass}-search-input`; // ID único para el input de búsqueda
+            const itemClass = `${checkboxClass}-item`; 
+            const searchId = `${checkboxClass}-search-input`; 
 
             if (searchable) {
-                // Agregar input de búsqueda si se requiere
                 const searchInputHtml = `
                     <div class="px-3 pt-2 pb-1 sticky top-0 bg-white z-20 shadow-sm border-b border-gray-200">
                         <input type="text" id="${searchId}" placeholder="Buscar..." 
@@ -495,55 +522,62 @@
                 `;
                 container.insertAdjacentHTML('afterbegin', searchInputHtml);
                 
-                // Event listener para el filtrado
                 document.getElementById(searchId).addEventListener('keyup', () => filterOptions(searchId, itemClass));
             }
 
-
-            // "Todos" option
             const allOptionLabel = document.createElement('label');
-            allOptionLabel.className =
-                `flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer font-semibold ${itemClass}`;
-            allOptionLabel.innerHTML =
-                `<input type="checkbox" id="${allSelectorId}" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3"> <span class="option-text">Todos</span>`;
+            allOptionLabel.className = `flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer font-semibold ${itemClass}`;
+            allOptionLabel.innerHTML = `<input type="checkbox" id="${allSelectorId}" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3" checked> <span class="option-text">Todos</span>`;
             container.appendChild(allOptionLabel);
 
-
-            // Item options
             items.forEach(item => {
                 const label = document.createElement('label');
-                // Usamos la clase itemClass para identificar los elementos a filtrar
-                label.className =
-                    `flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer ${itemClass}`;
-                label.innerHTML =
-                    `<input type="checkbox" data-id="${item[idField]}" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3 ${checkboxClass}"> <span class="option-text">${item[nameField]}</span>`;
+                label.className = `flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer ${itemClass}`;
+                label.innerHTML = `<input type="checkbox" data-id="${item[idField]}" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3 ${checkboxClass}" checked> <span class="option-text">${item[nameField]}</span>`;
                 container.appendChild(label);
             });
-
 
             document.getElementById(allSelectorId).addEventListener('change', (e) => {
                 container.querySelectorAll(`.${checkboxClass}`).forEach(cb => cb.checked = e.target.checked);
                 updateTextFn();
                 debouncedApplyFilters();
             });
-            container.addEventListener('change', () => {
+            
+            container.addEventListener('change', (e) => {
+                if (e.target.id !== allSelectorId) {
+                    const allCheckboxes = container.querySelectorAll(`.${checkboxClass}`);
+                    const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
+                    const someChecked = Array.from(allCheckboxes).some(cb => cb.checked);
+                    const allSelector = document.getElementById(allSelectorId);
+                    
+                    if (allChecked) {
+                        allSelector.checked = true;
+                        allSelector.indeterminate = false;
+                    } else if (someChecked) {
+                        allSelector.checked = false;
+                        allSelector.indeterminate = true;
+                    } else {
+                        allSelector.checked = false;
+                        allSelector.indeterminate = false;
+                    }
+                }
                 updateTextFn();
                 debouncedApplyFilters();
             });
         }
-        // --- FIN MULTI-SELECT UI LOGIC ---
 
-
-        const getSelectedIds = (selector) => Array.from(document.querySelectorAll(selector + ':checked')).map(cb => cb
-            .dataset.id);
+        const getSelectedIds = (selector) => Array.from(document.querySelectorAll(selector + ':checked')).map(cb => cb.dataset.id);
 
         function updateFilterText(textEl, selector, total, singleText, pluralText, allText) {
             const selectedCheckboxes = document.querySelectorAll(selector + ':checked');
             const count = selectedCheckboxes.length;
-            if (count === 0 || count === total) {
+            
+            if (count === 0) {
+                textEl.textContent = "Ninguno";
+            } else if (count === total) {
                 textEl.textContent = allText;
             } else if (count === 1) {
-                textEl.textContent = selectedCheckboxes[0].parentElement.textContent.trim().replace('Todos', singleText);
+                textEl.textContent = selectedCheckboxes[0].parentElement.querySelector('.option-text').textContent.trim();
             } else {
                 textEl.textContent = `${count} ${pluralText} seleccionados`;
             }
@@ -569,20 +603,16 @@
                 'estado', 'estados', 'Todos los estados');
         }
 
-        document.getElementById('departamento-filter-btn').addEventListener('click', () => document.getElementById(
-            'departamento-filter-options').classList.toggle('hidden'));
-        document.getElementById('sala-filter-btn').addEventListener('click', () => document.getElementById(
-            'sala-filter-options').classList.toggle('hidden'));
-        document.getElementById('work-type-filter-btn').addEventListener('click', () => document.getElementById(
-            'work-type-filter-options').classList.toggle('hidden'));
-        document.getElementById('estado-filter-btn').addEventListener('click', () => document.getElementById(
-            'estado-filter-options').classList.toggle('hidden'));
+        function updateTipoMaquinaFilterText() {
+            updateFilterText(document.getElementById('tipo-maquina-filter-text'), '.tipo-maquina-checkbox',
+                allTiposMaquina.length, 'tipo', 'tipos', 'Todos los tipos');
+        }
 
         // --- DATA FETCHING & RENDERING ---
         async function applyFilters() {
             document.getElementById('loading-overlay').style.display = 'flex';
-            rawFetchedData = await fetchReportData(); // MODIFICADO: Almacena en la variable global
-            renderFilteredTable(); // MODIFICADO: Llama a la función de renderizado
+            rawFetchedData = await fetchReportData(); 
+            renderFilteredTable(); 
             document.getElementById('loading-overlay').style.display = 'none';
         }
 
@@ -595,23 +625,24 @@
 
             let query = supabaseClient
                 .from('detalle')
-                // MODIFICADO: Añadido id_trabajo y codigo
                 .select('estado, diag_ini, trab_realizado, resul, tipo_trabajo, maquinas!inner(serie, modelo, gabinete), trabajos!inner(id_trabajo, codigo, fecha, tecnicos(usuario, correo, cel, cargo), sala!inner(id_sala, sala_mincetur, empresa, departamento, provincia, distrito))')
                 .gte('trabajos.fecha', startDate)
                 .lte('trabajos.fecha', endDate);
 
-            if (departamentos.length > 0) query = query.in('trabajos.sala.departamento', departamentos);
-            if (salas.length > 0) query = query.in('trabajos.sala.id_sala', salas);
-            if (workTypes.length > 0) query = query.in('tipo_trabajo', workTypes);
+            if (departamentos.length > 0 && departamentos.length < allDepartamentos.length) {
+                query = query.in('trabajos.sala.departamento', departamentos);
+            }
+            if (salas.length > 0 && salas.length < allSalas.length) {
+                query = query.in('trabajos.sala.id_sala', salas);
+            }
+            if (workTypes.length > 0 && workTypes.length < allWorkTypes.length) {
+                query = query.in('tipo_trabajo', workTypes);
+            }
 
-            const {
-                data,
-                error
-            } = await query.order('fecha', {
+            const { data, error } = await query.order('fecha', {
                 foreignTable: 'trabajos',
                 ascending: false
-            })
-            .limit(10000);
+            }).limit(10000);
             
             if (error) {
                 console.error("Error fetching report data:", error);
@@ -627,7 +658,6 @@
                 return;
             }
             const dataToExport = currentRecords.map(item => ({
-                // NUEVA COLUMNA
                 'Código Reporte': item.trabajos.codigo || 'N/A',
                 'Fecha': new Date(item.trabajos.fecha + 'T00:00:00').toLocaleDateString('es-ES'),
                 'Estado': item.estado,
@@ -636,9 +666,7 @@
                 'Gabinete': item.maquinas?.gabinete || 'N/A',
                 'Sala': item.trabajos.sala?.sala_mincetur || 'N/A',
                 'Empresa': item.trabajos.sala?.empresa || 'N/A',
-                'Ubicación': [item.trabajos.sala?.departamento, item.trabajos.sala?.provincia, item.trabajos.sala
-                    ?.distrito
-                ].filter(Boolean).join(', '),
+                'Ubicación': [item.trabajos.sala?.departamento, item.trabajos.sala?.provincia, item.trabajos.sala?.distrito].filter(Boolean).join(', '),
                 'Tipo de Trabajo': item.tipo_trabajo,
                 'Diagnóstico Inicial': item.diag_ini,
                 'Trabajo Realizado': item.trab_realizado,
@@ -651,18 +679,16 @@
             XLSX.writeFile(workbook, "Reporte_Operaciones.xlsx");
         }
 
-        // MODIFICADO: La lógica de renderizado se movió a esta función
         function renderFilteredTable() {
-            const data = rawFetchedData; // Usa los datos globales
+            const data = rawFetchedData;
             const table = document.getElementById('admin-report-table');
             if (!table) return;
             const tableHead = table.querySelector('thead');
             const tableBody = table.querySelector('tbody');
             const selectedEstados = getSelectedIds('.estado-checkbox');
 
-            // MODIFICADO: Añadidas columnas "Código" y "Acciones" (11 columnas total)
-            tableHead.innerHTML =
-                `<tr>
+            tableHead.innerHTML = `
+                <tr>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Slot/Ruleta</th>
@@ -673,27 +699,20 @@
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Razón Social</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ubicación</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
                 </tr>`;
             tableBody.innerHTML = '';
 
             if (!data || data.length === 0) {
-                tableBody.innerHTML =
-                    // MODIFICADO: colspan="11"
-                    `<tr><td colspan="11" class="text-center py-4 text-gray-500">No se encontraron datos para los filtros seleccionados.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-gray-500">No se encontraron datos para los filtros seleccionados.</td></tr>`;
                 return;
             }
 
             let recordsToDisplay = [];
             
             if (reportMode === 'estado') {
-                // 1. MODALIDAD ESTADO: Mostrar el último estado de cada máquina
-                
-                // Agrupar por serie y tomar el registro más reciente (último estado)
                 let latestRecords = Object.values(data.reduce((acc, record) => {
                     const serie = record.maquinas?.serie;
                     if (serie) {
-                        // Comprobar si el registro es más reciente que el actual para esa serie
                         if (!acc[serie] || new Date(record.trabajos.fecha) > new Date(acc[serie].trabajos.fecha)) {
                             acc[serie] = record;
                         }
@@ -701,30 +720,36 @@
                     return acc;
                 }, {}));
                 
-                // Aplicar filtro de Estado sobre el último estado
-                if (selectedEstados.length > 0) {
+                if (selectedEstados.length > 0 && selectedEstados.length < allEstados.length) {
                     recordsToDisplay = latestRecords.filter(record => selectedEstados.includes(record.estado));
                 } else {
                     recordsToDisplay = latestRecords;
                 }
 
-            } else { // reportMode === 'detallado'
-                // 2. MODALIDAD DETALLADO: Mostrar TODOS los reportes
-                
-                // Aplicar filtro de Estado sobre todos los registros
-                if (selectedEstados.length > 0) {
+            } else {
+                if (selectedEstados.length > 0 && selectedEstados.length < allEstados.length) {
                     recordsToDisplay = data.filter(record => selectedEstados.includes(record.estado));
                 } else {
                     recordsToDisplay = data;
                 }
             }
 
-            // --- NUEVO: FILTRO DE BÚSQUEDA GENERAL ---
+            const selectedTiposMaquina = getSelectedIds('.tipo-maquina-checkbox');
+            let preFilteredRecords = recordsToDisplay;
+
+            if (selectedTiposMaquina.length > 0 && selectedTiposMaquina.length < allTiposMaquina.length) {
+                preFilteredRecords = recordsToDisplay.filter(record => {
+                    const serie = record.maquinas?.serie;
+                    const tipo = getTipoMaquina(serie);
+                    return selectedTiposMaquina.includes(tipo);
+                });
+            }
+
             const searchTerm = document.getElementById('general-search').value.toLowerCase().trim();
-            let filteredRecords = recordsToDisplay;
+            let filteredRecords = preFilteredRecords; 
 
             if (searchTerm) {
-                filteredRecords = recordsToDisplay.filter(item => {
+                filteredRecords = preFilteredRecords.filter(item => { 
                     const codigo = (item.trabajos.codigo || '').toLowerCase();
                     const serie = (item.maquinas?.serie || '').toLowerCase();
                     const sala = (item.trabajos.sala?.sala_mincetur || '').toLowerCase();
@@ -735,32 +760,30 @@
                     const empresa = (item.trabajos.sala?.empresa || '').toLowerCase();
 
                     return codigo.includes(searchTerm) ||
-                            serie.includes(searchTerm) ||
-                            sala.includes(searchTerm) ||
-                            tecnico.includes(searchTerm) ||
-                            estado.includes(searchTerm) ||
-                            modelo.includes(searchTerm) ||
-                            gabinete.includes(searchTerm) ||
-                            empresa.includes(searchTerm);
+                        serie.includes(searchTerm) ||
+                        sala.includes(searchTerm) ||
+                        tecnico.includes(searchTerm) ||
+                        estado.includes(searchTerm) ||
+                        modelo.includes(searchTerm) ||
+                        gabinete.includes(searchTerm) ||
+                        empresa.includes(searchTerm);
                 });
             }
-            // --- FIN FILTRO DE BÚSQUEDA ---
             
-            // Ordenar la lista final (más reciente primero)
             filteredRecords.sort((a, b) => new Date(b.trabajos.fecha) - new Date(a.trabajos.fecha));
-            currentRecords = filteredRecords; // Actualizar registros para exportación
+            currentRecords = filteredRecords;
 
             if (filteredRecords.length === 0) {
                 let message = 'No se encontraron registros para los filtros seleccionados.';
                 if (searchTerm) {
                     message = 'No se encontraron coincidencias para su búsqueda.';
-                } else if (reportMode === 'estado') {
+                } else if (reportMode === 'estado' && selectedEstados.length > 0 && selectedEstados.length < allEstados.length) {
                     message = 'No se encontraron máquinas con el estado final seleccionado.';
+                } else if (selectedTiposMaquina.length > 0 && selectedTiposMaquina.length < allTiposMaquina.length) {
+                    message = 'No se encontraron máquinas del tipo seleccionado (Ruleta/Slot/PC).';
                 }
                 
-                tableBody.innerHTML =
-                    // MODIFICADO: colspan="11"
-                    `<tr><td colspan="11" class="text-center py-4 text-gray-500">${message}</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-gray-500">${message}</td></tr>`;
                 return;
             }
 
@@ -772,7 +795,6 @@
                     'Pendiente': 'status-pendiente'
                 }[item.estado] || '';
 
-                // NUEVOS DATOS
                 const codigo = item.trabajos.codigo || 'N/A';
                 const idTrabajo = item.trabajos.id_trabajo;
 
@@ -780,30 +802,33 @@
                     day: '2-digit',
                     month: 'short'
                 }).replace('.', '');
-                const modeloGabinete = [item.maquinas?.modelo, item.maquinas?.gabinete].filter(Boolean).join(
-                    ' / ');
+                const modeloGabinete = [item.maquinas?.modelo, item.maquinas?.gabinete].filter(Boolean).join(' / ');
                 const serie = item.maquinas?.serie || 'N/A';
+
                 const sala = item.trabajos.sala?.sala_mincetur || 'N/A';
                 const tipoTrabajo = item.tipo_trabajo || 'No especificado';
-                const detalleCompleto = [item.diag_ini, item.trab_realizado, item.resul].filter(Boolean).join(
-                    '<br>');
-                const incidenciaHTML = `<div class="tooltip-container">${tipoTrabajo}<div class="tooltip-bubble">${detalleCompleto ||
-                    'Sin detalles.'}</div></div>`;
+                const detalleCompleto = [item.diag_ini, item.trab_realizado, item.resul].filter(Boolean).join('<br>');
+                const incidenciaHTML = `<div class="tooltip-container">${tipoTrabajo}<div class="tooltip-bubble">${detalleCompleto || 'Sin detalles.'}</div></div>`;
                 const tecnico = item.trabajos.tecnicos;
                 let tecnicoHTML = `<span class="text-xs text-gray-400">No asignado</span>`;
                 if (tecnico) {
-                    tecnicoHTML =
-                        `<div class="font-medium text-gray-900">${tecnico.usuario}</div><div class="text-xs text-gray-500">${tecnico.correo ||
-                    ''}</div><div class="text-xs text-gray-500">${tecnico.cel || ''}</div>`;
+                    tecnicoHTML = `<div class="font-medium text-gray-900">${tecnico.usuario}</div><div class="text-xs text-gray-500">${tecnico.correo || ''}</div><div class="text-xs text-gray-500">${tecnico.cel || ''}</div>`;
                 }
                 const razonSocial = item.trabajos.sala?.empresa || 'N/A';
-                const ubicacion = [item.trabajos.sala?.departamento, item.trabajos.sala?.provincia, item.trabajos
-                    .sala?.distrito
-                ].filter(Boolean).join(', ');
+                const ubicacion = [item.trabajos.sala?.departamento, item.trabajos.sala?.provincia, item.trabajos.sala?.distrito].filter(Boolean).join(', ');
 
-                // MODIFICADO: Añadidas las nuevas <td>
                 tr.innerHTML = `
-                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${codigo}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <div class="flex items-center gap-2">
+                            <span>${codigo}</span>
+                            <a href="./reporte_detalle.html?id=${idTrabajo}" 
+                                target="_blank" 
+                                title="Ver PDF"
+                                class="inline-flex items-center p-1 rounded-md text-gray-500 hover:text-blue-600 hover:bg-gray-100 transition">
+                                <i data-lucide="file-text" class="w-4 h-4"></i>
+                            </a>
+                        </div>
+                    </td>
                     <td class="px-4 py-4 whitespace-nowrap text-sm">${fecha}</td>
                     <td class="px-4 py-4 whitespace-nowrap text-sm">${modeloGabinete}</td>
                     <td class="px-4 py-4 whitespace-nowrap text-sm">${serie}</td>
@@ -813,14 +838,6 @@
                     <td class="px-4 py-4 whitespace-nowrap text-sm">${item.estado || 'N/A'}</td>
                     <td class="px-4 py-4 whitespace-nowrap text-sm">${razonSocial}</td>
                     <td class="px-4 py-4 whitespace-nowrap text-sm">${ubicacion}</td>
-                    <td class="px-4 py-4 whitespace-nowrap text-sm text-center">
-                        <a href="./reporte_detalle.html?id=${idTrabajo}" 
-                           target="_blank" 
-                           title="Ver PDF"
-                           class="inline-flex items-center p-2 rounded-md text-gray-500 hover:text-blue-600 hover:bg-gray-100 transition">
-                            <i data-lucide="file-text" class="w-4 h-4"></i>
-                        </a>
-                    </td>
                 `;
                 tableBody.appendChild(tr);
             });
@@ -833,4 +850,3 @@
 </body>
 
 </html>
-
