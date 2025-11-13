@@ -29,11 +29,9 @@
             box-shadow: 0 0 15px rgba(0,0,0,0.5);
             box-sizing: border-box; 
             
-            /* ▼▼▼ CORRECCIÓN DE PIE DE PÁGINA ▼▼▼ */
             /* Usamos Flexbox para empujar el footer hacia abajo */
             display: flex;
             flex-direction: column;
-            /* ▲▲▲ FIN CORRECCIÓN ▲▲▲ */
         }
 
         /* Estilos de Impresión */
@@ -138,10 +136,8 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvYnF1a3R4dmhsdnRycGVvcGppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU2OTc4NDYsImV4cCI6MjA2MTI3Mzg0Nn0.rnubNUWSWEomj5Xwvr65kZLK7Ig_bLC74ajFh9cksFc';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
-        // ▼▼▼ CORRECCIÓN DE LOGO ▼▼▼
-        // Usamos la ruta relativa que nos diste
-        const LOGO_URL = 'winsystems_logo.png'; 
-        // ▲▲▲ FIN CORRECCIÓN ▲▲▲
+        // Usamos el logo de la Imagen 1 (la referente de la primera petición)
+        const LOGO_URL = 'Logo_Winsystems.png'; 
 
         // --- FUNCIONES DE AYUDA ---
         function handleError(message) {
@@ -192,10 +188,19 @@
         // Función para formatear el texto de la base de datos a HTML
         function formatDbTextToHtml(value) {
             if (!value || value.trim() === '') return '';
-            // Reemplaza - con viñetas y \n con <br>
-            return value
+            
+            // 1. Escapar HTML
+            let safeValue = String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+            
+            // 2. Aplicar formato (viñetas y saltos de línea)
+            return safeValue
                 .replace(/^- /gm, '• ') 
-                .replace(/\n/g, ' ');
+                .replace(/\n/g, '<br>'); // Convertir saltos de línea a <br>
         }
         
         async function simpleCheckSession() {
@@ -218,8 +223,8 @@
             // --- 1. CABECERA ---
             const headerHTML = `
                 <div class="flex justify-between items-start">
-                    <img src="${LOGO_URL}" alt="Logo Winsystems" style="width: 70pt; height: 39pt;">
-                    <div class="bg-[#004A99] text-white text-xs font-bold py-2 px-3 rounded" style="font-size: 10pt;">
+                    <img src="${LOGO_URL}" alt="Logo Winsystems" style="width: 82.5pt; height: 39pt;">
+                    <div class="bg-[#004A99] text-white text-xs font-bold py-2 px-3 rounded print-color-adjust-exact" style="font-size: 10pt;">
                         Reporte N°: ${numeroInforme}
                     </div>
                 </div>
@@ -227,12 +232,10 @@
             document.getElementById('report-header').innerHTML = headerHTML;
 
             // --- 2. TÍTULO Y LÍNEA ---
-            // ▼▼▼ CORRECCIÓN: LÍNEA AÑADIDA ARRIBA DEL TÍTULO ▼▼▼
             document.getElementById('report-title-container').innerHTML = `
                 <hr class="border-t-2 border-black mt-4">
                 <h1 class="text-center text-xl font-bold pt-4 pb-8" style="font-size: 16pt;">INFORME DE SERVICIO TÉCNICO</h1>
             `;
-            // ▲▲▲ FIN CORRECCIÓN ▲▲▲
 
             // --- 3. DATOS (GRID) ---
             const sala = trabajo.sala || {};
@@ -240,7 +243,7 @@
             const infoGridHTML = `
                 <div class="grid grid-cols-2 gap-x-8 text-xs" style="font-size: 9pt;">
                     <div>
-                        <h2 class="text-[#004A99] font-bold mb-3" style="font-size: 9pt;">DATOS DEL REPORTE</h2>
+                        <h2 class="text-[#004A99] font-bold mb-3 print-color-adjust-exact" style="font-size: 9pt;">DATOS DEL REPORTE</h2>
                         <div class="flex mb-2">
                             <span class="font-bold inline-block" style="width: 60pt;">Fecha:</span>
                             <span class="text-gray-700">${formatDate(trabajo.fecha)}</span>
@@ -251,7 +254,7 @@
                         </div>
                     </div>
                     <div>
-                        <h2 class="text-[#004A99] font-bold mb-3" style="font-size: 9pt;">DATOS DEL CLIENTE</h2>
+                        <h2 class="text-[#004A99] font-bold mb-3 print-color-adjust-exact" style="font-size: 9pt;">DATOS DEL CLIENTE</h2>
                         <div class="flex mb-2">
                             <span class="font-bold inline-block" style="width: 60pt;">Sala:</span>
                             <span class="text-gray-700">${safeText(sala.sala)}</span>
@@ -271,10 +274,9 @@
 
             // --- 4. DETALLES DEL SERVICIO ---
             document.getElementById('report-details-title').innerHTML = `
-                <h2 class="text-[#004A99] font-bold mt-8 mb-3" style="font-size: 10pt;">DETALLES DEL SERVICIO</h2>
+                <h2 class="text-[#004A99] font-bold mt-8 mb-3 print-color-adjust-exact" style="font-size: 10pt;">DETALLES DEL SERVICIO</h2>
             `;
 
-            // ▼▼▼ CORRECCIÓN DE ALINEACIÓN DE DETALLES ▼▼▼
             let detailsHTML = '';
             detalles.forEach(detalle => {
                 const maquina = detalle.maquinas || {};
@@ -285,30 +287,29 @@
                     `Juego: ${safeText(maquina.juego)}`,
                 ].join(' | ');
 
-                // Traemos los valores
-                const diag = safeText(detalle.diag_ini, '');
-                const trab = safeText(detalle.trab_realizado, '');
-                const res = safeText(detalle.resul, '');
                 
-                // Construimos el bloque de texto SIN negritas en las etiquetas
-                // y con el formato de viñetas y saltos de línea
+                const diag = detalle.diag_ini || '';
+                const trab = detalle.trab_realizado || '';
+                const res = detalle.resul || '';
+                
+                // Generamos el texto con saltos de línea <br>
                 const detalleTextos = [
                     (diag ? `Diagnóstico: ${formatDbTextToHtml(diag)}` : ''),
                     (trab ? `Trabajo: ${formatDbTextToHtml(trab)}` : ''),
                     (res ? `Resultado: ${formatDbTextToHtml(res)}` : '')
-                ].filter(Boolean).join(' '); // Usamos <br> para separar
+                ].filter(Boolean).join('<br>'); 
 
                 detailsHTML += `
                     <div class="border border-gray-300 rounded-lg overflow-hidden mb-4 detail-box">
-                        <div class="bg-[#004A99] text-white p-2 text-sm font-bold" style="font-size: 8.5pt;">
+                        <div class="bg-[#004A99] text-white p-2 text-sm font-bold print-color-adjust-exact" style="font-size: 8.5pt;">
                             ${maquinaInfo}
                         </div>
                         <div class="grid grid-cols-[1fr_100px]">
                             <div class="p-3" style="font-size: 7.5pt;">
                                 <div class="font-bold mb-2" style="font-size: 8pt;">Detalle del Servicio</div>
                                 
-                                <div class="text-gray-700 whitespace-pre-wrap">
-                                    ${safeText(detalleTextos, '') || 'Sin detalles.'}
+                                <div class="text-gray-700">
+                                    ${detalleTextos || 'Sin detalles.'}
                                 </div>
                             </div>
                             <div class="p-3">
@@ -326,7 +327,6 @@
                 `;
             });
             document.getElementById('report-details-body').innerHTML = detailsHTML;
-            // ▲▲▲ FIN CORRECCIÓN ▲▲▲
             
             // --- 5. FIRMAS ---
             const tecnico = trabajo.tecnicos || {};
@@ -390,7 +390,6 @@
                 }
 
                 // 3. Obtener datos de Supabase
-                // ▼▼▼ CORRECCIÓN: Quitamos repuestos y progresivos de la consulta ▼▼▼
                 const [trabajoResponse, detallesResponse] = await Promise.all([
                     supabaseClient
                         .from('trabajos')
@@ -400,11 +399,9 @@
                     
                     supabaseClient
                         .from('detalle')
-                        // Simplificamos la consulta ya que no se usan en este reporte
                         .select('*, maquinas(*)')
                         .eq('id_trabajo', trabajoId)
                 ]);
-                // ▲▲▲ FIN CORRECCIÓN ▲▲▲
 
                 // 4. Manejar errores de Supabase
                 if (trabajoResponse.error) throw new Error(`Error al cargar trabajo: ${trabajoResponse.error.message}`);
@@ -438,7 +435,4 @@
 
     </script>
 </body>
-
 </html>
-
-
