@@ -292,7 +292,6 @@
 
 <body class="text-gray-800">
 
-    <!-- Toast Notification -->
     <div id="toast" class="toast hidden">
         <i data-lucide="check-circle" class="w-6 h-6 flex-shrink-0"></i>
         <span id="toast-message" class="flex-1">Operación completada</span>
@@ -301,7 +300,6 @@
         </button>
     </div>
 
-    <!-- Loading Overlay Mejorado -->
     <div id="loading-overlay" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center">
         <div class="text-center">
             <div class="relative mb-6">
@@ -321,13 +319,12 @@
     </div>
 
     <div class="container mx-auto p-4 md:p-8 max-w-7xl opacity-0" id="main-content">
-        <!-- Header Simplificado -->
         <header class="mb-6 glass-card rounded-2xl p-4 md:p-6">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div class="flex items-center gap-3 md:gap-4">
                     <div class="bg-gradient-to-br from-ws-primary to-ws-secondary p-3 md:p-4 rounded-2xl shadow-lg">
-                        <img src= winsystems_logo.png alt="Logo de Winsystems" class="h-16 md:h-20">
-                        
+                        <img src="assets/winsystems_logo.png" alt="Logo de Winsystems" class="h-16 md:h-20">
+
                     </div>
                     <div>
                         <h1 class="text-xl md:text-3xl font-bold text-gray-900">Reporte de Incidencias</h1>
@@ -349,7 +346,6 @@
             </div>
         </header>
 
-        <!-- Filtro de Sala para Admin -->
         <div id="admin-sala-filter" class="mb-6 hidden">
             <div class="glass-card p-4 md:p-6 rounded-2xl">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
@@ -391,7 +387,6 @@
             </div>
         </div>
 
-        <!-- Información de la Sala Mejorada -->
         <div id="sala-info" class="sala-info-card rounded-2xl p-4 md:p-6 mb-6 fade-in hidden">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div class="flex items-center gap-3 md:gap-4">
@@ -414,10 +409,8 @@
         </div>
 
 
-        <!-- Contenido Principal Mejorado -->
         <div id="form-container" class="hidden">
             <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                <!-- Panel de Máquinas Mejorado -->
                 <div class="xl:col-span-1">
                     <div class="form-section p-4 md:p-6 sticky top-4">
                         <div class="flex items-center gap-3 mb-4 md:mb-6">
@@ -441,8 +434,7 @@
 
                         <div id="maquinas-container"
                             class="space-y-2 max-h-80 md:max-h-96 overflow-y-auto custom-scrollbar pr-2">
-                            <!-- Máquinas se cargarán aquí -->
-                        </div>
+                            </div>
 
                         <div id="no-machines-message" class="text-center py-6 md:py-8 hidden">
                             <div
@@ -479,10 +471,8 @@
                     </div>
                 </div>
 
-                <!-- Panel de Reporte e Historial Mejorado -->
                 <div class="xl:col-span-2">
                     <div class="grid grid-cols-1 gap-6">
-                        <!-- Formulario de Incidencia Mejorado -->
                         <div class="form-section p-4 md:p-6">
                             <div class="flex items-center gap-3 mb-4 md:mb-6">
                                 <div class="bg-orange-100 p-2 md:p-3 rounded-xl">
@@ -550,7 +540,6 @@
                             </form>
                         </div>
 
-                        <!-- Historial de Incidencias Mejorado -->
                         <div class="form-section p-4 md:p-6">
                             <div
                                 class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4 md:mb-6">
@@ -564,11 +553,7 @@
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2 self-end md:self-auto">
-                                    <button id="btn-export-history"
-                                        class="bg-gray-100 text-gray-700 px-3 py-1.5 md:px-4 md:py-2 rounded-lg hover:bg-gray-200 transition-colors duration-200 flex items-center gap-1 md:gap-2 text-xs md:text-sm">
-                                        <i data-lucide="download" class="w-3 h-3 md:w-4 md:h-4"></i>
-                                        Exportar
-                                    </button>
+                                    
                                     <button id="btn-delete-reports"
                                         class="btn-danger px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-medium flex items-center gap-1 md:gap-2 text-xs md:text-sm hidden">
                                         <i data-lucide="trash-2" class="w-3 h-3 md:w-4 md:h-4"></i>
@@ -590,7 +575,6 @@
                                 </div>
                             </div>
 
-                            <!-- Leyenda de Estados Mejorada -->
                             <div class="mt-4 grid grid-cols-2 gap-2 text-xs md:text-sm">
                                 <div class="flex items-center gap-2 bg-green-50 px-2 py-1.5 md:px-3 md:py-2 rounded-lg">
                                     <span class="status-indicator status-operativo"></span>
@@ -617,7 +601,6 @@
         </div>
     </div>
 
-    <!-- Modal de Asignación Mejorado -->
     <div id="asignacion-modal"
         class="fixed inset-0 z-50 hidden items-center justify-center modal-overlay transition-opacity duration-300 p-4">
         <div
@@ -632,8 +615,7 @@
             </div>
 
             <div id="modal-content" class="space-y-4 md:space-y-6 mb-4 md:mb-8">
-                <!-- Contenido dinámico se insertará aquí -->
-            </div>
+                </div>
 
             <div class="bg-gray-50 rounded-xl p-3 md:p-4 mb-4 md:mb-6">
                 <h3 class="font-semibold text-gray-800 mb-2 flex items-center gap-2 text-sm md:text-base">
@@ -643,11 +625,11 @@
                 <ul class="text-xs md:text-sm text-gray-600 space-y-1 md:space-y-2">
                     <li class="flex items-center gap-1 md:gap-2">
                         <i data-lucide="phone" class="w-3 h-3 md:w-4 md:h-4 text-green-600 flex-shrink-0"></i>
-                        <span>Contacta al técnico asignado por WhatsApp escribiendo el codigo asignado, o tambien por llamadas</span>
+                        <span>Contacta al técnico asignado</span>
                     </li>
                     <li class="flex items-center gap-1 md:gap-2">
                         <i data-lucide="clock" class="w-3 h-3 md:w-4 md:h-4 text-blue-600 flex-shrink-0"></i>
-                        <span>El técnico se pondrá en contacto maximo en 30 minutos, caso contrario comuicarse con soporrte 981227268</span>
+                        <span>El técnico se pondrá en contacto</span>
                     </li>
                     <li class="flex items-center gap-1 md:gap-2">
                         <i data-lucide="eye" class="w-3 h-3 md:w-4 md:h-4 text-purple-600 flex-shrink-0"></i>
@@ -898,8 +880,10 @@
             // Botón de refresh para admin
             document.getElementById('btn-refresh-sala').addEventListener('click', refreshSalaData);
 
+            // ===== INICIO MODIFICACIÓN 4: Listener de Exportar Eliminado =====
             // Exportar historial
-            document.getElementById('btn-export-history').addEventListener('click', exportHistory);
+            // document.getElementById('btn-export-history').addEventListener('click', exportHistory);
+            // ===== FIN MODIFICACIÓN 4 =====
 
             // Modal
             document.getElementById('btn-resuelto').addEventListener('click', closeModalAndReset);
@@ -1158,11 +1142,11 @@
             const noMachinesMsg = document.getElementById('no-machines-message');
 
             container.innerHTML = `
-        <div class="text-center py-8">
-            <i data-lucide="loader-2" class="animate-spin w-8 h-8 text-blue-600 mx-auto mb-3"></i>
-            <p class="text-gray-600">Cargando máquinas...</p>
-        </div>
-    `;
+            <div class="text-center py-8">
+                <i data-lucide="loader-2" class="animate-spin w-8 h-8 text-blue-600 mx-auto mb-3"></i>
+                <p class="text-gray-600">Cargando máquinas...</p>
+            </div>
+        `;
 
             try {
                 // Obtener máquinas
@@ -1230,25 +1214,25 @@
                         machineCard.style.animationDelay = `${index * 0.1}s`;
 
                         machineCard.innerHTML = `
-                    <div class="flex items-start">
-                        <i data-lucide="dices" class="w-5 h-5 mr-3 mt-0.5 ${iconColorClass} flex-shrink-0"></i>
-                        
-                        <div class="flex flex-col">
-                            <p class="text-base font-semibold ${textColorClass}">
-                                ${machine.serie}
-                            </p>
+                        <div class="flex items-start">
+                            <i data-lucide="dices" class="w-5 h-5 mr-3 mt-0.5 ${iconColorClass} flex-shrink-0"></i>
                             
-                            <p class="text-xs ${subtitleColorClass} mt-0.5">
-                                ${machine.modelo || 'Sin modelo'}
-                            </p>
-                            
-                            <div class="flex items-center gap-1 text-xs mt-1">
-                                <span class="status-indicator ${statusClass} w-2 h-2 rounded-full"></span> 
-                                <span class="capitalize font-medium text-gray-600">${lastStatus.toLowerCase()}</span>
+                            <div class="flex flex-col">
+                                <p class="text-base font-semibold ${textColorClass}">
+                                    ${machine.serie}
+                                </p>
+                                
+                                <p class="text-xs ${subtitleColorClass} mt-0.5">
+                                    ${machine.modelo || 'Sin modelo'}
+                                </p>
+                                
+                                <div class="flex items-center gap-1 text-xs mt-1">
+                                    <span class="status-indicator ${statusClass} w-2 h-2 rounded-full"></span> 
+                                    <span class="capitalize font-medium text-gray-600">${lastStatus.toLowerCase()}</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                `;
+                    `;
 
                         machineCard.addEventListener('click', () => selectMachine(machine, lastStatus));
                         container.appendChild(machineCard);
@@ -1263,11 +1247,11 @@
             } catch (error) {
                 console.error('Error al cargar máquinas:', error);
                 container.innerHTML = `
-            <div class="text-center py-8 text-red-500">
-                <i data-lucide="alert-circle" class="w-8 h-8 mx-auto mb-3"></i>
-                <p>Error al cargar las máquinas</p>
-            </div>
-        `;
+                <div class="text-center py-8 text-red-500">
+                    <i data-lucide="alert-circle" class="w-8 h-8 mx-auto mb-3"></i>
+                    <p>Error al cargar las máquinas</p>
+                </div>
+            `;
                 lucide.createIcons();
             }
         }
@@ -1415,11 +1399,11 @@
         async function loadHistoryForMachine(machineId) {
             const historyBody = document.getElementById('incidencia-history-body');
             historyBody.innerHTML = `
-        <div class="text-center py-8">
-            <i data-lucide="loader-2" class="animate-spin w-8 h-8 text-blue-600 mx-auto mb-3"></i>
-            <p class="text-gray-600">Cargando historial...</p>
-        </div>
-    `;
+            <div class="text-center py-8">
+                <i data-lucide="loader-2" class="animate-spin w-8 h-8 text-blue-600 mx-auto mb-3"></i>
+                <p class="text-gray-600">Cargando historial...</p>
+            </div>
+        `;
             lucide.createIcons();
 
             try {
@@ -1427,33 +1411,47 @@
                 const { data, error } = await supabaseClient
                     .from('detalle')
                     .select(`
-                *,
-                trabajos!inner(
-                    fecha, 
-                    hora_inicio,
-                    codigo,
-                    id_responsable,
-                    tecnicos(
-                        usuario,
-                        cel,
-                        correo
-                    )
-                )
-            `)
+                        *,
+                        trabajos!inner(
+                            fecha, 
+                            hora_inicio,
+                            codigo,
+                            id_responsable,
+                            tecnicos(
+                                usuario,
+                                cel,
+                                correo
+                            )
+                        )
+                    `)
                     .eq('id_maquina', machineId)
                     .order('fecha', { foreignTable: 'trabajos', ascending: false })
                     .order('hora_inicio', { foreignTable: 'trabajos', ascending: false });
 
                 if (error) throw error;
+                
+                // ===== INICIO MODIFICACIÓN 3: Ordenamiento del Historial =====
+                // Forzamos el ordenamiento del lado del cliente para garantizar
+                // que los más recientes aparezcan primero.
+                data.sort((a, b) => {
+                    // Combinamos fecha y hora para una comparación precisa
+                    const dateTimeA = new Date(`${a.trabajos.fecha}T${a.trabajos.hora_inicio || '00:00:00'}`);
+                    const dateTimeB = new Date(`${b.trabajos.fecha}T${b.trabajos.hora_inicio || '00:00:00'}`);
+                    
+                    // Orden descendente (B - A)
+                    return dateTimeB - dateTimeA;
+                });
+                // ===== FIN MODIFICACIÓN 3 =====
+
 
                 if (data.length === 0) {
                     historyBody.innerHTML = `
-                <div class="text-center py-12 text-gray-500">
-                    <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-4 text-gray-400"></i>
-                    <p class="font-medium">No hay historial registrado</p>
-                    <p class="text-sm mt-1">Esta máquina no tiene reportes anteriores</p>
-                </div>
-            `;
+                    <div class="text-center py-12 text-gray-500">
+                        <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-4 text-gray-400"></i>
+                        <p class="font-medium">No hay historial registrado</p>
+                        <p class="text-sm mt-1">Esta máquina no tiene reportes anteriores</p>
+                    </div>
+                `;
                     lucide.createIcons();
                     return;
                 }
@@ -1476,17 +1474,17 @@
                 }
 
                 let historyHTML = `
-            <div class="mb-4 md:mb-6 p-3 md:p-4 bg-blue-50 rounded-xl border border-blue-200">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h4 class="font-bold text-blue-800 text-sm md:text-base">${selectedMachineData.serie} - ${selectedMachineData.modelo || 'Sin modelo'}</h4>
-                        <p class="text-blue-600 text-xs md:text-sm">Total de registros: ${data.length}</p>
+                <div class="mb-4 md:mb-6 p-3 md:p-4 bg-blue-50 rounded-xl border border-blue-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="font-bold text-blue-800 text-sm md:text-base">${selectedMachineData.serie} - ${selectedMachineData.modelo || 'Sin modelo'}</h4>
+                            <p class="text-blue-600 text-xs md:text-sm">Total de registros: ${data.length}</p>
+                        </div>
+                        <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs md:text-sm font-medium">Historial</span>
                     </div>
-                    <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs md:text-sm font-medium">Historial</span>
                 </div>
-            </div>
-            <div class="space-y-3 md:space-y-4">
-        `;
+                <div class="space-y-3 md:space-y-4">
+            `;
 
                 data.forEach(item => {
                     const fechaHora = formatDateTime(item.trabajos.fecha, item.trabajos.hora_inicio);
@@ -1498,112 +1496,119 @@
                     let responsableInfo = '';
                     if (item.trabajos.id_responsable && responsablesData[item.trabajos.id_responsable]) {
                         responsableInfo = `
-                    <div class="flex items-center gap-1 text-xs">
-                        <i data-lucide="user" class="w-3 h-3 text-purple-600 flex-shrink-0"></i>
-                        <span class="font-medium">Responsable de sala:</span>
-                        <span>${responsablesData[item.trabajos.id_responsable]}</span>
-                    </div>
-                `;
+                        <div class="flex items-center gap-1 text-xs">
+                            <i data-lucide="user" class="w-3 h-3 text-purple-600 flex-shrink-0"></i>
+                            <span class="font-medium">Responsable de sala:</span>
+                            <span>${responsablesData[item.trabajos.id_responsable]}</span>
+                        </div>
+                    `;
                     }
 
                     // Información del técnico
                     let tecnicoInfo = '';
                     if (tecnico) {
                         tecnicoInfo = `
-                    <div class="space-y-1">
-                        <div class="flex items-center gap-1 text-xs">
-                            <i data-lucide="user-check" class="w-3 h-3 text-green-600 flex-shrink-0"></i>
-                            <span class="font-medium">Técnico a cargo:</span>
-                            <span>${tecnico.usuario || 'Técnico'}</span>
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-1 text-xs">
+                                <i data-lucide="user-check" class="w-3 h-3 text-green-600 flex-shrink-0"></i>
+                                <span class="font-medium">Técnico a cargo:</span>
+                                <span>${tecnico.usuario || 'Técnico'}</span>
+                            </div>
+                            ${tecnico.cel ? `
+                            <div class="flex items-center gap-1 text-xs">
+                                <i data-lucide="phone" class="w-3 h-3 text-blue-600 flex-shrink-0"></i>
+                                <span class="font-medium">Celular:</span>
+                                <span>${tecnico.cel}</span>
+                            </div>
+                            ` : ''}
+                            ${tecnico.correo ? `
+                            <div class="flex items-center gap-1 text-xs">
+                                <i data-lucide="mail" class="w-3 h-3 text-orange-600 flex-shrink-0"></i>
+                                <span class="font-medium">Correo:</span>
+                                <span class="truncate">${tecnico.correo}</span>
+                            </div>
+                            ` : ''}
                         </div>
-                        ${tecnico.cel ? `
-                        <div class="flex items-center gap-1 text-xs">
-                            <i data-lucide="phone" class="w-3 h-3 text-blue-600 flex-shrink-0"></i>
-                            <span class="font-medium">Celular:</span>
-                            <span>${tecnico.cel}</span>
-                        </div>
-                        ` : ''}
-                        ${tecnico.correo ? `
-                        <div class="flex items-center gap-1 text-xs">
-                            <i data-lucide="mail" class="w-3 h-3 text-orange-600 flex-shrink-0"></i>
-                            <span class="font-medium">Correo:</span>
-                            <span class="truncate">${tecnico.correo}</span>
-                        </div>
-                        ` : ''}
-                    </div>
-                `;
+                    `;
                     }
 
                     // Si no hay técnico ni responsable, mostrar información básica
                     let informacionContacto = '';
                     if (tecnicoInfo || responsableInfo) {
                         informacionContacto = `
-                    <div class="bg-gray-50 rounded-lg p-3 mt-2 space-y-2">
-                        ${responsableInfo}
-                        ${tecnicoInfo}
-                    </div>
-                `;
+                        <div class="bg-gray-50 rounded-lg p-3 mt-2 space-y-2">
+                            ${responsableInfo}
+                            ${tecnicoInfo}
+                        </div>
+                    `;
                     } else {
                         informacionContacto = `
-                    <div class="flex items-center gap-1 text-xs text-gray-500">
-                        <i data-lucide="user" class="w-3 h-3"></i>
-                        <span>Reporte de Sala</span>
-                    </div>
-                `;
+                        <div class="flex items-center gap-1 text-xs text-gray-500">
+                            <i data-lucide="user" class="w-3 h-3"></i>
+                            <span>Reporte de Sala</span>
+                        </div>
+                    `;
                     }
 
                     historyHTML += `
-                <div class="history-item ${estadoClass} bg-white p-3 md:p-4 rounded-xl border border-gray-200">
-                    <div class="flex justify-between items-start mb-2">
-                        <div class="flex items-center gap-2 min-w-0 flex-1">
-                            <span class="status-badge ${estadoClass} text-xs">${estado}</span>
-                            <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded truncate">${item.tipo_trabajo || 'Mantenimiento'}</span>
+                    <div class="history-item ${estadoClass} bg-white p-3 md:p-4 rounded-xl border border-gray-200">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center gap-2 min-w-0 flex-1">
+                                <span class="status-badge ${estadoClass} text-xs">${estado}</span>
+                                <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded truncate">${item.tipo_trabajo || 'Mantenimiento'}</span>
+                            </div>
+
+                            <div class="flex items-center gap-2 flex-shrink-0 ml-2">
+                                <span class="text-xs text-gray-500 whitespace-nowrap">${fechaHora}</span>
+                                
+                                <a href="./reporte_detalle.html?id=${item.id_trabajo}" 
+                                   target="_blank" 
+                                   title="Ver Detalle del Reporte"
+                                   class="text-gray-500 hover:text-blue-600 transition-colors p-1 rounded hover:bg-blue-50">
+                                    <i data-lucide="file-text" class="w-3 h-3"></i>
+                                </a>
+
+                                ${userCargo === 'administrador' ? `
+                                    <button onclick="deleteSingleReport(${item.id_trabajo}, '${item.trabajos.codigo}')" 
+                                            class="text-red-500 hover:text-red-700 transition-colors p-1 rounded hover:bg-red-50"
+                                            title="Eliminar este reporte">
+                                        <i data-lucide="trash-2" class="w-3 h-3"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                            </div>
+                        
+                        <div class="mb-2">
+                            <p class="text-xs font-medium text-gray-700 mb-1">Código de Reporte:</p>
+                            <p class="text-sm font-bold text-blue-800 bg-blue-50 p-2 rounded-lg">${item.trabajos.codigo}</p>
                         </div>
-                        <div class="flex items-center gap-2 flex-shrink-0 ml-2">
-                            <span class="text-xs text-gray-500 whitespace-nowrap">${fechaHora}</span>
-                            ${userCargo === 'administrador' ? `
-                                <button onclick="deleteSingleReport(${item.id_trabajo}, '${item.trabajos.codigo}')" 
-                                        class="text-red-500 hover:text-red-700 transition-colors p-1 rounded hover:bg-red-50"
-                                        title="Eliminar este reporte">
-                                    <i data-lucide="trash-2" class="w-3 h-3"></i>
-                                </button>
-                            ` : ''}
+                        
+                        ${item.diag_ini ? `
+                            <div class="mb-2">
+                                <p class="text-xs font-medium text-gray-700 mb-1">Diagnóstico:</p>
+                                <p class="text-xs text-gray-600 bg-gray-50 p-2 rounded-lg">${item.diag_ini}</p>
+                            </div>
+                        ` : ''}
+                        
+                        ${item.trab_realizado ? `
+                            <div class="mb-2">
+                                <p class="text-xs font-medium text-gray-700 mb-1">Trabajo Realizado:</p>
+                                <p class="text-xs text-gray-600 bg-gray-50 p-2 rounded-lg">${item.trab_realizado}</p>
+                            </div>
+                        ` : ''}
+                        
+                        ${item.resul ? `
+                            <div class="mb-2">
+                                <p class="text-xs font-medium text-gray-700 mb-1">Resultado:</p>
+                                <p class="text-xs text-gray-600 bg-gray-50 p-2 rounded-lg">${item.resul}</p>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200">
+                            ${informacionContacto}
                         </div>
                     </div>
-                    
-                    <!-- CÓDIGO DE REPORTE -->
-                    <div class="mb-2">
-                        <p class="text-xs font-medium text-gray-700 mb-1">Código de Reporte:</p>
-                        <p class="text-sm font-bold text-blue-800 bg-blue-50 p-2 rounded-lg">${item.trabajos.codigo}</p>
-                    </div>
-                    
-                    ${item.diag_ini ? `
-                        <div class="mb-2">
-                            <p class="text-xs font-medium text-gray-700 mb-1">Diagnóstico:</p>
-                            <p class="text-xs text-gray-600 bg-gray-50 p-2 rounded-lg">${item.diag_ini}</p>
-                        </div>
-                    ` : ''}
-                    
-                    ${item.trab_realizado ? `
-                        <div class="mb-2">
-                            <p class="text-xs font-medium text-gray-700 mb-1">Trabajo Realizado:</p>
-                            <p class="text-xs text-gray-600 bg-gray-50 p-2 rounded-lg">${item.trab_realizado}</p>
-                        </div>
-                    ` : ''}
-                    
-                    ${item.resul ? `
-                        <div class="mb-2">
-                            <p class="text-xs font-medium text-gray-700 mb-1">Resultado:</p>
-                            <p class="text-xs text-gray-600 bg-gray-50 p-2 rounded-lg">${item.resul}</p>
-                        </div>
-                    ` : ''}
-                    
-                    <!-- INFORMACIÓN DE CONTACTO MEJORADA -->
-                    <div class="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200">
-                        ${informacionContacto}
-                    </div>
-                </div>
-            `;
+                `;
                 });
 
                 historyHTML += '</div>';
@@ -1613,16 +1618,18 @@
             } catch (error) {
                 console.error('Error al cargar historial:', error);
                 historyBody.innerHTML = `
-            <div class="text-center py-8 text-red-500">
-                <i data-lucide="alert-circle" class="w-8 h-8 mx-auto mb-3"></i>
-                <p>Error al cargar el historial</p>
-                <p class="text-sm mt-1">${error.message}</p>
-            </div>
-        `;
+                <div class="text-center py-8 text-red-500">
+                    <i data-lucide="alert-circle" class="w-8 h-8 mx-auto mb-3"></i>
+                    <p>Error al cargar el historial</p>
+                    <p class="text-sm mt-1">${error.message}</p>
+                </div>
+            `;
                 lucide.createIcons();
             }
         }
 
+        // ===== INICIO MODIFICACIÓN 4: Función exportHistory Eliminada =====
+        /*
         function exportHistory() {
             if (!selectedMachineId) {
                 showToast('Selecciona una máquina para exportar su historial', 'warning');
@@ -1642,6 +1649,9 @@
 
             showToast('Historial exportado correctamente');
         }
+        */
+        // ===== FIN MODIFICACIÓN 4 =====
+
 
         // --- GESTIÓN DE REPORTES ---
         async function handleIncidenciaSubmit(event) {
@@ -1795,18 +1805,18 @@
                 const { data: reportes, error } = await supabaseClient
                     .from('trabajos')
                     .select(`
-                    id_trabajo,
-                    codigo,
-                    fecha,
-                    hora_inicio,
-                    detalle!inner(
-                        id_detalle,
-                        id_maquina,
-                        estado,
-                        diag_ini,
-                        maquinas!inner(serie, modelo)
-                    )
-                `)
+                        id_trabajo,
+                        codigo,
+                        fecha,
+                        hora_inicio,
+                        detalle!inner(
+                            id_detalle,
+                            id_maquina,
+                            estado,
+                            diag_ini,
+                            maquinas!inner(serie, modelo)
+                        )
+                    `)
                     .eq('id_sala', selectedAdminSalaId)
                     .order('fecha', { ascending: false })
                     .order('hora_inicio', { ascending: false });
@@ -1842,7 +1852,7 @@
             
             <div class="max-h-64 md:max-h-96 overflow-y-auto custom-scrollbar mb-4 md:mb-6">
                 <div class="space-y-2 md:space-y-3">
-        `;
+            `;
 
             reportes.forEach((reporte, index) => {
                 const detalle = reporte.detalle[0]; // Tomamos el primer detalle
@@ -1852,9 +1862,9 @@
                 <div class="bg-white border border-gray-200 rounded-xl p-3 md:p-4 hover:border-red-300 transition-colors">
                     <div class="flex items-start gap-2 md:gap-3">
                         <input type="checkbox" 
-                               id="reporte-${reporte.id_trabajo}" 
-                               value="${reporte.id_trabajo}"
-                               class="mt-1 rounded border-gray-300 text-red-600 focus:ring-red-500">
+                                id="reporte-${reporte.id_trabajo}" 
+                                value="${reporte.id_trabajo}"
+                                class="mt-1 rounded border-gray-300 text-red-600 focus:ring-red-500">
                         
                         <div class="flex-1 min-w-0">
                             <div class="flex justify-between items-start mb-2">
@@ -1876,7 +1886,7 @@
                         </div>
                     </div>
                 </div>
-            `;
+                `;
             });
 
             reportesHTML += `
@@ -2114,19 +2124,19 @@
                 const { data, error } = await supabaseClient
                     .from('detalle')
                     .select(`
-                *,
-                trabajos!inner(
-                    fecha,
-                    hora_inicio,
-                    codigo,
-                    id_responsable,
-                    tecnicos(
-                        usuario,
-                        cel,
-                        correo
-                    )
-                )
-            `)
+                        *,
+                        trabajos!inner(
+                            fecha,
+                            hora_inicio,
+                            codigo,
+                            id_responsable,
+                            tecnicos(
+                                usuario,
+                                cel,
+                                correo
+                            )
+                        )
+                    `)
                     .eq('id_maquina', machineId)
                     .order('fecha', { foreignTable: 'trabajos', ascending: false })
                     .order('hora_inicio', { foreignTable: 'trabajos', ascending: false })
@@ -2188,100 +2198,94 @@
 
             card.className = `${bgColor} ${borderColor} border-2 rounded-xl p-4 transition-all duration-200 hover:shadow-md`;
             card.innerHTML = `
-        <div class="space-y-4">
-            <!-- Encabezado con información básica -->
-            <div class="flex items-start justify-between">
-                <div class="flex items-start gap-3 flex-1">
-                    <div class="flex-shrink-0">
-                        <div class="bg-white p-2 rounded-lg shadow-sm">
-                            <i data-lucide="${isInoperativo ? 'alert-octagon' : 'clock'}" class="w-5 h-5 ${isInoperativo ? 'text-red-600' : 'text-yellow-600'}"></i>
+            <div class="space-y-4">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-start gap-3 flex-1">
+                        <div class="flex-shrink-0">
+                            <div class="bg-white p-2 rounded-lg shadow-sm">
+                                <i data-lucide="${isInoperativo ? 'alert-octagon' : 'clock'}" class="w-5 h-5 ${isInoperativo ? 'text-red-600' : 'text-yellow-600'}"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <h3 class="font-semibold ${isInoperativo ? 'text-red-800' : 'text-yellow-800'} text-sm">${machine.serie}</h3>
+                                <span class="status-badge ${estadoClass} text-xs">${estado}</span>
+                                <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">${tipoTrabajo}</span>
+                            </div>
+                            
+                            <p class="text-xs text-gray-600 mb-2">${machine.modelo || 'Sin modelo'}</p>
+                            
+                            <div class="flex items-center gap-4 text-xs text-gray-500">
+                                <div class="flex items-center gap-1">
+                                    <i data-lucide="calendar" class="w-3 h-3"></i>
+                                    <span>${fechaReporte}</span>
+                                </div>
+                                ${horaReporte ? `
+                                <div class="flex items-center gap-1">
+                                    <i data-lucide="clock" class="w-3 h-3"></i>
+                                    <span>${horaReporte}</span>
+                                </div>
+                                ` : ''}
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2 mb-1">
-                            <h3 class="font-semibold ${isInoperativo ? 'text-red-800' : 'text-yellow-800'} text-sm">${machine.serie}</h3>
-                            <span class="status-badge ${estadoClass} text-xs">${estado}</span>
-                            <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">${tipoTrabajo}</span>
+                    <button onclick="selectMachineById(${machine.id_maquina})" 
+                            class="ml-3 bg-white hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded-lg border border-gray-300 transition-colors duration-200 text-xs font-medium flex items-center gap-1 flex-shrink-0">
+                        <i data-lucide="eye" class="w-3 h-3"></i>
+                        Ver Detalles
+                    </button>
+                </div>
+
+                <div class="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                    <p class="text-xs font-medium text-gray-700 mb-1">Código de Reporte</p>
+                    <p class="text-sm font-bold text-blue-800 font-mono">${codigoReporte}</p>
+                </div>
+
+                <div class="bg-green-50 rounded-lg p-3 border border-green-200">
+                    <p class="text-xs font-medium text-gray-700 mb-2">Técnico Asignado</p>
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2 text-xs">
+                            <i data-lucide="user" class="w-3 h-3 text-green-600 flex-shrink-0"></i>
+                            <span class="font-medium min-w-[80px]">Nombre:</span>
+                            <span class="text-gray-700">${tecnicoNombre}</span>
                         </div>
-                        
-                        <p class="text-xs text-gray-600 mb-2">${machine.modelo || 'Sin modelo'}</p>
-                        
-                        <div class="flex items-center gap-4 text-xs text-gray-500">
-                            <div class="flex items-center gap-1">
-                                <i data-lucide="calendar" class="w-3 h-3"></i>
-                                <span>${fechaReporte}</span>
-                            </div>
-                            ${horaReporte ? `
-                            <div class="flex items-center gap-1">
-                                <i data-lucide="clock" class="w-3 h-3"></i>
-                                <span>${horaReporte}</span>
-                            </div>
-                            ` : ''}
+                        <div class="flex items-center gap-2 text-xs">
+                            <i data-lucide="phone" class="w-3 h-3 text-green-600 flex-shrink-0"></i>
+                            <span class="font-medium min-w-[80px]">Celular:</span>
+                            <span class="text-gray-700">${tecnicoCel}</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs">
+                            <i data-lucide="mail" class="w-3 h-3 text-green-600 flex-shrink-0"></i>
+                            <span class="font-medium min-w-[80px]">Correo:</span>
+                            <span class="text-gray-700 truncate">${tecnicoCorreo}</span>
                         </div>
                     </div>
                 </div>
-                
-                <button onclick="selectMachineById(${machine.id_maquina})" 
-                        class="ml-3 bg-white hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded-lg border border-gray-300 transition-colors duration-200 text-xs font-medium flex items-center gap-1 flex-shrink-0">
-                    <i data-lucide="eye" class="w-3 h-3"></i>
-                    Ver Detalles
-                </button>
-            </div>
 
-            <!-- CÓDIGO DE REPORTE -->
-            <div class="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                <p class="text-xs font-medium text-gray-700 mb-1">Código de Reporte</p>
-                <p class="text-sm font-bold text-blue-800 font-mono">${codigoReporte}</p>
-            </div>
+                <div>
+                    <p class="text-xs font-medium text-gray-700 mb-1">Diagnóstico Inicial</p>
+                    <div class="bg-white p-3 rounded-lg border border-gray-200">
+                        <p class="text-xs text-gray-600">${diagnostico}</p>
+                    </div>
+                </div>
 
-            <!-- INFORMACIÓN DEL TÉCNICO -->
-            <div class="bg-green-50 rounded-lg p-3 border border-green-200">
-                <p class="text-xs font-medium text-gray-700 mb-2">Técnico Asignado</p>
-                <div class="space-y-2">
-                    <div class="flex items-center gap-2 text-xs">
-                        <i data-lucide="user" class="w-3 h-3 text-green-600 flex-shrink-0"></i>
-                        <span class="font-medium min-w-[80px]">Nombre:</span>
-                        <span class="text-gray-700">${tecnicoNombre}</span>
+                <div>
+                    <p class="text-xs font-medium text-gray-700 mb-1">Trabajo Realizado</p>
+                    <div class="bg-white p-3 rounded-lg border border-gray-200">
+                        <p class="text-xs text-gray-600">${trabajoRealizado}</p>
                     </div>
-                    <div class="flex items-center gap-2 text-xs">
-                        <i data-lucide="phone" class="w-3 h-3 text-green-600 flex-shrink-0"></i>
-                        <span class="font-medium min-w-[80px]">Celular:</span>
-                        <span class="text-gray-700">${tecnicoCel}</span>
-                    </div>
-                    <div class="flex items-center gap-2 text-xs">
-                        <i data-lucide="mail" class="w-3 h-3 text-green-600 flex-shrink-0"></i>
-                        <span class="font-medium min-w-[80px]">Correo:</span>
-                        <span class="text-gray-700 truncate">${tecnicoCorreo}</span>
+                </div>
+
+                <div>
+                    <p class="text-xs font-medium text-gray-700 mb-1">Resultado</p>
+                    <div class="bg-white p-3 rounded-lg border border-gray-200">
+                        <p class="text-xs text-gray-600">${resultado}</p>
                     </div>
                 </div>
             </div>
-
-            <!-- DIAGNÓSTICO INICIAL -->
-            <div>
-                <p class="text-xs font-medium text-gray-700 mb-1">Diagnóstico Inicial</p>
-                <div class="bg-white p-3 rounded-lg border border-gray-200">
-                    <p class="text-xs text-gray-600">${diagnostico}</p>
-                </div>
-            </div>
-
-            <!-- TRABAJO REALIZADO -->
-            <div>
-                <p class="text-xs font-medium text-gray-700 mb-1">Trabajo Realizado</p>
-                <div class="bg-white p-3 rounded-lg border border-gray-200">
-                    <p class="text-xs text-gray-600">${trabajoRealizado}</p>
-                </div>
-            </div>
-
-            <!-- RESULTADO -->
-            <div>
-                <p class="text-xs font-medium text-gray-700 mb-1">Resultado</p>
-                <div class="bg-white p-3 rounded-lg border border-gray-200">
-                    <p class="text-xs text-gray-600">${resultado}</p>
-                </div>
-            </div>
-        </div>
-    `;
+        `;
 
             return card;
         }
@@ -2400,4 +2404,3 @@
 </body>
 
 </html>
-
