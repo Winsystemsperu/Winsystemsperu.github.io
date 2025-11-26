@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seguimiento de Repuestos - Winsystems</title>
+
+    <!-- Tailwind CSS desde CDN (para desarrollo) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons sin source maps -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        /* --- ESTILOS GLOBAL WINSISTEMS --- */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --ws-primary: #3b82f6;
+            --ws-secondary: #1e40af;
+            --ws-accent: #f97316;
+            --ws-bg: #f8fafc;
+            --ws-card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--ws-bg);
+            min-height: 100vh;
+        }
+
+        .user-role-badge {
+            background: linear-gradient(90deg, var(--ws-primary), var(--ws-secondary));
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .soft-card {
+            background-color: var(--ws-card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .soft-card:hover:not(.active) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card.active {
+            border-bottom: 4px solid var(--ws-primary);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.2), 0 4px 6px -4px rgba(59, 130, 246, 0.1);
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-solicitado {
+            background: #fffbeb;
+            color: #d97706;
+            border: 1px solid #fcd34d;
+        }
+
+        .status-en-proceso,
+        .status-en-taller,
+        .status-en-almacen {
+            background: #eff6ff;
+            color: #2563eb;
+            border: 1px solid #93c5fd;
+        }
+
+        .status-entregado,
+        .status-instalado {
+            background: #ecfdf5;
+            color: #059669;
+            border: 1px solid #34d399;
+        }
+
+        /* Timeline mejorado */
+        .timeline-container {
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .timeline-line {
+            position: absolute;
+            left: 7px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, #3b82f6, #10b981);
+            z-index: 1;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 16px;
+            padding: 16px;
+            background: white;
+            border-radius: 12px;
+            border-left: 4px solid #3b82f6;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .timeline-item:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transform: translateX(2px);
+        }
+
+        .timeline-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -26px;
+            top: 20px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 3px solid white;
+            background: #3b82f6;
+            z-index: 2;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+
+        .timeline-dot.current {
+            background: #10b981;
+            border-color: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        .timeline-dot.completed {
+            background: #10b981;
+            border-color: #10b981;
+        }
+
+        .timeline-dot.pending {
+            background: #f59e0b;
+            border-color: #f59e0b;
+        }
+
+        .timeline-dot.future {
+            background: #9ca3af;
+            border-color: #9ca3af;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .timeline-content {
+            margin-left: 0;
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+            gap: 12px;
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            color: #1f2937;
+            flex: 1;
+            font-size: 0.95rem;
+        }
+
+        .timeline-date {
+            font-size: 0.8rem;
+            color: #6b7280;
+            text-align: right;
+            min-width: 120px;
+        }
+
+        .timeline-time {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            margin-top: 2px;
+        }
+
+        .timeline-details {
+            font-size: 0.875rem;
+            color: #4b5563;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .timeline-meta {
+            display: flex;
+            gap: 16px;
+            margin-top: 8px;
+            font-size: 0.75rem;
+            color: #6b7280;
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .animate-in {
+            opacity: 0;
+            animation: fadeInSlide 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeInSlide {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Badge de estado en timeline */
+        .timeline-badge {
+            padding: 3px 10px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 8px;
+            border: 1px solid;
+        }
+
+        .badge-solicitado { background: #fef3c7; color: #d97706; border-color: #fcd34d; }
+        .badge-proceso { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+        .badge-taller { background: #fce7f3; color: #be185d; border-color: #f9a8d4; }
+        .badge-almacen { background: #dcfce7; color: #166534; border-color: #86efac; }
+        .badge-entregado { background: #f0f9ff; color: #0369a1; border-color: #7dd3fc; }
+        .badge-instalado { background: #fef7cd; color: #854d0e; border-color: #fde68a; }
+
+        /* Estados especiales para la línea de tiempo */
+        .timeline-item.current {
+            border-left-color: #10b981;
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+        }
+
+        .timeline-item.completed {
+            border-left-color: #3b82f6;
+        }
+
+        .timeline-item.pending {
+            border-left-color: #f59e0b;
+            background: #fffbeb;
+        }
+
+        /* Scrollbar personalizado */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+
+<body class="text-gray-800">
+
+    <div id="loading-overlay"
+        class="fixed inset-0 bg-white z-50 flex items-center justify-center transition-opacity duration-500">
+        <div class="text-center">
+            <i data-lucide="package" class="animate-ping h-8 w-8 text-blue-600 mx-auto mb-4"></i>
+            <p class="text-xl font-semibold text-gray-700 mt-6">Cargando Seguimiento de Repuestos...</p>
+            <p class="text-sm text-gray-500 mt-2">Conectando en tiempo real.</p>
+        </div>
+    </div>
+
+    <header class="bg-white shadow-md">
+        <div
+            class="container mx-auto px-4 md:px-8 max-w-7xl py-4 flex flex-col md:flex-row justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <div
+                    class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center shadow-lg">
+                    <span class="text-white font-bold text-lg">WS</span>
+                </div>
+                <div>
+                    <h1 id="welcome-title" class="text-xl md:text-2xl font-bold text-gray-900">Seguimiento de Repuestos
+                    </h1>
+                    <div class="flex items-center mt-1 space-x-2">
+                        <span id="user-role-badge" class="user-role-badge">SALA</span>
+                        <span id="sala-info" class="text-sm text-gray-500">Cargando información...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3 mt-4 md:mt-0">
+                <a href="./home.html" title="Ir al Dashboard"
+                    class="p-2 rounded-full text-gray-600 hover:bg-gray-100 transition-colors">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                </a>
+                <button id="logout-button" title="Cerrar Sesión"
+                    class="p-2 rounded-full text-gray-600 hover:bg-red-100 hover:text-red-600 transition-colors">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 md:px-8 max-w-7xl mt-8">
+
+        <div class="soft-card p-5 mb-6 flex flex-col lg:flex-row gap-4 items-center justify-between">
+            <div class="w-full lg:w-1/3">
+                <div class="relative">
+                    <i data-lucide="search"
+                        class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5"></i>
+                    <input type="text" id="search-input" placeholder="Buscar por Código, Nombre, Serie..."
+                        class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                </div>
+            </div>
+
+            <button id="refresh-btn" title="Actualizar Datos"
+                class="bg-green-500 text-white p-3 rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-green-600 transition-colors w-full lg:w-auto">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                Actualizar Datos (Manual)
+            </button>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="stat-filters-container">
+            <div class="soft-card stat-card p-4 text-center border-t-4 border-blue-500 cursor-pointer active"
+                data-filter="all">
+                <div class="text-3xl font-bold text-blue-600 mb-1" id="total-count">0</div>
+                <div class="text-sm text-gray-600 font-medium">Total Repuestos</div>
+            </div>
+            <div class="soft-card stat-card p-4 text-center border-t-4 border-amber-500 cursor-pointer"
+                data-filter="Solicitado">
+                <div class="text-3xl font-bold text-amber-600 mb-1" id="solicitados-count">0</div>
+                <div class="text-sm text-gray-600 font-medium">Solicitados</div>
+            </div>
+            <div class="soft-card stat-card p-4 text-center border-t-4 border-orange-500 cursor-pointer"
+                data-filter="En Proceso|En Taller|En Almacen">
+                <div class="text-3xl font-bold text-orange-600 mb-1" id="proceso-count">0</div>
+                <div class="text-sm text-gray-600 font-medium">En Progreso</div>
+            </div>
+            <div class="soft-card stat-card p-4 text-center border-t-4 border-green-500 cursor-pointer"
+                data-filter="Entregado|Instalado">
+                <div class="text-3xl font-bold text-green-600 mb-1" id="entregados-count">0</div>
+                <div class="text-sm text-gray-600 font-medium">Finalizados</div>
+            </div>
+        </div>
+
+        <div id="results-container" class="space-y-4">
+            <div class="soft-card p-8 text-center">
+                <i data-lucide="package" class="w-10 h-10 text-blue-500 mx-auto mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">Cargando repuestos...</h3>
+            </div>
+        </div>
+
+        <footer class="mt-10 pt-4 border-t border-gray-200 text-center text-gray-500 text-sm">
+            <p>Winsystems &copy; 2025 - Sistema de Gestión de Repuestos</p>
+        </footer>
+    </div>
+
+    <button id="help-button"
+        class="fixed bottom-6 right-6 bg-blue-500 text-white p-3 rounded-full shadow-lg hover:bg-blue-600 transition-colors z-40">
+        <i data-lucide="help-circle" class="w-5 h-5"></i>
+    </button>
+
+    <script>
+    // === CONFIGURACIÓN SUPABASE ===
+    const SUPABASE_URL = 'https://qobquktxvhlvtrpeopji.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvYnF1a3R4dmhsdnRycGVvcGppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU2OTc4NDYsImV4cCI6MjA2MTI3Mzg0Nn0.rnubNUWSWEomj5Xwvr65kZLK7Ig_bLC74ajFh9cksFc';
+    
+    // Inicializar Supabase con manejo de errores
+    let supabaseClient;
+    try {
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } catch (error) {
+        console.error('Error inicializando Supabase:', error);
+    }
+
+    // === VARIABLES GLOBALES ===
+    let userSalaId = null;
+    let allRepuestos = [];
+    let activeFilter = 'all'; 
+
+    // Estados del flujo completo
+    const STATUS_FLOW = {
+        'Solicitado': { 
+            step: 1, 
+            label: 'Solicitud Recibida',
+            description: 'El repuesto ha sido solicitado y está en proceso de aprobación.',
+            icon: 'clipboard-list',
+            color: 'badge-solicitado'
+        },
+        'En Proceso': { 
+            step: 2, 
+            label: 'En Proceso de Preparación',
+            description: 'El repuesto está siendo preparado y empaquetado para envío.',
+            icon: 'package',
+            color: 'badge-proceso'
+        },
+        'En Taller': { 
+            step: 3, 
+            label: 'En Taller de Reparación',
+            description: 'El repuesto está siendo revisado o reparado en el taller técnico.',
+            icon: 'settings',
+            color: 'badge-taller'
+        },
+        'En Almacen': { 
+            step: 4, 
+            label: 'En Almacén Central',
+            description: 'El repuesto está listo en almacén esperando asignación o entrega.',
+            icon: 'warehouse',
+            color: 'badge-almacen'
+        },
+        'Entregado': { 
+            step: 5, 
+            label: 'Entregado en Sala',
+            description: 'El repuesto ha sido entregado en la sala y está disponible para uso.',
+            icon: 'truck',
+            color: 'badge-entregado'
+        },
+        'Instalado': { 
+            step: 6, 
+            label: 'Instalado y Operativo',
+            description: 'El repuesto ha sido instalado y se encuentra en funcionamiento.',
+            icon: 'check-circle',
+            color: 'badge-instalado'
+        }
+    };
+
+    // --- FUNCIONES DE INICIALIZACIÓN Y SESIÓN MEJORADAS ---
+
+    async function initializeApp() {
+        try {
+            // Inicializar Lucide primero
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+
+            await checkSession();
+            await loadRepuestos();
+            setupEventListeners();
+            setupRealtimeSubscription();
+            
+            console.log('✅ Aplicación inicializada correctamente');
+        } catch (error) {
+            console.error('❌ Error al inicializar:', error);
+            showMessage('⚠️ Error crítico al cargar la aplicación: ' + error.message, 'error');
+        } finally {
+            // Ocultar loading overlay
+            const loadingOverlay = document.getElementById('loading-overlay');
+            if (loadingOverlay) {
+                loadingOverlay.classList.add('opacity-0', 'pointer-events-none');
+                setTimeout(() => loadingOverlay.classList.add('hidden'), 500);
+            }
+        }
+    }
+
+    async function checkSession() {
+        console.log("--- INICIANDO checkSession ---");
+        
+        if (!supabaseClient) {
+            throw new Error("Cliente de Supabase no inicializado");
+        }
+
+        const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+        
+        if (sessionError) {
+            console.error('❌ Error en getSession:', sessionError);
+            throw new Error("Error de conexión con el servidor");
+        }
+        
+        if (!session) {
+            console.log("❌ No se detectó ninguna sesión activa");
+            console.log("➡️ Redirigiendo a ./index.html");
+            window.location.href = './index.html';
+            return;
+        } 
+        
+        console.log(`✅ Sesión activa detectada. User ID: ${session.user.id}`);
+        
+        // Obtener información del usuario
+        const { data: userData, error: userError } = await supabaseClient
+            .from('tecnicos')
+            .select('cargo, docum, usuario')
+            .eq('id_usuario', session.user.id)
+            .single();
+
+        if (userError || !userData || userData.cargo.toLowerCase() !== 'sala' || !userData.docum) {
+            console.error('❌ Error en datos de usuario:', userError);
+            alert('No tienes permiso para acceder a esta vista o tu información está incompleta. Serás redirigido.');
+            window.location.href = './index.html';
+            throw new Error('Usuario no autorizado para ver repuestos de sala');
+        }
+
+        userSalaId = userData.docum;
+
+        // Obtener información de la sala
+        const { data: salaData, error: salaError } = await supabaseClient
+            .from('sala')
+            .select('sala_mincetur')
+            .eq('id_sala', userSalaId)
+            .single();
+
+        const userSalaNombre = salaData?.sala_mincetur || `Sala ${userSalaId}`;
+        
+        // Actualizar UI
+        const salaInfoElement = document.getElementById('sala-info');
+        const roleBadgeElement = document.getElementById('user-role-badge');
+        const welcomeTitleElement = document.getElementById('welcome-title');
+        
+        if (salaInfoElement) salaInfoElement.textContent = userSalaNombre;
+        if (roleBadgeElement) roleBadgeElement.textContent = userData.cargo;
+        if (welcomeTitleElement) welcomeTitleElement.textContent = `Seguimiento de Repuestos - ${userSalaNombre}`;
+        
+        console.log(`✅ Usuario configurado: ${userData.usuario}, Sala: ${userSalaNombre}`);
+    }
+
+    function setupEventListeners() {
+        const refreshBtn = document.getElementById('refresh-btn');
+        const searchInput = document.getElementById('search-input');
+        const helpButton = document.getElementById('help-button');
+        const logoutButton = document.getElementById('logout-button');
+
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', loadRepuestos);
+        }
+        
+        // Filtros de estadísticas
+        document.querySelectorAll('.stat-card').forEach(card => {
+            card.addEventListener('click', function() {
+                setActiveFilter(this.dataset.filter, this);
+            });
+        });
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', filterRepuestos);
+        }
+        
+        if (helpButton) {
+            helpButton.addEventListener('click', () => {
+                alert("Para soporte, contacta al administrador del sistema.");
+            });
+        }
+        
+        if (logoutButton) {
+            logoutButton.addEventListener('click', () => logout(false));
+        }
+
+        // Activar filtro inicial
+        const initialCard = document.querySelector('.stat-card[data-filter="all"]');
+        if (initialCard) setActiveFilter('all', initialCard);
+    }
+
+    async function logout(force = false) {
+        if (!force) {
+            const confirmLogout = confirm("¿Estás seguro de que deseas cerrar sesión?");
+            if (!confirmLogout) return;
+        }
+
+        try {
+            if (supabaseClient) {
+                supabaseClient.removeAllChannels(); 
+                await supabaseClient.auth.signOut();
+            }
+        } catch (error) {
+            console.error('Error durante logout:', error);
+        } finally {
+            window.location.href = './index.html';
+        }
+    }
+
+    // --- FUNCIONES DE DATOS Y TIEMPO REAL ---
+
+    function setupRealtimeSubscription() {
+        if (!userSalaId || !supabaseClient) return; 
+        
+        try {
+            supabaseClient
+                .channel(`repuestos_sala_${userSalaId}`)
+                .on(
+                    'postgres_changes',
+                    { 
+                        event: '*', 
+                        schema: 'public', 
+                        table: 'estado_repu',
+                        filter: `id_sala=eq.${userSalaId}`
+                    },
+                    (payload) => {
+                        console.log('📦 Cambio en tiempo real detectado:', payload);
+                        handleRealtimeUpdate();
+                    }
+                )
+                .subscribe((status) => {
+                    if (status === 'SUBSCRIBED') {
+                        console.log('✅ Suscrito a cambios en tiempo real');
+                    }
+                });
+        } catch (error) {
+            console.error('❌ Error en suscripción en tiempo real:', error);
+        }
+    }
+
+    async function handleRealtimeUpdate() {
+        await loadRepuestos(false); 
+        
+        const refreshBtn = document.getElementById('refresh-btn');
+        if (refreshBtn) {
+            refreshBtn.textContent = 'Actualizado en Tiempo Real ✅';
+            refreshBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+            refreshBtn.classList.add('bg-blue-500', 'hover:bg-blue-600', 'text-white');
+            
+            setTimeout(() => {
+                refreshBtn.textContent = 'Actualizar Datos (Manual)';
+                refreshBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600', 'text-white');
+                refreshBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+            }, 3000);
+        }
+    }
+
+    async function loadRepuestos(showLoad = true) {
+        if (showLoad) showLoading();
+
+        try {
+            if (!supabaseClient) {
+                throw new Error("Cliente de Supabase no disponible");
+            }
+
+            // CONSULTA CORREGIDA - RELACIÓN CORRECTA ENTRE TABLAS
+            const { data: repuestos, error } = await supabaseClient
+                .from('estado_repu')
+                .select(`
+                    id_estadorepu,
+                    id_serie,
+                    estado,
+                    ubi_actual,
+                    cantidad,
+                    id_repuesto,
+                    id_detalle,
+                    repuestos (
+                        id_repuesto,
+                        nombre,
+                        num_part,
+                        categoria
+                    ),
+                    maquinas (
+                        serie,
+                        modelo
+                    ),
+                    id_detalle (
+                        id_trabajo,
+                        tipo_trabajo,
+                        estado,
+                        trabajos (
+                            codigo,
+                            fecha,
+                            hora_inicio,
+                            hora_fin,
+                            id_usuario
+                        )
+                    )
+                `)
+                .eq('id_sala', userSalaId)
+                .order('id_estadorepu', { ascending: false });
+
+            if (error) throw error;
+
+            allRepuestos = repuestos || [];
+            console.log(`✅ ${allRepuestos.length} repuestos cargados`);
+            
+            updateStatistics();
+            filterRepuestos();
+            
+        } catch (error) {
+            console.error('❌ Error cargando repuestos:', error);
+            showMessage('Error al cargar los repuestos: ' + error.message, 'error');
+        }
+    }
+
+    // --- FUNCIÓN MEJORADA PARA CARGAR HISTORIAL COMPLETO CON FECHA Y HORA ---
+    async function loadCompleteHistory(idRepuesto, estadoActual, containerId, delay) {
+        const container = document.getElementById(containerId);
+        if (!container) return; 
+        
+        await new Promise(resolve => setTimeout(resolve, delay));
+
+        container.innerHTML = `
+            <div class="text-sm text-gray-500 flex items-center gap-2">
+                <i data-lucide="loader-2" class="animate-spin w-4 h-4"></i> 
+                Cargando historial completo...
+            </div>
+        `;
+        
+        // Actualizar íconos
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+
+        try {
+            // Cargar movimientos desde repuestos_movimientos
+            const { data: movimientos, error: movError } = await supabaseClient
+                .from('repuestos_movimientos')
+                .select(`
+                    fecha_hora, 
+                    accion, 
+                    id_usuario,
+                    ubicacion_origen,
+                    ubicacion_destino,
+                    serie_texto,
+                    tecnicos!inner(usuario, cel, correo)
+                `)
+                .eq('id_repuesto', idRepuesto)
+                .order('fecha_hora', { ascending: true });
+
+            if (movError) throw movError;
+
+            let timelineHTML = `
+                <div class="timeline-container">
+                    <div class="timeline-line"></div>
+                    <div class="space-y-3">
+            `;
+
+            // Si no hay movimientos, mostrar estados por defecto con fecha actual
+            if (!movimientos || movimientos.length === 0) {
+                const now = new Date();
+                Object.entries(STATUS_FLOW).forEach(([estado, info], index) => {
+                    const isCurrent = estado === estadoActual;
+                    const isCompleted = STATUS_FLOW[estado]?.step < STATUS_FLOW[estadoActual]?.step;
+                    const dotClass = isCurrent ? 'current' : (isCompleted ? 'completed' : 'future');
+                    
+                    // Generar fecha progresiva para estados por defecto
+                    const eventDate = new Date(now);
+                    eventDate.setDate(eventDate.getDate() - (Object.keys(STATUS_FLOW).length - index));
+                    
+                    const dateStr = eventDate.toLocaleDateString('es-PE', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    });
+                    const timeStr = eventDate.toLocaleTimeString('es-PE', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    });
+
+                    timelineHTML += createTimelineItem({
+                        title: info.label,
+                        description: info.description,
+                        status: estado,
+                        date: dateStr,
+                        time: timeStr,
+                        dotClass: dotClass,
+                        isCurrent: isCurrent,
+                        isCompleted: isCompleted,
+                        hasRealDate: false
+                    });
+                });
+            } else {
+                // Mostrar movimientos reales con fechas y horas exactas
+                movimientos.forEach((mov, index) => {
+                    const isLast = index === movimientos.length - 1;
+                    const dotClass = isLast ? 'current' : 'completed';
+                    
+                    const date = new Date(mov.fecha_hora);
+                    const dateStr = date.toLocaleDateString('es-PE', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    });
+                    const timeStr = date.toLocaleTimeString('es-PE', { 
+                        hour: '2-digit', 
+                        minute: '2-digit',
+                        second: '2-digit'
+                    });
+
+                    let details = [];
+                    if (mov.ubicacion_origen && mov.ubicacion_destino) {
+                        details.push(`De: ${mov.ubicacion_origen}`);
+                        details.push(`A: ${mov.ubicacion_destino}`);
+                    }
+                    if (mov.serie_texto) {
+                        details.push(`Serie: ${mov.serie_texto}`);
+                    }
+
+                    timelineHTML += createTimelineItem({
+                        title: mov.accion,
+                        description: details.join(' • '),
+                        status: mov.accion,
+                        date: dateStr,
+                        time: timeStr,
+                        dotClass: dotClass,
+                        isCurrent: isLast,
+                        isCompleted: !isLast,
+                        tecnico: mov.tecnicos?.usuario || 'Sistema',
+                        hasRealDate: true
+                    });
+                });
+
+                // Si el estado actual no está en los movimientos, agregarlo con fecha actual
+                const currentEstadoInMovimientos = movimientos.some(mov => 
+                    mov.accion.includes(estadoActual)
+                );
+
+                if (!currentEstadoInMovimientos && estadoActual) {
+                    const estadoInfo = STATUS_FLOW[estadoActual];
+                    if (estadoInfo) {
+                        const now = new Date();
+                        const dateStr = now.toLocaleDateString('es-PE', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                        });
+                        const timeStr = now.toLocaleTimeString('es-PE', { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                        });
+
+                        timelineHTML += createTimelineItem({
+                            title: estadoInfo.label,
+                            description: estadoInfo.description,
+                            status: estadoActual,
+                            date: dateStr,
+                            time: timeStr,
+                            dotClass: 'current',
+                            isCurrent: true,
+                            isCompleted: false,
+                            hasRealDate: true
+                        });
+                    }
+                }
+            }
+            
+            timelineHTML += `
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = timelineHTML;
+            
+            // Actualizar íconos después de renderizar
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+
+        } catch (err) {
+            console.error('❌ Error cargando historial:', err);
+            container.innerHTML = `
+                <div class="text-sm text-red-500 bg-red-50 p-3 rounded-lg">
+                    <i data-lucide="alert-circle" class="w-4 h-4 inline mr-2"></i>
+                    Error al cargar historial: ${err.message}
+                </div>
+            `;
+            
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+        }
+    }
+
+    function createTimelineItem({ title, description, status, date, time, dotClass, isCurrent, isCompleted, tecnico, hasRealDate = true }) {
+        const statusInfo = STATUS_FLOW[status] || { color: 'badge-proceso', icon: 'circle' };
+        const icon = STATUS_FLOW[status]?.icon || 'circle';
+        
+        return `
+            <div class="timeline-item ${isCurrent ? 'current' : (isCompleted ? 'completed' : 'pending')}">
+                <div class="timeline-dot ${dotClass}"></div>
+                <div class="timeline-content">
+                    <div class="timeline-header">
+                        <div class="timeline-title flex items-center gap-2">
+                            <i data-lucide="${icon}" class="w-4 h-4 ${isCurrent ? 'text-green-600' : (isCompleted ? 'text-blue-600' : 'text-gray-400')}"></i>
+                            ${title}
+                            <span class="timeline-badge ${statusInfo.color}">${status}</span>
+                        </div>
+                        <div class="timeline-date">
+                            <div>${date}</div>
+                            <div class="timeline-time">${time}</div>
+                            ${!hasRealDate ? '<div class="text-xs text-amber-600 mt-1">Fecha estimada</div>' : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-details">
+                        ${description}
+                    </div>
+                    
+                    <div class="timeline-meta">
+                        ${tecnico ? `
+                            <div class="meta-item">
+                                <i data-lucide="user" class="w-3 h-3"></i>
+                                <span>Técnico: ${tecnico}</span>
+                            </div>
+                        ` : ''}
+                        
+                        ${isCurrent ? `
+                            <div class="meta-item text-green-600">
+                                <i data-lucide="clock" class="w-3 h-3"></i>
+                                <span>Estado Actual</span>
+                            </div>
+                        ` : (isCompleted ? `
+                            <div class="meta-item text-blue-600">
+                                <i data-lucide="check" class="w-3 h-3"></i>
+                                <span>Completado</span>
+                            </div>
+                        ` : `
+                            <div class="meta-item text-amber-600">
+                                <i data-lucide="clock" class="w-3 h-3"></i>
+                                <span>Pendiente</span>
+                            </div>
+                        `)}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // --- FUNCIONES DE FILTRO Y RENDERIZADO DE LISTA ---
+
+    function setActiveFilter(filter, clickedCard) {
+        activeFilter = filter;
+
+        document.querySelectorAll('.stat-card').forEach(card => {
+            card.classList.remove('active');
+        });
+        clickedCard.classList.add('active');
+
+        filterRepuestos();
+    }
+
+    function filterRepuestos() {
+        const searchTerm = document.getElementById('search-input')?.value.toLowerCase() || '';
+        
+        let results = [...allRepuestos];
+
+        if (activeFilter !== 'all') {
+            const filterStates = activeFilter.split('|');
+            results = results.filter(repuesto => filterStates.includes(repuesto.estado));
+        }
+
+        if (searchTerm) {
+            results = results.filter(repuesto => {
+                const codigo = repuesto.id_detalle?.trabajos?.codigo || '';
+                const nombre = repuesto.repuestos?.nombre || '';
+                const serie = repuesto.id_serie || '';
+                const numPart = repuesto.repuestos?.num_part || '';
+                
+                return codigo.toLowerCase().includes(searchTerm) || 
+                       nombre.toLowerCase().includes(searchTerm) || 
+                       serie.toLowerCase().includes(searchTerm) ||
+                       numPart.toLowerCase().includes(searchTerm);
+            });
+        }
+
+        displayResults(results);
+    }
+
+    function displayResults(results) {
+        const container = document.getElementById('results-container');
+        if (!container) return;
+        
+        if (!results || results.length === 0) {
+            container.innerHTML = `
+                <div class="soft-card p-8 text-center animate-in">
+                    <i data-lucide="package-x" class="w-10 h-10 text-amber-500 mx-auto mb-4"></i>
+                    <h3 class="text-xl font-semibold text-gray-700 mb-2">No se encontraron repuestos</h3>
+                    <p class="text-gray-500">Ajusta los filtros o términos de búsqueda.</p>
+                </div>
+            `;
+            
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+            return;
+        }
+        
+        let html = '<div class="space-y-4">';
+        
+        const repuestosToLoad = [];
+
+        results.forEach((repuesto, index) => {
+            
+            // Extracción de datos relacionados
+            const trabajoInfo = repuesto.id_detalle?.trabajos || null;
+            const codigoTrabajo = trabajoInfo?.codigo || 'N/A';
+            const fechaTrabajo = trabajoInfo?.fecha || 'N/A';
+            const horaInicio = trabajoInfo?.hora_inicio || 'N/A';
+            const horaFin = trabajoInfo?.hora_fin || 'N/A';
+            
+            const idDetalleValor = repuesto.id_detalle?.id_trabajo || 'N/A';
+            const idRepuesto = repuesto.id_repuesto;
+            const timelineContainerId = `timeline-${repuesto.id_estadorepu}`;
+            const delay = index * 50;
+
+            // Registrar la carga del historial
+            if (idRepuesto) {
+                repuestosToLoad.push({ 
+                    idRepuesto, 
+                    estadoActual: repuesto.estado,
+                    timelineContainerId, 
+                    delay 
+                });
+            }
+
+            html += `
+                <div class="soft-card p-5 animate-in" style="animation-delay: ${delay}ms">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 pb-4 border-b border-gray-100">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                <i data-lucide="package" class="w-5 h-5 text-blue-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-900">${repuesto.repuestos?.nombre || 'Repuesto sin Nombre'}</h3>
+                                <p class="text-sm text-gray-500">PN: ${repuesto.repuestos?.num_part || 'N/A'} | Serie: ${repuesto.id_serie || 'N/A'}</p>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <span class="status-badge status-${repuesto.estado.toLowerCase().replace(' ', '-')}">
+                                ${repuesto.estado}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        
+                        <div class="space-y-3 p-3 bg-gray-50 rounded-lg">
+                            <p class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                                <i data-lucide="file-text" class="w-4 h-4 text-blue-500"></i> 
+                                Código de Trabajo:
+                            </p>
+                            <p class="font-mono text-blue-700 ml-6">${codigoTrabajo}</p>
+                            
+                            <p class="text-sm font-semibold text-gray-700 flex items-center gap-2 mt-4">
+                                <i data-lucide="calendar" class="w-4 h-4 text-orange-500"></i> 
+                                Fecha de Trabajo:
+                            </p>
+                            <p class="font-medium text-gray-800 ml-6">${fechaTrabajo}</p>
+
+                            <p class="text-sm font-semibold text-gray-700 flex items-center gap-2 mt-4">
+                                <i data-lucide="clock" class="w-4 h-4 text-purple-500"></i> 
+                                Horario de Trabajo:
+                            </p>
+                            <p class="font-medium text-gray-800 ml-6 text-xs">
+                                Inicio: ${horaInicio} <br>
+                                Fin: ${horaFin}
+                            </p>
+                        </div>
+
+                        <div class="space-y-2 p-3 bg-gray-50 rounded-lg">
+                            <p class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                                <i data-lucide="map-pin" class="w-4 h-4 text-blue-500"></i> 
+                                Ubicación Actual:
+                            </p>
+                            <p class="font-medium text-gray-800 ml-6">${repuesto.ubi_actual || 'No especificada'}</p>
+                            
+                            <p class="text-sm font-semibold text-gray-700 flex items-center gap-2 mt-4">
+                                <i data-lucide="hash" class="w-4 h-4 text-green-500"></i> 
+                                Cantidad:
+                            </p>
+                            <p class="font-medium text-gray-800 ml-6">${repuesto.cantidad || 1}</p>
+                            
+                            <p class="text-sm font-semibold text-gray-700 flex items-center gap-2 mt-4">
+                                <i data-lucide="server" class="w-4 h-4 text-purple-500"></i> 
+                                Máquina Relacionada:
+                            </p>
+                            <p class="font-medium text-gray-800 ml-6">${repuesto.maquinas?.serie || 'N/A'}</p>
+                        </div>
+                        
+                        <div class="lg:col-span-1">
+                            <h4 class="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                                <i data-lucide="history" class="w-5 h-5 text-purple-600"></i>
+                                Historial Completo
+                            </h4>
+                            <div id="${timelineContainerId}" class="max-h-80 overflow-y-auto pr-2 custom-scrollbar">
+                                <!-- El historial completo se cargará aquí -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        container.innerHTML = html;
+        
+        // Actualizar íconos
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+
+        // Cargar historiales completos de forma asíncrona
+        repuestosToLoad.forEach(({ idRepuesto, estadoActual, timelineContainerId, delay }) => {
+            loadCompleteHistory(idRepuesto, estadoActual, timelineContainerId, delay);
+        });
+    }
+
+    function updateStatistics() {
+        const total = allRepuestos.length;
+        const solicitados = allRepuestos.filter(r => r.estado === 'Solicitado').length;
+        const proceso = allRepuestos.filter(r => ['En Proceso', 'En Taller', 'En Almacen'].includes(r.estado)).length;
+        const entregados = allRepuestos.filter(r => r.estado === 'Entregado' || r.estado === 'Instalado').length;
+
+        const totalCount = document.getElementById('total-count');
+        const solicitadosCount = document.getElementById('solicitados-count');
+        const procesoCount = document.getElementById('proceso-count');
+        const entregadosCount = document.getElementById('entregados-count');
+
+        if (totalCount) totalCount.textContent = total;
+        if (solicitadosCount) solicitadosCount.textContent = solicitados;
+        if (procesoCount) procesoCount.textContent = proceso;
+        if (entregadosCount) entregadosCount.textContent = entregados;
+    }
+
+    function showLoading() {
+        const container = document.getElementById('results-container');
+        if (!container) return;
+        
+        container.innerHTML = `
+            <div class="soft-card p-8 text-center">
+                <i data-lucide="loader-2" class="animate-spin w-10 h-10 text-blue-600 mx-auto mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">Cargando repuestos...</h3>
+            </div>
+        `;
+        
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+    }
+
+    function showMessage(message, type = 'info') {
+        const container = document.getElementById('results-container');
+        if (!container) return;
+        
+        const icons = { info: 'info', error: 'alert-circle' };
+        const colors = { info: 'text-blue-600', error: 'text-red-600' };
+        const bgColors = { info: 'bg-blue-50', error: 'bg-red-50' };
+        
+        container.innerHTML = `
+            <div class="soft-card p-8 text-center animate-in ${bgColors[type]}">
+                <i data-lucide="${icons[type]}" class="w-10 h-10 ${colors[type]} mx-auto mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">${message}</h3>
+            </div>
+        `;
+        
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+    }
+
+    // --- INICIALIZACIÓN SEGURA ---
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar Lucide primero
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+        
+        // Luego inicializar la aplicación
+        setTimeout(() => {
+            initializeApp().catch(error => {
+                console.error('Error fatal en inicialización:', error);
+            });
+        }, 100);
+    });
+</script>
+</body>
+
+</html>

@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Taller</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+        }
+
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(240, 242, 245, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        /* Tooltip (copiado de tu referencia) */
+        .tooltip-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip-bubble {
+            visibility: hidden;
+            width: 300px;
+            background-color: #262626;
+            color: #fff;
+            text-align: left;
+            white-space: normal;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 20;
+            opacity: 0;
+            transition: opacity 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            bottom: 125%; /* Posicionado arriba */
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .tooltip-bubble::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #262626 transparent transparent transparent;
+        }
+
+        .tooltip-container:hover .tooltip-bubble {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body class="text-gray-800">
+
+    <div id="loading-overlay">
+        <div class="text-center">
+            <i data-lucide="loader-2" class="animate-spin h-12 w-12 text-blue-600"></i>
+            <p class="mt-4 text-lg font-semibold text-gray-700">Cargando Datos de Taller...</p>
+        </div>
+    </div>
+
+    <div class="container mx-auto p-4 md:p-8 opacity-0" id="main-content">
+
+        <header class="mb-6 flex flex-wrap justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <img src="https://winsystems.com.pe/wp-content/uploads/2022/01/logo-winsystems-2022.png"
+                    alt="Logo de Winsystems" class="h-24">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Gestión de Taller</h1>
+                    <p class="text-gray-500">Monitoreo de ingresos, reparaciones y salidas.</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4 mt-4 md:mt-0">
+                <a href="./home.html" class="text-blue-600 hover:underline flex items-center gap-2">
+                    <i data-lucide="arrow-left"></i> Volver al Inicio
+                </a>
+                <button id="export-excel-btn"
+                    class="bg-green-600 text-white px-3 py-2 rounded-lg shadow hover:bg-green-700 flex items-center gap-2 text-sm transition">
+                    <i data-lucide="file-down" class="w-4 h-4"></i> Exportar a Excel
+                </button>
+                <button id="logout-button" title="Cerrar Sesión"
+                    class="p-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </header>
+
+        <div id="filters-section"
+            class="bg-white p-4 rounded-xl shadow-md mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+            <div>
+                <label for="start-date" class="block text-sm font-medium text-gray-700">Fecha Ingreso (Inicio)</label>
+                <input type="date" id="start-date"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            </div>
+            <div>
+                <label for="end-date" class="block text-sm font-medium text-gray-700">Fecha Ingreso (Fin)</label>
+                <input type="date" id="end-date"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            </div>
+            
+            <div id="estado-filter-container">
+                <label class="block text-sm font-medium text-gray-700">Estado</label>
+                <div class="relative mt-1">
+                    <button id="estado-filter-btn"
+                        class="w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default">
+                        <span id="estado-filter-text" class="block truncate">Todos</span>
+                    </button>
+                    <div id="estado-filter-options"
+                        class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto">
+                    </div>
+                </div>
+            </div>
+
+            <div id="procedencia-filter-container">
+                <label class="block text-sm font-medium text-gray-700">Procedencia</label>
+                <div class="relative mt-1">
+                    <button id="procedencia-filter-btn"
+                        class="w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default">
+                        <span id="procedencia-filter-text" class="block truncate">Todas</span>
+                    </button>
+                    <div id="procedencia-filter-options"
+                        class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label for="general-search" class="sr-only">Búsqueda General</label>
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
+                </div>
+                <input type="search" id="general-search"
+                    class="block w-full p-3 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Buscar por serie, sala, procedencia, observaciones...">
+            </div>
+        </div>
+        <div id="reporte-dashboard" class="bg-white p-6 rounded-xl shadow-md">
+            <div class="overflow-x-auto">
+                <table id="taller-report-table" class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50"></thead>
+                    <tbody class="bg-white divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIG & GLOBAL VARS ---
+        const SUPABASE_URL = 'https://qobquktxvhlvtrpeopji.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvYnF1a3R4dmhsdnRycGVvcGppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU2OTc4NDYsImV4cCI6MjA2MTI3Mzg0Nn0.rnubNUWSWEomj5Xwvr65kZLK7Ig_bLC74ajFh9cksFc';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let allEstados = [], allProcedencias = [];
+        let currentRecords = [];
+        let rawFetchedData = [];
+
+        // --- HELPERS ---
+        function debounce(func, delay = 400) {
+            let timeout;
+            return (...args) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    func.apply(this, args);
+                }, delay);
+            };
+        }
+        const debouncedApplyFilters = debounce(applyFilters);
+        const debouncedRender = debounce(renderTallerTable, 300);
+
+        function filterOptions(inputId, itemClass) {
+            const input = document.getElementById(inputId);
+            const filter = input.value.toUpperCase();
+            const items = document.querySelectorAll(`.${itemClass}`);
+            items.forEach(item => {
+                const textValue = item.querySelector('.option-text').textContent || item.querySelector('.option-text').innerText;
+                if (textValue.toUpperCase().indexOf(filter) > -1) {
+                    item.style.display = "flex";
+                } else {
+                    item.style.display = "none";
+                }
+            });
+        }
+
+        // --- SESSION & INITIALIZATION ---
+        async function checkSession() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                window.location.href = './index.html';
+                return;
+            }
+            // Opcional: puedes re-agregar la validación de rol si es necesario
+            initializePage();
+        }
+
+        async function logout() {
+            await supabaseClient.auth.signOut();
+            window.location.href = './index.html';
+        }
+
+        async function initializePage() {
+            document.getElementById('logout-button').addEventListener('click', logout);
+            document.getElementById('export-excel-btn').addEventListener('click', exportToExcel);
+            document.getElementById('start-date').addEventListener('change', debouncedApplyFilters);
+            document.getElementById('end-date').addEventListener('change', debouncedApplyFilters);
+            document.getElementById('general-search').addEventListener('input', debouncedRender);
+            
+            document.getElementById('estado-filter-btn').addEventListener('click', () => document.getElementById('estado-filter-options').classList.toggle('hidden'));
+            document.getElementById('procedencia-filter-btn').addEventListener('click', () => document.getElementById('procedencia-filter-options').classList.toggle('hidden'));
+
+            setDefaultDates();
+
+            await Promise.all([
+                populateEstadoFilter(),
+                populateProcedenciaFilter()
+            ]);
+            
+            updateEstadoFilterText();
+            updateProcedenciaFilterText();
+        
+            await applyFilters();
+
+            document.getElementById('main-content').classList.remove('opacity-0');
+            document.getElementById('loading-overlay').style.display = 'none';
+            lucide.createIcons();
+
+            // Suscripción a cambios en la tabla 'taller'
+            const channel = supabaseClient
+                .channel('taller-db-changes')
+                .on('postgres_changes', {
+                    event: '*',
+                    schema: 'public',
+                    table: 'taller'
+                }, (payload) => {
+                    console.log('¡Cambio detectado en Taller!', payload);
+                    debouncedApplyFilters();
+                })
+                .subscribe((status) => {
+                    if (status === 'SUBSCRIBED') {
+                        console.log('¡Conectado al canal de Taller!');
+                    }
+                });
+        }
+
+        // --- FILTER POPULATION ---
+        function setDefaultDates() {
+            const endDateInput = document.getElementById('end-date');
+            const startDateInput = document.getElementById('start-date');
+            const today = new Date();
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(today.getDate() - 30);
+            endDateInput.value = today.toISOString().split('T')[0];
+            startDateInput.value = thirtyDaysAgo.toISOString().split('T')[0];
+        }
+
+        async function populateEstadoFilter() {
+            // Consulta los estados distintos de la tabla 'taller'
+            const { data, error } = await supabaseClient.from('taller').select('estado');
+            if (error) {
+                console.error('Error fetching estados de taller:', error);
+                return;
+            }
+            allEstados = [...new Set(data.map(item => item.estado).filter(Boolean))].sort().map(st => ({
+                estado: st
+            }));
+            createMultiSelect({
+                container: document.getElementById('estado-filter-options'),
+                items: allEstados,
+                idField: 'estado',
+                nameField: 'estado',
+                checkboxClass: 'estado-checkbox',
+                allSelectorId: 'select-all-estados',
+                updateTextFn: updateEstadoFilterText
+            });
+        }
+
+        async function populateProcedenciaFilter() {
+            // Consulta las procedencias distintas de la tabla 'taller'
+            const { data, error } = await supabaseClient.from('taller').select('procedencia');
+            if (error) {
+                console.error('Error fetching procedencias de taller:', error);
+                return;
+            }
+            allProcedencias = [...new Set(data.map(item => item.procedencia).filter(Boolean))].sort().map(p => ({
+                procedencia: p
+            }));
+            createMultiSelect({
+                container: document.getElementById('procedencia-filter-options'),
+                items: allProcedencias,
+                idField: 'procedencia',
+                nameField: 'procedencia',
+                checkboxClass: 'procedencia-checkbox',
+                allSelectorId: 'select-all-procedencias',
+                updateTextFn: updateProcedenciaFilterText
+            });
+        }
+
+
+        // --- MULTI-SELECT UI LOGIC (copiada de tu referencia) ---
+        function createMultiSelect({
+            container,
+            items,
+            idField,
+            nameField,
+            checkboxClass,
+            allSelectorId,
+            updateTextFn,
+            searchable = false
+        }) {
+            container.innerHTML = '';
+            
+            const itemClass = `${checkboxClass}-item`;
+            const searchId = `${checkboxClass}-search-input`;
+
+            if (searchable) {
+                const searchInputHtml = `
+                    <div class="px-3 pt-2 pb-1 sticky top-0 bg-white z-20 shadow-sm border-b border-gray-200">
+                        <input type="text" id="${searchId}" placeholder="Buscar..." 
+                            class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 p-1.5 text-sm">
+                    </div>
+                `;
+                container.insertAdjacentHTML('afterbegin', searchInputHtml);
+                document.getElementById(searchId).addEventListener('keyup', () => filterOptions(searchId, itemClass));
+            }
+
+            const allOptionLabel = document.createElement('label');
+            allOptionLabel.className = `flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer font-semibold ${itemClass}`;
+            allOptionLabel.innerHTML = `<input type="checkbox" id="${allSelectorId}" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3" checked> <span class="option-text">Todos</span>`;
+            container.appendChild(allOptionLabel);
+
+            items.forEach(item => {
+                const label = document.createElement('label');
+                label.className = `flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer ${itemClass}`;
+                label.innerHTML = `<input type="checkbox" data-id="${item[idField]}" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3 ${checkboxClass}" checked> <span class="option-text">${item[nameField]}</span>`;
+                container.appendChild(label);
+            });
+
+            document.getElementById(allSelectorId).addEventListener('change', (e) => {
+                container.querySelectorAll(`.${checkboxClass}`).forEach(cb => cb.checked = e.target.checked);
+                updateTextFn();
+                debouncedApplyFilters();
+            });
+            
+            container.addEventListener('change', (e) => {
+                if (e.target.id !== allSelectorId) {
+                    const allCheckboxes = container.querySelectorAll(`.${checkboxClass}`);
+                    const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
+                    const someChecked = Array.from(allCheckboxes).some(cb => cb.checked);
+                    const allSelector = document.getElementById(allSelectorId);
+                    
+                    if (allChecked) {
+                        allSelector.checked = true;
+                        allSelector.indeterminate = false;
+                    } else if (someChecked) {
+                        allSelector.checked = false;
+                        allSelector.indeterminate = true;
+                    } else {
+                        allSelector.checked = false;
+                        allSelector.indeterminate = false;
+                    }
+                }
+                updateTextFn();
+                debouncedApplyFilters();
+            });
+        }
+
+        const getSelectedIds = (selector) => Array.from(document.querySelectorAll(selector + ':checked')).map(cb => cb.dataset.id);
+
+        function updateFilterText(textEl, selector, total, singleText, pluralText, allText) {
+            const selectedCheckboxes = document.querySelectorAll(selector + ':checked');
+            const count = selectedCheckboxes.length;
+            
+            if (count === 0) {
+                textEl.textContent = "Ninguno";
+            } else if (count === total) {
+                textEl.textContent = allText;
+            } else if (count === 1) {
+                textEl.textContent = selectedCheckboxes[0].parentElement.querySelector('.option-text').textContent.trim();
+            } else {
+                textEl.textContent = `${count} ${pluralText} seleccionados`;
+            }
+        }
+
+        function updateEstadoFilterText() {
+            updateFilterText(document.getElementById('estado-filter-text'), '.estado-checkbox', allEstados.length,
+                'estado', 'estados', 'Todos los estados');
+        }
+
+        function updateProcedenciaFilterText() {
+            updateFilterText(document.getElementById('procedencia-filter-text'), '.procedencia-checkbox', allProcedencias.length,
+                'procedencia', 'procedencias', 'Todas las procedencias');
+        }
+
+        // --- DATA FETCHING & RENDERING ---
+        async function applyFilters() {
+            document.getElementById('loading-overlay').style.display = 'flex';
+            rawFetchedData = await fetchTallerData();
+            renderTallerTable();
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+
+        async function fetchTallerData() {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            const estados = getSelectedIds('.estado-checkbox');
+            const procedencias = getSelectedIds('.procedencia-checkbox');
+
+            let query = supabaseClient
+                .from('taller')
+                .select(`
+                    *,
+                    sala (sala_mincetur),
+                    repu_serie (serie),
+                    maquinas (serie, modelo)
+                `)
+                .gte('fecha_ingreso', startDate)
+                .lte('fecha_ingreso', endDate);
+
+            if (estados.length > 0 && estados.length < allEstados.length) {
+                query = query.in('estado', estados);
+            }
+            if (procedencias.length > 0 && procedencias.length < allProcedencias.length) {
+                query = query.in('procedencia', procedencias);
+            }
+
+            const { data, error } = await query.order('fecha_ingreso', { ascending: false }).limit(1000);
+            
+            if (error) {
+                console.error("Error fetching taller data:", error);
+                document.getElementById('reporte-dashboard').innerHTML = `<p class="text-red-600 text-center py-8">Error cargando los datos de taller: ${JSON.stringify(error)}</p>`;
+                return [];
+            }
+            return data;
+        }
+
+        function exportToExcel() {
+            if (!currentRecords || currentRecords.length === 0) {
+                alert("No hay datos para exportar. Por favor, ajuste los filtros.");
+                return;
+            }
+            const dataToExport = currentRecords.map(item => {
+                const serieRepuesto = item.repu_serie?.serie || null;
+                const serieMaquina = item.maquinas?.serie || null;
+                const modeloMaquina = item.maquinas?.modelo || null;
+
+                return {
+                    'ID Taller': item.id_taller,
+                    'Fecha Ingreso': new Date(item.fecha_ingreso + 'T00:00:00').toLocaleDateString('es-ES'),
+                    'Fecha Salida': item.fecha_salida ? new Date(item.fecha_salida + 'T00:00:00').toLocaleDateString('es-ES') : '',
+                    'Estado': item.estado,
+                    'Procedencia': item.procedencia,
+                    'Sala': item.sala?.sala_mincetur || 'N/A',
+                    'Serie Repuesto': serieRepuesto,
+                    'Serie Máquina': serieMaquina,
+                    'Modelo Máquina': modeloMaquina,
+                    'Cantidad': item.cantidad,
+                    'Incluye': item.incluye,
+                    'Observaciones': item.observaciones,
+                    'Costo Reparación': item.costo_reparacion,
+                    'Condición': item.condicion,
+                    'Tipo Contrato': item.tipo_contrato
+                }
+            });
+            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Taller");
+            XLSX.writeFile(workbook, "Reporte_Taller.xlsx");
+        }
+
+        function renderTallerTable() {
+            const data = rawFetchedData;
+            const table = document.getElementById('taller-report-table');
+            if (!table) return;
+            const tableHead = table.querySelector('thead');
+            const tableBody = table.querySelector('tbody');
+
+            tableHead.innerHTML = `
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha Ing.</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Serie (Rep/Maq)</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sala</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Procedencia</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Costo</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Observaciones</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acción</th>
+                </tr>`;
+            tableBody.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-gray-500">No se encontraron datos para los filtros seleccionados.</td></tr>`;
+                currentRecords = [];
+                return;
+            }
+
+            const searchTerm = document.getElementById('general-search').value.toLowerCase().trim();
+            let filteredRecords = data; 
+
+            if (searchTerm) {
+                filteredRecords = data.filter(item => {
+                    const serieRep = (item.repu_serie?.serie || '').toLowerCase();
+                    const serieMaq = (item.maquinas?.serie || '').toLowerCase();
+                    const sala = (item.sala?.sala_mincetur || '').toLowerCase();
+                    const procedencia = (item.procedencia || '').toLowerCase();
+                    const estado = (item.estado || '').toLowerCase();
+                    const obs = (item.observaciones || '').toLowerCase();
+
+                    return serieRep.includes(searchTerm) ||
+                        serieMaq.includes(searchTerm) ||
+                        sala.includes(searchTerm) ||
+                        procedencia.includes(searchTerm) ||
+                        estado.includes(searchTerm) ||
+                        obs.includes(searchTerm);
+                });
+            }
+            
+            currentRecords = filteredRecords;
+
+            if (filteredRecords.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-gray-500">No se encontraron coincidencias para la búsqueda.</td></tr>`;
+                return;
+            }
+
+            filteredRecords.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50';
+
+                const fechaIngreso = new Date(item.fecha_ingreso + 'T00:00:00').toLocaleDateString('es-ES', {
+                    day: '2-digit', month: 'short', year: 'numeric'
+                }).replace('.', '');
+
+                const serieRepuesto = item.repu_serie?.serie || null;
+                const serieMaquina = item.maquinas?.serie || null;
+                let serieDisplay = 'N/A';
+                if (serieRepuesto) {
+                    serieDisplay = `<span class="font-medium">${serieRepuesto}</span> <span class="text-xs text-gray-500">(Rep)</span>`;
+                } else if (serieMaquina) {
+                    serieDisplay = `<span class="font-medium">${serieMaquina}</span> <span class="text-xs text-gray-500">(Maq: ${item.maquinas.modelo || ''})</span>`;
+                }
+
+                const sala = item.sala?.sala_mincetur || '<span class="text-gray-400">N/A</span>';
+                const procedencia = item.procedencia || 'N/A';
+                const estado = item.estado || 'N/A';
+                const costo = item.costo_reparacion ? `S/ ${item.costo_reparacion.toFixed(2)}` : 'S/ 0.00';
+                
+                const obs = item.observaciones || '';
+                const obsShort = obs.length > 40 ? obs.substring(0, 40) + '...' : obs;
+                const obsHTML = obs.length > 40 ? 
+                    `<div class="tooltip-container">${obsShort}<div class="tooltip-bubble">${obs}</div></div>` : 
+                    obsShort;
+
+                tr.innerHTML = `
+                    <td class="px-4 py-4 whitespace-nowrap text-sm">${fechaIngreso}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm">${serieDisplay}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm">${sala}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm">${procedencia}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            estado === 'En Taller' ? 'bg-yellow-100 text-yellow-800' : 
+                            estado === 'Reparado' ? 'bg-green-100 text-green-800' : 
+                            estado === 'Enviado' ? 'bg-blue-100 text-blue-800' : 
+                            'bg-gray-100 text-gray-800'
+                        }">${estado}</span>
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium">${costo}</td>
+                    <td class="px-4 py-4 text-sm text-gray-600 max-w-xs truncate">${obsHTML}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm">
+                        <a href="#" class="text-blue-600 hover:text-blue-800" onclick="alert('Editar ID: ${item.id_taller}')">
+                            <i data-lucide="edit-2" class="w-4 h-4"></i>
+                        </a>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        // --- STARTUP ---
+        document.addEventListener('DOMContentLoaded', checkSession);
+    </script>
+</body>
+
+</html>

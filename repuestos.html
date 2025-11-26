@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estado de Repuestos</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+        }
+
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(240, 242, 245, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        /* Estilo para el botón/checkbox deshabilitado */
+        button:disabled, input[type="checkbox"]:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Estilos para el Tab Activo */
+        .tab-active.tab-active { 
+            border-bottom-color: #3b82f6 !important; /* blue-500 */
+            color: #1e3a8a !important; /* blue-900 */
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body class="text-gray-800">
+
+    <div id="loading-overlay">
+        <div class="text-center">
+            <i data-lucide="loader-2" class="animate-spin h-12 w-12 text-blue-600"></i>
+            <p class="mt-4 text-lg font-semibold text-gray-700">Cargando Estados de Repuestos...</p>
+        </div>
+    </div>
+
+    <div class="container mx-auto p-4 md:p-8 opacity-0" id="main-content">
+
+        <header class="mb-6 flex flex-wrap justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <img src="https://winsystems.com.pe/wp-content/uploads/2022/01/logo-winsystems-2022.png"
+                    alt="Logo de Winsystems" class="h-24">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Estado de Repuestos</h1>
+                    <p class="text-gray-500">Monitor de estados y ubicaciones desde <strong>estado_repu</strong>.</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4 mt-4 md:mt-0">
+                <a href="./home.html" class="text-blue-600 hover:underline flex items-center gap-2">
+                    <i data-lucide="arrow-left"></i> Volver al Inicio
+                </a>
+
+                <button id="send-email-btn"
+                    class="bg-blue-600 text-white px-3 py-2 rounded-lg shadow hover:bg-blue-700 flex items-center gap-2 text-sm transition"
+                    disabled>
+                    <i data-lucide="send" class="w-4 h-4"></i> Enviar
+                </button>
+
+                <button id="export-excel-btn"
+                    class="bg-green-600 text-white px-3 py-2 rounded-lg shadow hover:bg-green-700 flex items-center gap-2 text-sm transition">
+                    <i data-lucide="file-down" class="w-4 h-4"></i> Exportar a Excel
+                </button>
+                <button id="logout-button" title="Cerrar Sesión"
+                    class="p-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </header>
+        
+        <div id="status-tabs" class="flex border-b border-gray-300 mb-6 bg-white rounded-t-xl shadow-md p-0 overflow-x-auto">
+            <button class="tab-button px-6 py-3 text-sm text-gray-600 hover:bg-gray-50 border-b-2 border-transparent transition tab-active border-blue-500 text-blue-900" 
+                    data-status="">Todos</button>
+            <button class="tab-button px-6 py-3 text-sm text-gray-600 hover:bg-gray-50 border-b-2 border-transparent transition" 
+                    data-status="Solicitado">Solicitado</button>
+            <button class="tab-button px-6 py-3 text-sm text-gray-600 hover:bg-gray-50 border-b-2 border-transparent transition" 
+                    data-status="En Proceso">En Proceso</button>
+            <button class="tab-button px-6 py-3 text-sm text-gray-600 hover:bg-gray-50 border-b-2 border-transparent transition" 
+                    data-status="En Revision">En Revisión</button>
+            <button class="tab-button px-6 py-3 text-sm text-gray-600 hover:bg-gray-50 border-b-2 border-transparent transition" 
+                    data-status="Disponible">Disponible</button>
+        </div>
+
+
+        <div id="filters-section"
+            class="bg-white p-4 rounded-xl shadow-md mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
+
+            <div id="estado-filter-container">
+                <label class="block text-sm font-medium text-gray-700">Estado</label>
+                <div class="relative mt-1">
+                    <button id="estado-filter-btn"
+                        class="w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default">
+                        <span id="estado-filter-text" class="block truncate">Todos</span>
+                    </button>
+                    <div id="estado-filter-options"
+                        class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto">
+                    </div>
+                </div>
+            </div>
+
+            <div id="ubicacion-filter-container">
+                <label class="block text-sm font-medium text-gray-700">Ubicación Actual</label>
+                <div class="relative mt-1">
+                    <button id="ubicacion-filter-btn"
+                        class="w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default">
+                        <span id="ubicacion-filter-text" class="block truncate">Todas</span>
+                    </button>
+                    <div id="ubicacion-filter-options"
+                        class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto">
+                    </div>
+                </div>
+            </div>
+
+            <div id="sala-filter-container">
+                <label class="block text-sm font-medium text-gray-700">Sala</label>
+                <div class="relative mt-1">
+                    <button id="sala-filter-btn"
+                        class="w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default">
+                        <span id="sala-filter-text" class="block truncate">Todas</span>
+                    </button>
+                    <div id="sala-filter-options"
+                        class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="mb-4">
+            <label for="general-search" class="sr-only">Búsqueda General</label>
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
+                </div>
+                <input type="search" id="general-search"
+                    class="block w-full p-3 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Buscar por serie, repuesto, estado, ubicación, máquina, sala, código de trabajo...">
+            </div>
+        </div>
+        <div id="reporte-dashboard" class="bg-white p-6 rounded-xl shadow-md">
+            <div class="overflow-x-auto">
+                <table id="estado-repu-table" class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50"></thead>
+                    <tbody class="bg-white divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIG & GLOBAL VARS ---
+        const SUPABASE_URL = 'https://qobquktxvhlvtrpeopji.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvYnF1a3R4dmhsdnRycGVvcGppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU2OTc4NDYsImV4cCI6MjA2MTI3Mzg0Nn0.rnubNUWSWEomj5Xwvr65kZLK7Ig_bLC74ajFh9cksFc';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+
+        let allEstados = [], allUbicaciones = [], allSalas = [];
+        let currentRecords = [];
+        let rawEstadoData = [];
+        
+        // 🟢 ID DE USUARIO DE EJEMPLO (CRÍTICO PARA EL LOG)
+        let globalUserId = '53562a0e-a775-4f81-b352-2bd96fdb6ae5'; // Usar un ID REAL de la tabla tecnicos
+        let currentStatusFilter = ""; 
+
+
+        // --- HELPERS ---
+        function debounce(func, delay = 400) {
+            let timeout;
+            return (...args) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    func.apply(this, args);
+                }, delay);
+            };
+        }
+        const debouncedApplyFilters = debounce(applyFilters);
+        const debouncedRender = debounce(renderEstadoRepuTable, 300);
+
+        function filterOptions(inputId, itemClass) {
+            const input = document.getElementById(inputId);
+            const filter = input.value.toUpperCase();
+            const items = document.querySelectorAll(`.${itemClass}`);
+            items.forEach(item => {
+                const textValue = item.querySelector('.option-text').textContent || item.querySelector('.option-text').innerText;
+                if (textValue.toUpperCase().indexOf(filter) > -1) {
+                    item.style.display = "flex";
+                } else {
+                    item.style.display = "none";
+                }
+            });
+        }
+        
+        function setLoadingState(isLoading, element) {
+            if (!element) return;
+            
+            if (isLoading) {
+                element.disabled = true;
+                element.innerHTML = '<i data-lucide="loader-2" class="animate-spin w-4 h-4"></i> Procesando...';
+            } else {
+                updateSendButtonState(); // Restaurar el estado normal
+            }
+            lucide.createIcons();
+        }
+
+        // 🟢 LOG DE MOVIMIENTO (Implementación Completa)
+        async function logMovement({ id_item, accion, ubicacion_origen, ubicacion_destino, firma_base64 = null }) {
+            try {
+                const { error } = await supabaseClient
+                    .from('repuestos_movimientos') // Usamos el nombre que indicaste en la tabla
+                    .insert([
+                        {
+                            id_item: id_item,
+                            accion: accion,
+                            serie_texto: String(id_item),
+                            ubicacion_origen: ubicacion_origen,
+                            ubicacion_destino: ubicacion_destino,
+                            id_usuario: globalUserId, // Se usa el ID del usuario
+                            firma_recibe: firma_base64,
+                            // id_repuesto, id_detalle, id_taller se insertan como NULL si no se proporcionan
+                        }
+                    ]);
+                if (error) {
+                    // Muestra el error detallado de la BD en la consola
+                    console.error('[LOG ERROR DB]', error);
+                    throw new Error(`Error de Log/DB: Fallo en la BD: ${error.message} (Código: ${error.code})`);
+                }
+                console.log(`Log exitoso para item ${id_item}: ${accion}`);
+            } catch (error) {
+                // Captura el error para que sendEmailAndUpdate pueda mostrarlo.
+                throw error; 
+            }
+        }
+
+
+        // --- SESSION & INITIALIZATION ---
+        async function checkSession() {
+            try {
+                // NOTA: Se asume que este es un dashboard de monitoreo sin login estricto, 
+                // pero si usas el login, debes obtener el globalUserId aquí.
+                
+                initializePage();
+            } catch (e) {
+                initializePage();
+            }
+        }
+
+        async function logout() {
+            await supabaseClient.auth.signOut();
+            window.location.href = './index.html';
+        }
+
+        async function initializePage() {
+            document.getElementById('logout-button').addEventListener('click', logout);
+            document.getElementById('export-excel-btn').addEventListener('click', exportToExcel);
+            document.getElementById('general-search').addEventListener('input', debouncedRender);
+
+            document.getElementById('send-email-btn').addEventListener('click', sendEmailAndUpdate);
+
+            document.getElementById('estado-filter-btn').addEventListener('click', () => document.getElementById('estado-filter-options').classList.toggle('hidden'));
+            document.getElementById('ubicacion-filter-btn').addEventListener('click', () => document.getElementById('ubicacion-filter-options').classList.toggle('hidden'));
+            document.getElementById('sala-filter-btn').addEventListener('click', () => document.getElementById('sala-filter-options').classList.toggle('hidden'));
+            
+            // 🟢 LÓGICA: INICIALIZAR LISTENERS DE PESTAÑAS
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', handleStatusTabClick);
+            });
+
+            await Promise.all([
+                populateEstadoFilter(),
+                populateUbicacionFilter(),
+                populateSalaFilter()
+            ]);
+
+            updateEstadoFilterText();
+            updateUbicacionFilterText();
+            updateSalaFilterText();
+
+            await applyFilters();
+
+            document.getElementById('main-content').classList.remove('opacity-0');
+            document.getElementById('loading-overlay').style.display = 'none';
+            lucide.createIcons();
+
+            const channel = supabaseClient
+                .channel('estado_repu-db-changes')
+                .on('postgres_changes', {
+                    event: '*',
+                    schema: 'public',
+                    table: 'estado_repu'
+                }, (payload) => {
+                    console.log('¡Cambio detectado en estado_repu!', payload);
+                    debouncedApplyFilters();
+                })
+                .subscribe((status) => {
+                    if (status === 'SUBSCRIBED') {
+                        console.log('¡Conectado al canal de estado_repu!');
+                    }
+                });
+        }
+        
+        // 🟢 FUNCIÓN: Manejar el click en las pestañas de estado
+        function handleStatusTabClick(e) {
+            const status = e.currentTarget.dataset.status;
+            
+            // 1. Desactivar pestaña anterior y activar la nueva
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('tab-active');
+                btn.classList.remove('border-blue-500');
+                btn.classList.remove('text-blue-900');
+            });
+            e.currentTarget.classList.add('tab-active');
+            e.currentTarget.classList.add('border-blue-500');
+            e.currentTarget.classList.add('text-blue-900');
+
+
+            // 2. Establecer el filtro global
+            currentStatusFilter = status; 
+            
+            // 3. Aplicar filtros
+            applyFilters();
+        }
+
+
+        // --- FILTER POPULATION ---
+        async function populateEstadoFilter() {
+            const { data, error } = await supabaseClient.from('estado_repu').select('estado');
+            if (error) {
+                console.error('Error fetching estados:', error);
+                return;
+            }
+            allEstados = [...new Set(data.map(item => item.estado).filter(Boolean))].sort().map(st => ({
+                estado: st
+            }));
+            createMultiSelect({
+                container: document.getElementById('estado-filter-options'),
+                items: allEstados,
+                idField: 'estado',
+                nameField: 'estado',
+                checkboxClass: 'estado-checkbox',
+                allSelectorId: 'select-all-estados',
+                updateTextFn: updateEstadoFilterText
+            });
+        }
+
+        async function populateUbicacionFilter() {
+            const { data, error } = await supabaseClient.from('estado_repu').select('ubi_actual');
+            if (error) {
+                console.error('Error fetching ubicaciones:', error);
+                return;
+            }
+            // Incluir manualmente estados importantes
+            let ubicacionesFromDB = data.map(item => item.ubi_actual).filter(Boolean);
+            let staticUbicaciones = ["En Almacen", "En Taller"];
+            let combinedUbicaciones = [...new Set([...ubicacionesFromDB, ...staticUbicaciones])];
+
+            allUbicaciones = combinedUbicaciones.sort().map(p => ({
+                ubicacion: p
+            }));
+            
+            createMultiSelect({
+                container: document.getElementById('ubicacion-filter-options'),
+                items: allUbicaciones,
+                idField: 'ubicacion',
+                nameField: 'ubicacion',
+                checkboxClass: 'ubicacion-checkbox',
+                allSelectorId: 'select-all-ubicaciones',
+                updateTextFn: updateUbicacionFilterText
+            });
+        }
+
+        async function populateSalaFilter() {
+            const { data, error } = await supabaseClient.from('sala').select('id_sala, sala');
+            if (error) {
+                console.error('Error fetching salas:', error);
+                return;
+            }
+            allSalas = data.sort((a, b) => a.sala.localeCompare(b.sala));
+            createMultiSelect({
+                container: document.getElementById('sala-filter-options'),
+                items: allSalas,
+                idField: 'id_sala',
+                nameField: 'sala',
+                checkboxClass: 'sala-checkbox',
+                allSelectorId: 'select-all-salas',
+                updateTextFn: updateSalaFilterText,
+                searchable: true
+            });
+        }
+
+
+        // --- MULTI-SELECT UI LOGIC ---
+        function createMultiSelect({
+            container,
+            items,
+            idField,
+            nameField,
+            checkboxClass,
+            allSelectorId,
+            updateTextFn,
+            searchable = false
+        }) {
+            container.innerHTML = '';
+
+            const itemClass = `${checkboxClass}-item`;
+            const searchId = `${checkboxClass}-search-input`;
+
+            if (searchable) {
+                const searchInputHtml = `
+                    <div class="px-3 pt-2 pb-1 sticky top-0 bg-white z-20 shadow-sm border-b border-gray-200">
+                        <input type="text" id="${searchId}" placeholder="Buscar..." 
+                            class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 p-1.5 text-sm">
+                    </div>
+                `;
+                container.insertAdjacentHTML('afterbegin', searchInputHtml);
+                document.getElementById(searchId).addEventListener('keyup', () => filterOptions(searchId, itemClass));
+            }
+
+            const allOptionLabel = document.createElement('label');
+            allOptionLabel.className = `flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer font-semibold ${itemClass}`;
+            allOptionLabel.innerHTML = `<input type="checkbox" id="${allSelectorId}" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3" checked> <span class="option-text">Todos</span>`;
+            container.appendChild(allOptionLabel);
+
+            items.forEach(item => {
+                const label = document.createElement('label');
+                label.className = `flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer ${itemClass}`;
+                label.innerHTML = `<input type="checkbox" data-id="${item[idField]}" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3 ${checkboxClass}" checked> <span class="option-text">${item[nameField]}</span>`;
+                container.appendChild(label);
+            });
+
+            document.getElementById(allSelectorId).addEventListener('change', (e) => {
+                container.querySelectorAll(`.${checkboxClass}`).forEach(cb => cb.checked = e.target.checked);
+                updateTextFn();
+                debouncedApplyFilters();
+            });
+
+            container.addEventListener('change', (e) => {
+                if (e.target.id !== allSelectorId) {
+                    const allCheckboxes = container.querySelectorAll(`.${checkboxClass}`);
+                    const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
+                    const someChecked = Array.from(allCheckboxes).some(cb => cb.checked);
+                    const allSelector = document.getElementById(allSelectorId);
+
+                    if (allChecked) {
+                        allSelector.checked = true;
+                        allSelector.indeterminate = false;
+                    } else if (someChecked) {
+                        allSelector.checked = false;
+                        allSelector.indeterminate = true;
+                    } else {
+                        allSelector.checked = false;
+                        allSelector.indeterminate = false;
+                    }
+                }
+                updateTextFn();
+                debouncedApplyFilters();
+            });
+        }
+
+        const getSelectedIds = (selector) => Array.from(document.querySelectorAll(selector + ':checked')).map(cb => cb.dataset.id);
+
+        function updateFilterText(textEl, selector, total, singleText, pluralText, allText) {
+            const selectedCheckboxes = document.querySelectorAll(selector + ':checked');
+            const count = selectedCheckboxes.length;
+
+            if (count === 0) {
+                textEl.textContent = "Ninguno";
+            } else if (count === total) {
+                textEl.textContent = allText;
+            } else if (count === 1) {
+                textEl.textContent = selectedCheckboxes[0].parentElement.querySelector('.option-text').textContent.trim();
+            } else {
+                textEl.textContent = `${count} ${pluralText} seleccionados`;
+            }
+        }
+
+        function updateEstadoFilterText() {
+            updateFilterText(document.getElementById('estado-filter-text'), '.estado-checkbox', allEstados.length,
+                'estado', 'estados', 'Todos los estados');
+        }
+
+        function updateUbicacionFilterText() {
+            updateFilterText(document.getElementById('ubicacion-filter-text'), '.ubicacion-checkbox', allUbicaciones.length,
+                'ubicación', 'ubicaciones', 'Todas las ubicaciones');
+        }
+
+        function updateSalaFilterText() {
+            updateFilterText(document.getElementById('sala-filter-text'), '.sala-checkbox', allSalas.length,
+                'sala', 'salas', 'Todas las salas');
+        }
+
+        // --- DATA FETCHING & RENDERING ---
+        async function applyFilters() {
+            document.getElementById('loading-overlay').style.display = 'flex';
+            rawEstadoData = await fetchEstadoRepuData();
+            renderEstadoRepuTable();
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+
+        async function fetchEstadoRepuData() {
+            const estados = getSelectedIds('.estado-checkbox');
+            const ubicaciones = getSelectedIds('.ubicacion-checkbox');
+            const salas = getSelectedIds('.sala-checkbox');
+
+            let query = supabaseClient
+                .from('estado_repu')
+                .select(`
+                    *,
+                    repuestos (nombre, num_part, categoria),
+                    maquinas (serie, modelo),
+                    sala (sala),
+                    responsable (nombre),
+                    detalle:detalle!estado_repu_id_detalle_fkey ( 
+                        id_trabajo,
+                        estado,
+                        trabajos (fecha, codigo) 
+                    )
+                `);
+            
+            // 🟢 LÓGICA DE FILTRO POR PESTAÑA (PRIORIDAD AL statusFilter)
+            if (currentStatusFilter && currentStatusFilter !== 'Todos') {
+                query = query.eq('estado', currentStatusFilter);
+            } else if (estados.length > 0 && estados.length < allEstados.length) {
+                // Si la pestaña es "Todos" (o vacío), aplicamos el filtro de selección múltiple (si está activo)
+                query = query.in('estado', estados);
+            }
+
+            if (ubicaciones.length > 0 && ubicaciones.length < allUbicaciones.length) {
+                query = query.in('ubi_actual', ubicaciones);
+            }
+            if (salas.length > 0 && salas.length < allSalas.length) {
+                query = query.in('id_sala', salas);
+            }
+
+            const { data, error } = await query.order('id_estadorepu', { ascending: false }).limit(2000);
+
+            if (error) {
+                console.error("Error fetching estado_repu data:", error);
+                document.getElementById('reporte-dashboard').innerHTML = `<p class="text-red-600 text-center py-8">Error cargando los datos: ${JSON.stringify(error)}</p>`;
+                return [];
+            }
+            return data;
+        }
+
+        function exportToExcel() {
+            if (!currentRecords || currentRecords.length === 0) {
+                alert("No hay datos para exportar. Por favor, ajuste los filtros.");
+                return;
+            }
+            const dataToExport = currentRecords.map(item => {
+
+                const fechaTrabajo = item.detalle?.trabajos?.fecha;
+                const fechaExport = fechaTrabajo ? new Date(fechaTrabajo + 'T00:00:00').toLocaleDateString('es-ES') : '';
+
+                return {
+                    'Fecha Trabajo': fechaExport,
+                    'Codigo Trabajo': item.detalle?.trabajos?.codigo,
+                    'ID Estado (PK)': item.id_estadorepu,
+                    'ID Detalle (FK)': item.id_detalle,
+                    'Serie (Texto)': item.id_serie,
+                    'Repuesto': item.repuestos?.nombre,
+                    'N/P': item.repuestos?.num_part,
+                    'Categoría': item.repuestos?.categoria,
+                    'Estado': item.estado,
+                    'Ubicación Actual': item.ubi_actual,
+                    'Máquina': item.maquinas?.serie,
+                    'Sala': item.sala?.sala,
+                    'Responsable': item.responsable?.nombre,
+                    'Cantidad': item.cantidad,
+                    'Observaciones': item.observaciones
+                }
+            });
+            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Estado_Repuestos");
+            XLSX.writeFile(workbook, "Reporte_Estado_Repuestos.xlsx");
+        }
+
+        function renderEstadoRepuTable() {
+            const data = rawEstadoData;
+            const table = document.getElementById('estado-repu-table');
+            if (!table) return;
+            const tableHead = table.querySelector('thead');
+            const tableBody = table.querySelector('tbody');
+
+            tableHead.innerHTML = `
+                <tr>
+                    <th class="p-4"><input type="checkbox" id="select-all-checkbox" class="h-4 w-4 rounded border-gray-300"></th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Serie</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Repuesto</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ubicación Actual</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Máquina</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sala</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Código Trabajo</th>
+                </tr>`;
+            tableBody.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-gray-500">No se encontraron datos para los filtros seleccionados.</td></tr>`;
+                currentRecords = [];
+                return;
+            }
+
+            const searchTerm = document.getElementById('general-search').value.toLowerCase().trim();
+            let filteredRecords = data;
+
+            if (searchTerm) {
+                filteredRecords = data.filter(item => {
+                    const serie = (item.id_serie || '').toLowerCase();
+                    const repuesto = (item.repuestos?.nombre || '').toLowerCase();
+                    const estado = (item.estado || '').toLowerCase();
+                    const ubicacion = (item.ubi_actual || '').toLowerCase();
+                    const maquina = (item.maquinas?.serie || '').toLowerCase();
+                    const sala = (item.sala?.sala || '').toLowerCase();
+                    const responsable = (item.responsable?.nombre || '').toLowerCase();
+                    const codigoTrabajo = (item.detalle?.trabajos?.codigo || '').toLowerCase();
+
+                    return serie.includes(searchTerm) ||
+                        repuesto.includes(searchTerm) ||
+                        estado.includes(searchTerm) ||
+                        ubicacion.includes(searchTerm) ||
+                        maquina.includes(searchTerm) ||
+                        sala.includes(searchTerm) ||
+                        responsable.includes(searchTerm) ||
+                        codigoTrabajo.includes(searchTerm);
+                });
+            }
+
+            currentRecords = filteredRecords;
+
+            if (filteredRecords.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-gray-500">No se encontraron coincidencias para la búsqueda.</td></tr>`;
+                return;
+            }
+
+            // 🟢 ESTADOS QUE PERMITEN SELECCIÓN
+            const selectableStates = ['Solicitado', 'Disponible'];
+
+            filteredRecords.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50';
+
+                const fechaTrabajo = item.detalle?.trabajos?.fecha;
+                const fechaDisplay = fechaTrabajo
+                    ? new Date(fechaTrabajo + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
+                    : '<span class="text-gray-400">N/A</span>';
+
+                const trabajoCodigo = item.detalle?.trabajos?.codigo || '<span class="text-gray-400">N/A</span>';
+
+                const serie = item.id_serie || '<span class="text-gray-400">N/A</span>';
+                const repuestoNombre = item.repuestos?.nombre || '<span class="text-gray-400">N/A</span>';
+                const estado = item.estado || '<span class="text-gray-400">N/A</span>';
+                const ubicacion = item.ubi_actual || '<span class="text-gray-400">N/A</span>';
+                const maquina = item.maquinas?.serie || '<span class="text-gray-400">N/A</span>';
+                const sala = item.sala?.sala || '<span class="text-gray-400">N/A</span>';
+                
+                // Lógica para habilitar/deshabilitar el checkbox
+                const isSelectable = selectableStates.includes(estado);
+                const checkboxHtml = `<input type="checkbox" class="row-checkbox h-4 w-4 rounded border-gray-300" data-id="${item.id_estadorepu}" ${isSelectable ? '' : 'disabled'}>`;
+
+
+                let estadoColorClass = 'bg-gray-100 text-gray-800';
+                if (estado === 'Instalado') {
+                    estadoColorClass = 'bg-blue-100 text-blue-800';
+                } else if (estado.includes('Retirado (Malogrado)')) {
+                    estadoColorClass = 'bg-red-100 text-red-800';
+                } else if (estado.includes('Retirado')) {
+                    estadoColorClass = 'bg-yellow-100 text-yellow-800';
+                } else if (estado === 'Solicitado') {
+                    estadoColorClass = 'bg-purple-100 text-purple-800';
+                } else if (estado === 'En Proceso' || estado === 'En Revisión' || estado === 'Disponible') {
+                    estadoColorClass = 'bg-cyan-100 text-cyan-800';
+                }
+
+                tr.innerHTML = `
+                    <td class="p-4">${checkboxHtml}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${fechaDisplay}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${serie}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm">${repuestoNombre}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${estadoColorClass}">
+                            ${estado}
+                        </span>
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-600">${ubicacion}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-600">${maquina}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-600">${sala}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-center font-medium">${trabajoCodigo}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+            lucide.createIcons();
+
+            const selectAllCheckbox = document.getElementById('select-all-checkbox');
+            // 🟢 Solo considerar checkboxes que NO están deshabilitados
+            const rowCheckboxes = document.querySelectorAll('.row-checkbox:not(:disabled)'); 
+
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', (e) => {
+                    // Solo selecciona/deselecciona los checkboxes que no están deshabilitados
+                    document.querySelectorAll('.row-checkbox:not(:disabled)').forEach(cb => cb.checked = e.target.checked);
+                    updateSendButtonState();
+                });
+            }
+            
+            // Si el botón de "seleccionar todo" existe, debemos deshabilitarlo si no hay opciones válidas
+            if (selectAllCheckbox) {
+                const totalSelectable = Array.from(document.querySelectorAll('.row-checkbox')).filter(cb => !cb.disabled).length;
+                selectAllCheckbox.disabled = totalSelectable === 0;
+            }
+
+            rowCheckboxes.forEach(cb => {
+                cb.addEventListener('change', () => {
+                    // La lógica del selectAll debe considerar solo los habilitados
+                    const allChecked = Array.from(rowCheckboxes).every(r => r.checked);
+                    const someChecked = Array.from(rowCheckboxes).some(r => r.checked);
+                    const selectAll = document.getElementById('select-all-checkbox');
+
+                    if (selectAll) {
+                        selectAll.checked = allChecked;
+                        selectAll.indeterminate = someChecked && !allChecked;
+                    }
+                    updateSendButtonState();
+                });
+            });
+
+            updateSendButtonState();
+        }
+
+        // --- NUEVAS FUNCIONES PARA ENVIAR CORREO (MODIFICADAS) ---
+
+        function updateSendButtonState() {
+            const sendButton = document.getElementById('send-email-btn');
+            const selectedCount = document.querySelectorAll('.row-checkbox:checked:not(:disabled)').length;
+
+            if (sendButton) {
+                sendButton.disabled = selectedCount === 0;
+                sendButton.innerHTML = selectedCount === 0
+                    ? '<i data-lucide="send" class="w-4 h-4"></i> Enviar'
+                    : `<i data-lucide="send" class="w-4 h-4"></i> Enviar (${selectedCount})`;
+                lucide.createIcons();
+            }
+        }
+
+        /**
+         * Función principal: Abre mailto Y copia HTML al portapapeles.
+         */
+        async function sendEmailAndUpdate() {
+            const sendButton = document.getElementById('send-email-btn');
+            
+            setLoadingState(true, sendButton);
+
+            const selectedCheckboxes = document.querySelectorAll('.row-checkbox:checked:not(:disabled)');
+            const selectedIds = Array.from(selectedCheckboxes).map(cb => parseInt(cb.dataset.id));
+
+            if (selectedIds.length === 0) {
+                alert("Por favor, seleccione al menos un item.");
+                setLoadingState(false, sendButton); // Restaurar botón
+                return;
+            }
+
+            const selectedItems = rawEstadoData.filter(item => selectedIds.includes(item.id_estadorepu));
+
+            // --- INICIO: LÓGICA DE CORREO HTML ---
+            const to = ["fernando.noite@example.com", "kevin.montalvan@example.com", "jorge.villanueva@example.com", "marco.poves@example.com", "hernan.mancilla@example.com"].join(",");
+            const cc = "martin.vargas@example.com";
+            const subject = "Solicitud de Partes para Taller (DT-WINSYS-PERU)";
+
+            let htmlTableRows = selectedItems.map(item => {
+                const fecha = item.detalle?.trabajos?.fecha ? new Date(item.detalle.trabajos.fecha + 'T00:00:00').toLocaleDateString('es-ES') : 'N/A';
+                const estadoMaq = item.detalle?.estado || 'N/A';
+                let backgroundColor = 'white';
+                if (estadoMaq.includes('Fuera Servicio')) { backgroundColor = '#ffe0e0'; }
+
+                return `<tr><td style="padding: 8px; border: 1px solid #ccc;">${item.id_estadorepu || 'N/A'}</td><td style="padding: 8px; border: 1px solid #ccc;">${fecha}</td><td style="padding: 8px; border: 1px solid #ccc;">${item.sala?.sala || 'N/A'}</td><td style="padding: 8px; border: 1px solid #ccc;">${item.maquinas?.serie || 'N/A'}</td><td style="padding: 8px; border: 1px solid #ccc;">${item.maquinas?.modelo || 'N/A'}</td><td style="padding: 8px; border: 1px solid #ccc; background-color: ${backgroundColor};">${estadoMaq}</td><td style="padding: 8px; border: 1px solid #ccc;">${item.cantidad || '1'}</td><td style="padding: 8px; border: 1px solid #ccc;">${item.repuestos?.nombre || 'N/A'}</td><td style="padding: 8px; border: 1px solid #ccc;">${item.repuestos?.num_part || 'N/A'}</td><td style="padding: 8px; border: 1px solid #ccc;">${item.responsable?.nombre || 'N/A'}</td><td style="padding: 8px; border: 1px solid #ccc;">${item.detalle?.trabajos?.codigo || 'N/A'}</td></tr>`;
+            }).join('');
+
+            const emailHtml = `
+                <h3>--- DETALLE DE PARTES REQUERIDAS ---</h3>
+                <table border="1" style="border-collapse: collapse; width: 100%; font-family: 'Inter', sans-serif; font-size: 12px;">
+                    <thead><tr style="background-color: #f0f2f5;"><th style="padding: 8px; text-align: left; border: 1px solid #ccc;">No</th><th style="padding: 8px; text-align: left; border: 1px solid #ccc;">Fecha</th><th style="padding: 8px; text-align: left; border: 1px solid #ccc;">Sala/Casino</th><th style="padding: 8px; text-align: left; border: 1px solid #ccc;">Serie Maq.</th><th style="padding: 8px; text-align: left; border: 1px solid #ccc;">Modelo Maq.</th><th style="padding: 8px; text-align: left; border: 1px solid #ccc;">Estado Maq.</th><th style="padding: 8px; text-align: left; border: 1px solid #ccc;">QTY</th><th style="padding: 8px; text-align: left; border: 1px solid #ccc;">Descripción Repuesto</th><th style="padding: 8px; text-align: left; border: 1px solid #ccc;">No. Parte</th><th style="padding: 8px; text-align: left; border: 1px solid #ccc;">Responsable</th><th style="padding: 8px; text-align: left; border: 1px solid #ccc;">Reporte Sala</th></tr></thead>
+                    <tbody>${htmlTableRows}</tbody>
+                </table>
+            `;
+            
+            const mailtoLink = `mailto:${to}?cc=${cc}&subject=${encodeURIComponent(subject)}`;
+            window.location.href = mailtoLink;
+
+            // --- ETAPA 2: Copiar HTML al Portapapeles ---
+            try {
+                const htmlBlob = new Blob([emailHtml], { type: 'text/html' });
+                const clipboardItem = new ClipboardItem({ 'text/html': htmlBlob });
+                await navigator.clipboard.write([clipboardItem]);
+
+                sendButton.innerHTML = '<i data-lucide="clipboard-check" class="w-4 h-4"></i> ¡Tabla Copiada!';
+                lucide.createIcons();
+                alert("¡Tabla copiada al portapapeles!\n\nPor favor, escribe tu correo y pega la tabla (Ctrl+V) en el cuerpo.");
+
+            } catch (err) {
+                console.error('Error al copiar al portapapeles: ', err);
+                alert('Error al copiar la tabla HTML. Revisa la consola (F12) y los permisos del navegador.');
+                setLoadingState(false, sendButton); // Restaurar botón
+                return; 
+            }
+
+            // --- ETAPA 3: Actualizar Supabase y LOG ---
+            try {
+                const updatePromises = selectedIds.map(id => {
+                    const item = selectedItems.find(i => i.id_estadorepu === id);
+
+                    // 1. Registrar Log de Movimiento
+                    const logPromise = logMovement({
+                        id_item: id,
+                        accion: 'Solicitud enviada (Coordinador)',
+                        ubicacion_origen: item.ubi_actual || 'Desconocida',
+                        ubicacion_destino: 'En Almacen',
+                    });
+
+                    // 2. Actualizar la tabla central
+                    const updatePromise = supabaseClient
+                        .from('estado_repu')
+                        .update({ 
+                            estado: 'En Proceso', 
+                            ubi_actual: 'En Almacen' // CAMBIO SOLICITADO
+                        }) 
+                        .eq('id_estadorepu', id);
+                        
+                    return Promise.all([logPromise, updatePromise]);
+                });
+
+                await Promise.all(updatePromises);
+                
+                sendButton.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> ¡Actualizado!';
+                lucide.createIcons();
+
+                setTimeout(() => {
+                    applyFilters();
+                }, 1500);
+
+            } catch (error) {
+                console.error("Error actualizando estados y ubicación:", error);
+                // Muestra el mensaje de error de la BD si la actualización falló
+                alert(`Error al actualizar los items: ${error.message}. Revise su configuración de RLS/Claves Foráneas.`);
+                setTimeout(() => {
+                    setLoadingState(false, sendButton);
+                }, 2000);
+            }
+        }
+        // --- FIN DE NUEVAS FUNCIONES ---
+
+
+        // --- STARTUP ---
+        document.addEventListener('DOMContentLoaded', checkSession);
+    </script>
+</body>
+
+</html>

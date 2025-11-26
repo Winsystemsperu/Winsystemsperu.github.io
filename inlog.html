@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repuestos En Almacén / En Proceso</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+        }
+
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(240, 242, 245, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Estilos críticos para el Canvas de Firma */
+        #signature-canvas {
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            cursor: crosshair;
+            background-color: #fff;
+            touch-action: none;
+            min-height: 150px;
+            width: 100%;
+            /* Ocupa todo el ancho disponible */
+            display: block;
+            /* Asegura el manejo de ancho */
+        }
+    </style>
+</head>
+
+<body class="text-gray-800">
+
+    <div id="loading-overlay">
+        <div class="text-center">
+            <i data-lucide="loader-2" class="animate-spin h-12 w-12 text-blue-600"></i>
+            <p class="mt-4 text-lg font-semibold text-gray-700">Cargando Repuestos En Almacén / En Proceso...</p>
+        </div>
+    </div>
+
+    <div class="container mx-auto p-4 md:p-8 opacity-0" id="main-content">
+
+        <header class="mb-6 flex flex-wrap justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <img src="https://winsystems.com.pe/wp-content/uploads/2022/01/logo-winsystems-2022.png"
+                    alt="Logo de Winsystems" class="h-24">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Repuestos: En Almacén / En Proceso</h1>
+                    <p class="text-gray-500">Vista filtrada: **Estado = En Proceso** y **Ubicación = En Almacen**.</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4 mt-4 md:mt-0">
+                <a href="./home.html" class="text-blue-600 hover:underline flex items-center gap-2">
+                    <i data-lucide="arrow-left"></i> Volver al Inicio
+                </a>
+
+                <button id="deliver-btn"
+                    class="bg-blue-600 text-white px-3 py-2 rounded-lg shadow hover:bg-blue-700 flex items-center gap-2 text-sm transition"
+                    disabled>
+                    <i data-lucide="package-check" class="w-4 h-4"></i> Entregar a Técnico
+                </button>
+
+                <button id="export-excel-btn"
+                    class="bg-green-600 text-white px-3 py-2 rounded-lg shadow hover:bg-green-700 flex items-center gap-2 text-sm transition">
+                    <i data-lucide="file-down" class="w-4 h-4"></i> Exportar a Excel
+                </button>
+                <button id="logout-button" title="Cerrar Sesión"
+                    class="p-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </header>
+
+        <div id="filters-section"
+            class="bg-white p-4 rounded-xl shadow-md mb-8 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div id="estado-filter-container" class="hidden"></div>
+            <div id="ubicacion-filter-container" class="hidden"></div>
+
+            <div id="sala-filter-container" class="md:col-span-1">
+                <label class="block text-sm font-medium text-gray-700">Sala</label>
+                <div class="relative mt-1">
+                    <button id="sala-filter-btn"
+                        class="w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default">
+                        <span id="sala-filter-text" class="block truncate">Todas</span>
+                    </button>
+                    <div id="sala-filter-options"
+                        class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto multi-select-options">
+                    </div>
+                </div>
+            </div>
+
+            <div class="md:col-span-2">
+                <label for="general-search" class="sr-only">Búsqueda General</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
+                    </div>
+                    <input type="search" id="general-search"
+                        class="block w-full p-3 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Buscar por serie, repuesto, máquina, código de trabajo...">
+                </div>
+            </div>
+        </div>
+
+        <div id="reporte-dashboard" class="bg-white p-6 rounded-xl shadow-md">
+            <div class="overflow-x-auto">
+                <table id="estado-repu-table" class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50"></thead>
+                    <tbody class="bg-white divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="delivery-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl p-6">
+            <div class="flex justify-between items-center pb-3 border-b">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <i data-lucide="clipboard-check" class="w-6 h-6 text-blue-600"></i> Confirmación de Entrega a Taller
+                </h3>
+                <button onclick="closeDeliveryModal()" class="text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <div class="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                    <h4 class="font-semibold mb-2 text-gray-700 border-b pb-1">Ítems a Entregar (<span
+                            id="modal-item-count">0</span>)</h4>
+                    <div id="modal-items-list"
+                        class="max-h-60 overflow-y-auto border p-2 rounded-lg text-sm bg-gray-50">
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h4 class="font-semibold mb-2 text-gray-700 border-b pb-1">Registro de Recepción</h4>
+
+                    <div>
+                        <label for="tecnico-select" class="block text-sm font-medium text-gray-700">Técnico que
+                            Recibe</label>
+                        <select id="tecnico-select" required
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 text-sm">
+                            <option value="">Seleccione un Técnico</option>
+                        </select>
+                    </div>
+
+                    <div class="flex space-x-4">
+                        <div class="w-1/2">
+                            <label class="block text-sm font-medium text-gray-700">Fecha de Entrega</label>
+                            <input type="date" id="delivery-date" disabled
+                                class="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 p-2 text-sm">
+                        </div>
+                        <div class="w-1/2">
+                            <label class="block text-sm font-medium text-gray-700">Hora de Entrega</label>
+                            <input type="time" id="delivery-time" disabled
+                                class="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 p-2 text-sm">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1 flex justify-between items-center">
+                            <span>Firma del Técnico</span>
+                            <button id="clear-signature-btn" type="button"
+                                class="text-red-500 hover:text-red-700 text-xs font-medium">Borrar</button>
+                        </label>
+                        <canvas id="signature-canvas" width="400" height="150" class="w-full"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeDeliveryModal()"
+                    class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition">
+                    Cancelar
+                </button>
+                <button id="confirm-delivery-btn"
+                    class="bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 transition disabled:bg-green-400"
+                    disabled>
+                    <i data-lucide="check" class="w-5 h-5 inline mr-1"></i> Confirmar Entrega
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIG & GLOBAL VARS ---
+        const SUPABASE_URL = 'https://qobquktxvhlvtrpeopji.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvYnF1a3R4dmhsdnRycGVvcGppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU2OTc4NDYsImV4cCI6MjA2MTI3Mzg0Nn0.rnubNUWSWEomj5Xwvr65kZLK7Ig_bLC74ajFh9cksFc';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+
+        let allSalas = [];
+        let allTecnicos = [];
+        let currentRecords = [];
+        let rawEstadoData = [];
+        let selectedRepuIds = [];
+
+        // --- CONSTANTES DE FILTRO FIJAS ---
+        const FIXED_ESTADO = 'En Proceso';
+        const FIXED_UBICACION = 'En Almacen';
+        // --- CONSTANTES DE ACTUALIZACIÓN ---
+        const NEW_ESTADO = 'En Revisión';
+        const NEW_UBICACION = 'En Taller';
+
+
+        // =======================================================
+        // 🟢 SECCIÓN 1: HELPERS Y LÓGICA DE UI MULTI-SELECT 
+        // =======================================================
+
+        // --- FUNCIONES UTILITARIAS ---
+        function debounce(func, delay = 400) {
+            let timeout;
+            return (...args) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    func.apply(this, args);
+                }, delay);
+            };
+        }
+
+        const debouncedApplyFilters = debounce(applyFilters);
+        const debouncedRender = debounce(renderEstadoRepuTable, 300);
+
+        // Función para mostrar notificaciones (ya estaba incluida en el código anterior)
+        function showNotification(message, type = 'info') {
+            const existingNotification = document.querySelector('.custom-notification');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+
+            const types = {
+                success: 'bg-green-500 border-green-600',
+                error: 'bg-red-500 border-red-600',
+                warning: 'bg-yellow-500 border-yellow-600',
+                info: 'bg-blue-500 border-blue-600'
+            };
+
+            const notification = document.createElement('div');
+            notification.className = `custom-notification fixed top-4 right-4 text-white p-4 rounded-lg shadow-lg border ${types[type]} z-50 transition-all duration-300`;
+            notification.innerHTML = `
+        <div class="flex items-center gap-2">
+            <span>${message}</span>
+        </div>
+    `;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+
+        // 🟢 FUNCIÓN CORREGIDA: setLoadingState 🟢
+        function setLoadingState(isLoading, element) {
+            if (!element) return;
+
+            if (isLoading) {
+                element.disabled = true;
+                element.innerHTML = '<i data-lucide="loader-2" class="animate-spin w-5 h-5 inline mr-1"></i> Procesando...';
+            } else {
+                // En este contexto, el botón se habilita y el texto vuelve a 'Confirmar Entrega'
+                element.disabled = false;
+                element.innerHTML = '<i data-lucide="check" class="w-5 h-5 inline mr-1"></i> Confirmar Entrega';
+            }
+            lucide.createIcons();
+        }
+        // --- FIN FUNCIONES UTILITARIAS ---
+
+        // --- FUNCIONES MULTI-SELECT ---
+        function createMultiSelect({
+            container, items, idField, nameField, checkboxClass, allSelectorId, updateTextFn, searchable = false
+        }) {
+            container.innerHTML = '';
+
+            const itemClass = `${checkboxClass}-item`;
+            const searchId = `${checkboxClass}-search-input`;
+
+            if (searchable) {
+                const searchInputHtml = `
+                    <div class="px-3 pt-2 pb-1 sticky top-0 bg-white z-20 shadow-sm border-b border-gray-200">
+                        <input type="text" id="${searchId}" placeholder="Buscar..." 
+                            class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 p-1.5 text-sm">
+                    </div>
+                `;
+                container.insertAdjacentHTML('afterbegin', searchInputHtml);
+                document.getElementById(searchId).addEventListener('keyup', () => filterOptions(searchId, itemClass));
+            }
+
+            const allOptionLabel = document.createElement('label');
+            allOptionLabel.className = `flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer font-semibold ${itemClass}`;
+            allOptionLabel.innerHTML = `<input type="checkbox" id="${allSelectorId}" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3" checked> <span class="option-text">Todas</span>`;
+            container.appendChild(allOptionLabel);
+
+            items.forEach(item => {
+                const label = document.createElement('label');
+                label.className = `flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer ${itemClass}`;
+                label.innerHTML = `<input type="checkbox" data-id="${item[idField]}" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3 ${checkboxClass}" checked> <span class="option-text">${item[nameField]}</span>`;
+                container.appendChild(label);
+            });
+
+            document.getElementById(allSelectorId).addEventListener('change', (e) => {
+                container.querySelectorAll(`.${checkboxClass}`).forEach(cb => cb.checked = e.target.checked);
+                updateTextFn();
+                debouncedApplyFilters();
+            });
+
+            container.addEventListener('change', (e) => {
+                if (e.target.id !== allSelectorId) {
+                    const allCheckboxes = container.querySelectorAll(`.${checkboxClass}`);
+                    const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
+                    const someChecked = !allChecked && Array.from(allCheckboxes).some(cb => cb.checked);
+                    const allSelector = document.getElementById(allSelectorId);
+
+                    if (allChecked) {
+                        allSelector.checked = true;
+                        allSelector.indeterminate = false;
+                    } else if (someChecked) {
+                        allSelector.checked = false;
+                        allSelector.indeterminate = true;
+                    } else {
+                        allSelector.checked = false;
+                        allSelector.indeterminate = false;
+                    }
+                }
+                updateTextFn();
+                debouncedApplyFilters();
+            });
+        }
+
+        const getSelectedIds = (selector) => Array.from(document.querySelectorAll(selector + ':checked')).map(cb => cb.dataset.id);
+
+        function updateFilterText(textEl, selector, total, singleText, pluralText, allText) {
+            const selectedCheckboxes = document.querySelectorAll(selector + ':checked');
+            const count = selectedCheckboxes.length;
+
+            if (count === 0) {
+                textEl.textContent = "Ninguno";
+            } else if (count === total) {
+                textEl.textContent = allText;
+            } else if (count === 1) {
+                textEl.textContent = selectedCheckboxes[0].parentElement.querySelector('.option-text').textContent.trim();
+            } else {
+                textEl.textContent = `${count} ${pluralText} seleccionados`;
+            }
+        }
+
+        function updateSalaFilterText() {
+            updateFilterText(document.getElementById('sala-filter-text'), '.sala-checkbox', allSalas.length,
+                'sala', 'salas', 'Todas las salas');
+        }
+
+        // --- FUNCIONES DEL CANVAS DE FIRMA (LOGICA ROBUSTA) ---
+
+        function setupSignatureCanvas() {
+            const canvas = document.getElementById('signature-canvas');
+            if (!canvas) return;
+
+            // --- 1. CONFIGURACIÓN INICIAL Y REDIMENSIONAMIENTO ---
+            const setCanvasSize = () => {
+                const container = canvas.parentElement;
+                const width = container.clientWidth;
+                const height = 150;
+
+                const scale = window.devicePixelRatio || 1;
+
+                // 1.a: Establecer dimensiones CSS
+                canvas.style.width = width + 'px';
+                canvas.style.height = height + 'px';
+
+                // 1.b: Establecer dimensiones del buffer interno (multiplicado por scale)
+                canvas.width = width * scale;
+                canvas.height = height * scale;
+
+                const ctx = canvas.getContext('2d');
+                ctx.scale(scale, scale); // Aplicar la escala al contexto de dibujo
+
+                // Configuración de estilo del pincel
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.strokeStyle = '#000000';
+
+                // Limpiar el área visible
+                ctx.clearRect(0, 0, width, height);
+            };
+
+            setCanvasSize();
+            window.addEventListener('resize', setCanvasSize);
+
+            // --- 2. LÓGICA DE DIBUJO ---
+            const ctx = canvas.getContext('2d');
+            let drawing = false;
+
+            // Función para obtener coordenadas relativas al canvas (no escaladas por devicePixelRatio)
+            const getRelativeCoords = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+                const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+
+                return {
+                    x: clientX - rect.left,
+                    y: clientY - rect.top
+                };
+            };
+
+            const startDrawing = (e) => {
+                const coords = getRelativeCoords(e);
+
+                ctx.beginPath();
+                ctx.moveTo(coords.x, coords.y);
+                drawing = true;
+            };
+
+            const draw = (e) => {
+                if (!drawing) return;
+
+                const coords = getRelativeCoords(e);
+
+                ctx.lineTo(coords.x, coords.y);
+                ctx.stroke();
+            };
+
+            const stopDrawing = () => {
+                if (drawing) {
+                    drawing = false;
+                    ctx.closePath();
+                }
+                updateDeliveryButtonValidity();
+            };
+
+            // --- 3. EVENT LISTENERS ---
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+
+            // Touch events para dispositivos móviles
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                startDrawing(e.touches[0]);
+            });
+
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault(); // CRUCIAL para evitar scroll y permitir dibujo
+                draw(e.touches[0]);
+            });
+
+            canvas.addEventListener('touchend', stopDrawing);
+
+            // Botón limpiar
+            document.getElementById('clear-signature-btn').addEventListener('click', () => {
+                setCanvasSize(); // Limpia y reajusta
+                updateDeliveryButtonValidity();
+            });
+        }
+
+        function isCanvasSigned() {
+            const canvas = document.getElementById('signature-canvas');
+            // EVITA IndexSizeError si el canvas no tiene dimensiones válidas (width o height = 0)
+            if (!canvas || canvas.width === 0 || canvas.height === 0) return false;
+
+            try {
+                const ctx = canvas.getContext('2d');
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+
+                // Verificar si hay píxeles no transparentes
+                for (let i = 0; i < data.length; i += 4) {
+                    if (data[i + 3] !== 0) { // Alpha channel no es 0
+                        return true;
+                    }
+                }
+                return false;
+            } catch (error) {
+                // Esto atrapa cualquier error residual como IndexSizeError
+                return false;
+            }
+        }
+
+        function updateDeliveryButtonValidity() {
+            const isSigned = isCanvasSigned();
+            const tecnicoSelected = document.getElementById('tecnico-select').value !== "";
+            const confirmButton = document.getElementById('confirm-delivery-btn');
+
+            if (confirmButton) {
+                confirmButton.disabled = !(isSigned && tecnicoSelected);
+            }
+        }
+        // --- FIN FUNCIONES DEL CANVAS DE FIRMA ---
+
+        // =======================================================
+        // 🟢 SECCIÓN 2: INICIALIZACIÓN Y CARGA DE DATOS 
+        // =======================================================
+
+        async function checkSession() {
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session) {
+                    window.location.href = './index.html';
+                    return;
+                }
+                initializePage();
+            } catch (e) {
+                if (e.message.includes("Invalid API key")) {
+                    document.getElementById('loading-overlay').innerHTML = `
+                        <div class="text-center p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+                            <h2 class="font-bold text-lg mb-2">Error de Configuración</h2>
+                            <p>API Key de Supabase inválida.</p>
+                            <p class="mt-2 text-sm">Por favor, revisa la variable <strong>SUPABASE_ANON_KEY</strong> en el archivo HTML.</p>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('loading-overlay').innerHTML = `<div class="text-center p-4 bg-red-100">${e.message}</div>`;
+                }
+            }
+        }
+
+        async function initializePage() {
+            document.getElementById('logout-button').addEventListener('click', logout);
+            document.getElementById('export-excel-btn').addEventListener('click', exportToExcel);
+            document.getElementById('general-search').addEventListener('input', debouncedRender);
+
+            document.getElementById('deliver-btn').addEventListener('click', openDeliveryModal);
+            document.getElementById('confirm-delivery-btn').addEventListener('click', confirmDeliveryAndUpdate);
+            document.getElementById('sala-filter-btn').addEventListener('click', () => document.getElementById('sala-filter-options').classList.toggle('hidden'));
+
+            await Promise.all([
+                populateSalaFilter(),
+                populateTecnicoSelect()
+            ]);
+
+            updateSalaFilterText();
+            await applyFilters();
+
+            document.getElementById('main-content').classList.remove('opacity-0');
+            document.getElementById('loading-overlay').style.display = 'none';
+            lucide.createIcons();
+
+            // Inicialización tardía del Canvas para asegurar que el DOM esté listo
+            setTimeout(() => {
+                setupSignatureCanvas();
+                updateDeliveryButtonValidity();
+            }, 100);
+
+            // Realtime listener
+            const channel = supabaseClient
+                .channel('estado_repu-almacen-changes')
+                .on('postgres_changes', {
+                    event: '*',
+                    schema: 'public',
+                    table: 'estado_repu'
+                }, (payload) => {
+                    debouncedApplyFilters();
+                })
+                .subscribe();
+        }
+
+        async function logout() {
+            await supabaseClient.auth.signOut();
+            window.location.href = './index.html';
+        }
+
+        async function populateSalaFilter() {
+            const { data, error } = await supabaseClient.from('sala').select('id_sala, sala');
+            if (error) {
+                console.error('Error fetching salas:', error);
+                return;
+            }
+            allSalas = data.sort((a, b) => a.sala.localeCompare(b.sala));
+            createMultiSelect({
+                container: document.getElementById('sala-filter-options'),
+                items: allSalas,
+                idField: 'id_sala',
+                nameField: 'sala',
+                checkboxClass: 'sala-checkbox',
+                allSelectorId: 'select-all-salas',
+                updateTextFn: updateSalaFilterText,
+                searchable: true
+            });
+        }
+
+        async function populateTecnicoSelect() {
+            const { data, error } = await supabaseClient
+                .from('tecnicos')
+                .select('id_usuario, usuario')
+                .in('cargo', ['Tecnico', 'Coordinador']);
+
+            if (error) {
+                console.error('Error fetching técnicos/coordinadores de la tabla tecnicos:', error);
+                return;
+            }
+
+            allTecnicos = data.sort((a, b) => a.usuario.localeCompare(b.usuario));
+            const selectEl = document.getElementById('tecnico-select');
+
+            selectEl.innerHTML = '<option value="">Seleccione un Técnico</option>';
+            allTecnicos.forEach(tecnico => {
+                const option = document.createElement('option');
+                option.value = tecnico.id_usuario;
+                option.textContent = tecnico.usuario;
+                selectEl.appendChild(option);
+            });
+        }
+
+        async function applyFilters() {
+            document.getElementById('loading-overlay').style.display = 'flex';
+            rawEstadoData = await fetchEstadoRepuData();
+            renderEstadoRepuTable();
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+
+        async function fetchEstadoRepuData() {
+            const salas = getSelectedIds('.sala-checkbox');
+
+            let query = supabaseClient
+                .from('estado_repu')
+                .select(`
+                    id_estadorepu, id_serie, estado, ubi_actual, cantidad, 
+                    repuestos (nombre, num_part),
+                    maquinas (serie, modelo),
+                    sala (sala),
+                    detalle:detalle!estado_repu_id_detalle_fkey ( 
+                        trabajos (fecha, codigo) 
+                    )
+                `);
+
+            query = query.eq('estado', FIXED_ESTADO);
+            query = query.eq('ubi_actual', FIXED_UBICACION);
+
+            if (salas.length > 0 && salas.length < allSalas.length) {
+                query = query.in('id_sala', salas);
+            }
+
+            const { data, error } = await query.order('id_estadorepu', { ascending: false }).limit(2000);
+
+            if (error) {
+                console.error("Error fetching estado_repu data:", error);
+                document.getElementById('reporte-dashboard').innerHTML = `<p class="text-red-600 text-center py-8">Error cargando los datos: ${JSON.stringify(error)}</p>`;
+                return [];
+            }
+            return data;
+        }
+
+        function renderEstadoRepuTable() {
+            const data = rawEstadoData;
+            const table = document.getElementById('estado-repu-table');
+            if (!table) return;
+            const tableHead = table.querySelector('thead');
+            const tableBody = table.querySelector('tbody');
+
+            tableHead.innerHTML = `
+                <tr>
+                    <th class="p-4"><input type="checkbox" id="select-all-checkbox" class="h-4 w-4 rounded border-gray-300"></th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha Trab.</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Serie Rep.</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Repuesto</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ubicación Actual</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Máquina</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sala</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cod. Trab.</th>
+                </tr>`;
+            tableBody.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-gray-500">No se encontraron repuestos con Estado: **${FIXED_ESTADO}** y Ubicación: **${FIXED_UBICACION}** para los filtros seleccionados.</td></tr>`;
+                currentRecords = [];
+                return;
+            }
+
+            const searchTerm = document.getElementById('general-search').value.toLowerCase().trim();
+            let filteredRecords = data;
+
+            if (searchTerm) {
+                filteredRecords = data.filter(item => {
+                    const serie = (item.id_serie || '').toLowerCase();
+                    const repuesto = (item.repuestos?.nombre || '').toLowerCase();
+                    const maquina = (item.maquinas?.serie || '').toLowerCase();
+                    const sala = (item.sala?.sala || '').toLowerCase();
+                    const codigoTrabajo = (item.detalle?.trabajos?.codigo || '').toLowerCase();
+
+                    return serie.includes(searchTerm) ||
+                        repuesto.includes(searchTerm) ||
+                        maquina.includes(searchTerm) ||
+                        sala.includes(searchTerm) ||
+                        codigoTrabajo.includes(searchTerm);
+                });
+            }
+
+            currentRecords = filteredRecords;
+
+            if (filteredRecords.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-gray-500">No se encontraron coincidencias para la búsqueda.</td></tr>`;
+                return;
+            }
+
+            filteredRecords.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50';
+
+                const fechaTrabajo = item.detalle?.trabajos?.fecha;
+                const fechaDisplay = fechaTrabajo
+                    ? new Date(fechaTrabajo + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
+                    : '<span class="text-gray-400">N/A</span>';
+
+                const trabajoCodigo = item.detalle?.trabajos?.codigo || '<span class="text-gray-400">N/A</span>';
+
+                const serie = item.id_serie || '<span class="text-gray-400">N/A</span>';
+                const repuestoNombre = item.repuestos?.nombre || '<span class="text-gray-400">N/A</span>';
+                const estado = item.estado || '<span class="text-gray-400">N/A</span>';
+                const ubicacion = item.ubi_actual || '<span class="text-gray-400">N/A</span>';
+                const maquina = item.maquinas?.serie || '<span class="text-gray-400">N/A</span>';
+                const sala = item.sala?.sala || '<span class="text-gray-400">N/A</span>';
+
+                let estadoColorClass = 'bg-cyan-100 text-cyan-800'; // Fijo para 'En Proceso'
+
+                tr.innerHTML = `
+                    <td class="p-4"><input type="checkbox" class="row-checkbox h-4 w-4 rounded border-gray-300 text-blue-600" data-id="${item.id_estadorepu}"></td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${fechaDisplay}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${serie}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm">${repuestoNombre}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${estadoColorClass}">
+                            ${estado}
+                        </span>
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-600">${ubicacion}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-600">${maquina}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-600">${sala}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-center font-medium">${trabajoCodigo}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+            lucide.createIcons();
+
+            const selectAllCheckbox = document.getElementById('select-all-checkbox');
+            const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', (e) => {
+                    rowCheckboxes.forEach(cb => cb.checked = e.target.checked);
+                    updateDeliverButtonState();
+                });
+            }
+
+            rowCheckboxes.forEach(cb => {
+                cb.addEventListener('change', () => {
+                    if (selectAllCheckbox) {
+                        const allChecked = Array.from(rowCheckboxes).every(r => r.checked);
+                        const someChecked = !allChecked && Array.from(rowCheckboxes).some(r => r.checked);
+                        selectAllCheckbox.checked = allChecked;
+                        selectAllCheckbox.indeterminate = someChecked;
+                    }
+                    updateDeliverButtonState();
+                });
+            });
+
+            updateDeliverButtonState();
+        }
+
+        function updateDeliverButtonState() {
+            const deliverButton = document.getElementById('deliver-btn');
+            const selectedCount = document.querySelectorAll('.row-checkbox:checked').length;
+
+            if (deliverButton) {
+                deliverButton.disabled = selectedCount === 0;
+                deliverButton.innerHTML = selectedCount === 0
+                    ? '<i data-lucide="package-check" class="w-4 h-4"></i> Entregar a Técnico'
+                    : `<i data-lucide="package-check" class="w-4 h-4"></i> Entregar (${selectedCount})`;
+                lucide.createIcons();
+            }
+        }
+
+        function exportToExcel() {
+            if (!currentRecords || currentRecords.length === 0) {
+                showNotification("No hay datos para exportar. Por favor, ajuste los filtros.", "warning");
+                return;
+            }
+            const dataToExport = currentRecords.map(item => {
+                const fechaTrabajo = item.detalle?.trabajos?.fecha;
+                const fechaExport = fechaTrabajo ? new Date(fechaTrabajo + 'T00:00:00').toLocaleDateString('es-ES') : '';
+                return {
+                    'Fecha Trabajo': fechaExport,
+                    'Codigo Trabajo': item.detalle?.trabajos?.codigo,
+                    'ID Estado (PK)': item.id_estadorepu,
+                    'ID Detalle (FK)': item.id_detalle,
+                    'Serie (Texto)': item.id_serie,
+                    'Repuesto': item.repuestos?.nombre,
+                    'N/P': item.repuestos?.num_part,
+                    'Estado': item.estado,
+                    'Ubicación Actual': item.ubi_actual,
+                    'Máquina': item.maquinas?.serie,
+                    'Sala': item.sala?.sala,
+                    'Cantidad': item.cantidad,
+                }
+            });
+            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Estado_Repuestos_Almacen");
+            XLSX.writeFile(workbook, "Reporte_Estado_Repuestos_Almacen.xlsx");
+
+            showNotification("✅ Archivo Excel exportado exitosamente", "success");
+        }
+
+        // --- FUNCIONES DEL MODAL Y ENVÍO ---
+
+        function openDeliveryModal() {
+            const selectedCheckboxes = document.querySelectorAll('.row-checkbox:checked');
+            selectedRepuIds = Array.from(selectedCheckboxes).map(cb => parseInt(cb.dataset.id));
+
+            if (selectedRepuIds.length === 0) {
+                showNotification("Por favor, seleccione al menos un item para entregar.", "warning");
+                return;
+            }
+
+            const now = new Date();
+            const dateString = now.toISOString().substring(0, 10);
+            const timeString = now.toTimeString().substring(0, 5);
+
+            document.getElementById('delivery-date').value = dateString;
+            document.getElementById('delivery-time').value = timeString;
+
+            // 1. FORZAR REDIMENSIONAMIENTO ANTES DE MOSTRAR (corregirá width=0)
+            const canvas = document.getElementById('signature-canvas');
+            if (canvas) {
+                // Llamar setCanvasSize que está dentro de setupSignatureCanvas
+                const setCanvasSize = window.setCanvasSize || (() => { /* fallback */ });
+                setCanvasSize();
+
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpiar Canvas
+            }
+
+            // 2. Resetear select/botón
+            document.getElementById('tecnico-select').value = "";
+
+            renderModalContent(selectedRepuIds);
+            updateDeliveryButtonValidity();
+
+            document.getElementById('delivery-modal').classList.remove('hidden');
+            document.getElementById('delivery-modal').classList.add('flex');
+
+            // 3. Establecer listener
+            document.getElementById('tecnico-select').onchange = updateDeliveryButtonValidity;
+        }
+
+        function closeDeliveryModal() {
+            document.getElementById('delivery-modal').classList.add('hidden');
+            document.getElementById('delivery-modal').classList.remove('flex');
+        }
+
+        function renderModalContent(ids) {
+            const listContainer = document.getElementById('modal-items-list');
+            const itemCount = document.getElementById('modal-item-count');
+            listContainer.innerHTML = '';
+
+            const selectedItems = rawEstadoData.filter(item => ids.includes(item.id_estadorepu));
+
+            itemCount.textContent = selectedItems.length;
+
+            selectedItems.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'py-1 border-b last:border-b-0 flex justify-between items-center';
+                div.innerHTML = `
+                    <span class="font-medium text-gray-800">${item.repuestos?.nombre || 'Repuesto N/A'}</span>
+                    <span class="text-xs text-gray-500">${item.id_serie || 'Serie N/A'}</span>
+                `;
+                listContainer.appendChild(div);
+            });
+        }
+
+        async function confirmDeliveryAndUpdate() {
+            const confirmButton = document.getElementById('confirm-delivery-btn');
+            const tecnicoId = document.getElementById('tecnico-select').value;
+
+            if (!tecnicoId || !isCanvasSigned()) {
+                showNotification("Debe seleccionar un técnico y registrar una firma.", "warning");
+                return;
+            }
+
+            if (selectedRepuIds.length === 0) {
+                showNotification("No hay items seleccionados para entregar.", "error");
+                return;
+            }
+
+            setLoadingState(true, confirmButton);
+
+            const updatePayload = {
+                estado: NEW_ESTADO,
+                ubi_actual: NEW_UBICACION,
+            };
+
+            try {
+                const { error } = await supabaseClient
+                    .from('estado_repu')
+                    .update(updatePayload)
+                    .in('id_estadorepu', selectedRepuIds);
+
+                if (error) {
+                    throw error;
+                }
+
+                closeDeliveryModal();
+                showNotification(`✅ ${selectedRepuIds.length} items entregados exitosamente!`, 'success');
+
+                setTimeout(() => {
+                    applyFilters();
+                }, 500);
+
+            } catch (error) {
+                console.error("Error al confirmar la entrega:", error);
+                showNotification(`❌ Error al actualizar los items: ${error.message}`, 'error');
+
+                updateDeliveryButtonValidity();
+                setLoadingState(false, confirmButton);
+            }
+        }
+
+        // --- INICIALIZACIÓN ---
+        document.addEventListener('DOMContentLoaded', checkSession);
+    </script>
+</body>
+
+</html>
