@@ -144,7 +144,7 @@
         <header class="mb-8 md:mb-12 flex flex-wrap justify-between items-center bg-white rounded-2xl p-6 shadow-sm">
             <div class="flex items-center space-x-4">
                 <div class="bg-white p-2 rounded-2xl shadow-sm">
-                    <img src= winsystems_logo.png alt="Logo de Winsystems" class="h-16 md:h-20">
+                    <img src="winsystems_logo.png" alt="Logo de Winsystems" class="h-16 md:h-20">
                 </div>
                 <div>
                     <h1 id="welcome-title" class="text-2xl md:text-3xl font-bold text-gray-900">Bienvenido</h1>
@@ -213,9 +213,10 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvYnF1a3R4dmhsdnRycGVvcGppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU2OTc4NDYsImV4cCI6MjA2MTI3Mzg0Nn0.rnubNUWSWEomj5Xwvr65kZLK7Ig_bLC74ajFh9cksFc';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // --- CONFIGURACIÓN DE TARJETAS (MANTENIDO) ---
+        // --- CONFIGURACIÓN DE TARJETAS (ACTUALIZADA CON SEGUIMIENTO DE REPUESTOS) ---
         const allCards = [
             { id: 'reportar', title: 'Reportar Incidencia', description: 'Crear un nuevo reporte de falla para una máquina.', href: './reportar.html', icon: 'alert-triangle', color: 'from-orange-500 to-red-500' },
+            { id: 'seguimiento_repuestos', title: 'Seguimiento de Repuestos', description: 'Gestiona y rastrea el estado de repuestos y componentes.', href: './repu_sala.html', icon: 'package', color: 'from-indigo-500 to-purple-500' },
             { id: 'asignar', title: 'Asignar Incidencias', description: 'Asigna reportes pendientes a los técnicos disponibles.', href: './asignacion.html', icon: 'send', color: 'from-blue-500 to-cyan-500' },
             { id: 'metricas', title: 'Métricas de Máquinas', description: 'Visualiza gráficas y el estado general de las operaciones.', href: './maquinas.html', icon: 'bar-chart-2', color: 'from-green-500 to-emerald-500' },
             { id: 'reporte_detallado', title: 'Reporte Detallado', description: 'Explora una tabla con todos los trabajos realizados.', href: './reporte.html', icon: 'file-text', color: 'from-purple-500 to-indigo-500' },
@@ -255,31 +256,36 @@
         }
 
 
-        // --- RENDERIZADO DE ESTADÍSTICAS REALES (MANTENIDO) ---
+        // --- RENDERIZADO DE ESTADÍSTICAS REALES (ACTUALIZADO CON REPUESTOS) ---
         async function renderUserStats(role, userId) {
-            // ... (Lógica de renderUserStats sin cambios) ...
             const container = document.getElementById('user-stats');
             container.innerHTML = ''; // Limpia los skeletons
 
             let stats = [];
 
             try {
-                // LÓGICA DE OBTENCIÓN DE DATOS REALES (MANTENIDA)
+                // LÓGICA DE OBTENCIÓN DE DATOS REALES (ACTUALIZADA)
                 if (role.toLowerCase() === 'sala') {
                     const { data: incidencias, error } = await supabaseClient
                         .from('incidencias')
                         .select('*')
                         .eq('usuario_reporte', userId);
 
+                    // Obtener datos de repuestos para la sala
+                    const { data: repuestos, error: errorRep } = await supabaseClient
+                        .from('estado_repu')
+                        .select('*')
+                        .eq('id_sala', userId);
+
                     if (!error && incidencias) {
                         const total = incidencias.length;
                         const pendientes = incidencias.filter(i => i.estado === 'pendiente').length;
-                        const resueltas = incidencias.filter(i => i.estado === 'resuelta').length;
+                        const repuestosActivos = repuestos && !errorRep ? repuestos.length : 0;
 
                         stats = [
                             { title: 'Incidencias Reportadas', value: total, icon: 'alert-triangle', color: 'text-orange-500' },
                             { title: 'Pendientes de Solución', value: pendientes, icon: 'clock', color: 'text-yellow-500' },
-                            { title: 'Resueltas esta Semana', value: resueltas, icon: 'check-circle', color: 'text-green-500' }
+                            { title: 'Repuestos Activos', value: repuestosActivos, icon: 'package', color: 'text-indigo-500' }
                         ];
                     }
                 } else if (role.toLowerCase() === 'coordinador') {
@@ -292,14 +298,19 @@
                         .select('*')
                         .eq('activo', true);
 
+                    const { data: repuestos, error: errorRep } = await supabaseClient
+                        .from('estado_repu')
+                        .select('*');
+
                     if (!errorInc && !errorTec) {
                         const asignadas = incidencias.filter(i => i.estado === 'asignada').length;
                         const tecnicosActivos = tecnicos.length;
+                        const repuestosTotales = repuestos && !errorRep ? repuestos.length : 0;
 
                         stats = [
                             { title: 'Incidencias Asignadas', value: asignadas, icon: 'send', color: 'text-blue-500' },
                             { title: 'Técnicos Activos', value: tecnicosActivos, icon: 'users', color: 'text-purple-500' },
-                            { title: 'Tiempo Promedio Respuesta', value: '2.4h', icon: 'bar-chart-3', color: 'text-indigo-500' }
+                            { title: 'Repuestos en Sistema', value: repuestosTotales, icon: 'package', color: 'text-indigo-500' }
                         ];
                     }
                 } else { // Técnico, Admin
@@ -308,16 +319,21 @@
                         .select('*')
                         .eq('tecnico_id', userId);
 
+                    const { data: repuestos, error: errorRep } = await supabaseClient
+                        .from('estado_repu')
+                        .select('*')
+                        .eq('id_tecnico', userId);
+
                     if (!error && tareas) {
                         const completadas = tareas.filter(t => t.estado === 'completada').length;
                         const tiempoTotal = tareas.reduce((sum, t) => sum + (t.tiempo_minutos || 0), 0);
                         const horasTrabajadas = Math.round(tiempoTotal / 60);
-                        const eficiencia = tareas.length > 0 ? Math.round((completadas / tareas.length) * 100) : 0;
+                        const repuestosAsignados = repuestos && !errorRep ? repuestos.length : 0;
 
                         stats = [
                             { title: 'Tareas Completadas', value: completadas, icon: 'check-circle', color: 'text-green-500' },
                             { title: 'Tiempo Trabajado', value: `${horasTrabajadas}h`, icon: 'clock', color: 'text-blue-500' },
-                            { title: 'Eficiencia', value: `${eficiencia}%`, icon: 'trending-up', color: 'text-emerald-500' }
+                            { title: 'Repuestos Asignados', value: repuestosAsignados, icon: 'package', color: 'text-indigo-500' }
                         ];
                     }
                 }
@@ -349,31 +365,29 @@
         }
 
         function getDefaultStats(role) {
-            // ... (Lógica de getDefaultStats sin cambios) ...
             if (role.toLowerCase() === 'sala') {
                 return [
                     { title: 'Incidencias Reportadas', value: '12', icon: 'alert-triangle', color: 'text-orange-500' },
                     { title: 'Pendientes de Solución', value: '3', icon: 'clock', color: 'text-yellow-500' },
-                    { title: 'Resueltas esta Semana', value: '9', icon: 'check-circle', color: 'text-green-500' }
+                    { title: 'Repuestos Activos', value: '8', icon: 'package', color: 'text-indigo-500' }
                 ];
             } else if (role.toLowerCase() === 'coordinador') {
                 return [
                     { title: 'Incidencias Asignadas', value: '24', icon: 'send', color: 'text-blue-500' },
                     { title: 'Técnicos Activos', value: '8', icon: 'users', color: 'text-purple-500' },
-                    { title: 'Tiempo Promedio Respuesta', value: '2.4h', icon: 'bar-chart-3', color: 'text-indigo-500' }
+                    { title: 'Repuestos en Sistema', value: '45', icon: 'package', color: 'text-indigo-500' }
                 ];
             } else {
                 return [
                     { title: 'Tareas Completadas', value: '15', icon: 'check-circle', color: 'text-green-500' },
                     { title: 'Tiempo Trabajado', value: '36h', icon: 'clock', color: 'text-blue-500' },
-                    { title: 'Eficiencia', value: '92%', icon: 'trending-up', color: 'text-emerald-500' }
+                    { title: 'Repuestos Asignados', value: '7', icon: 'package', color: 'text-indigo-500' }
                 ];
             }
         }
 
-        // --- RENDERIZADO DE TARJETAS DE NAVEGACIÓN (MANTENIDO) ---
+        // --- RENDERIZADO DE TARJETAS DE NAVEGACIÓN (ACTUALIZADO CON SEGUIMIENTO DE REPUESTOS) ---
         function renderNavigationCards(role) {
-            // ... (Lógica de renderNavigationCards sin cambios) ...
             const container = document.getElementById('nav-cards-container');
             container.innerHTML = '';
             const userRole = role.toLowerCase();
@@ -382,13 +396,23 @@
             let accessibleCards = [];
 
             if (userRole === 'sala') {
-                accessibleCards = allCards.filter(card => card.id === 'reportar');
-            } else if (userRole === 'coordinador') {
-                accessibleCards = allCards.filter(card => card.id !== 'reportar'); 
-            } else { // Técnico, Admin
-                accessibleCards = allCards.filter(card =>
-                    card.id !== 'reportar' && card.id !== 'asignar'
+                // Sala puede reportar incidencias y ver seguimiento de repuestos
+                accessibleCards = allCards.filter(card => 
+                    card.id === 'reportar' || card.id === 'seguimiento_repuestos'
                 );
+            } else if (userRole === 'coordinador') {
+                // Coordinador puede acceder a todo excepto reportar incidencias
+                accessibleCards = allCards.filter(card => card.id !== 'reportar');
+            } else if (userRole === 'tecnico') {
+                // Técnico puede ver métricas, reportes y seguimiento de repuestos
+                accessibleCards = allCards.filter(card => 
+                    card.id === 'metricas' || 
+                    card.id === 'reporte_detallado' || 
+                    card.id === 'seguimiento_repuestos'
+                );
+            } else { // Admin
+                // Admin puede acceder a todo
+                accessibleCards = allCards;
             }
 
             if (accessibleCards.length === 0) {
