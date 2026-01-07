@@ -48,15 +48,15 @@
             class="flex flex-col md:flex-row justify-between items-center mb-8 gap-6 bg-white p-6 rounded-3xl shadow-sm border-b-4 border-blue-600">
             <div class="flex items-center gap-4">
                 <img src="winsystems_logo.png" alt="Logo de Winsystems" class="h-16 md:h-20">
-                    alt="Winsystems">
+                    
                 <h1 class="text-2xl font-extrabold tracking-tighter text-slate-800 uppercase">Análisis Predictivo 2026
                 </h1>
             </div>
             <select id="filtro-serie-long"
                 class="bg-blue-600 text-white p-3 rounded-xl font-bold shadow-lg outline-none cursor-pointer">
-                <option value="5">🎰 Máquinas (5 Dígitos)</option>
-                <option value="4">🎡 Ruletas (4 Dígitos)</option>
-                <option value="6">🖥️ PC Controller (6 Dígitos)</option>
+                <option value="5">🎰 Máquinas</option>
+                <option value="4">🎡 Ruletas</option>
+                <option value="6">🖥️ PC Controller</option>
             </select>
         </header>
 
@@ -80,12 +80,8 @@
             <div class="lg:col-span-3 glass-card p-8">
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="font-bold text-slate-700 uppercase text-xs tracking-widest">Incidencias por Periodo
-                        (2026)</h3>
-                    <select id="agrupacion-temporal"
-                        class="bg-slate-100 p-2 rounded-lg text-xs font-bold border cursor-pointer">
-                        <option value="mes">Mensual</option>
-                        <option value="trimestral">Trimestral</option>
-                    </select>
+                        (2025-2026)</h3>
+                    
                 </div>
                 <div class="h-[350px]"><canvas id="chartComparativo"></canvas></div>
             </div>
@@ -315,3 +311,4 @@
 
 
 </html>
+
