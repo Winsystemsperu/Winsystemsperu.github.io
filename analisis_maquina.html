@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Winsystems | Inteligencia de Activos 2026</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f1f5f9;
+        }
+
+        .glass-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 1.25rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .selected-item {
+            border-color: #2563eb !important;
+            background-color: #eff6ff !important;
+        }
+    </style>
+</head>
+
+<body class="text-slate-900">
+    <div class="container mx-auto p-4 lg:p-8">
+        <header
+            class="flex flex-col md:flex-row justify-between items-center mb-8 gap-6 bg-white p-6 rounded-3xl shadow-sm border-b-4 border-blue-600">
+            <div class="flex items-center gap-4">
+                <img src="https://winsystems.com.pe/wp-content/uploads/2022/01/logo-winsystems-2022.png" class="h-10"
+                    alt="Winsystems">
+                <h1 class="text-2xl font-extrabold tracking-tighter text-slate-800 uppercase">Análisis Predictivo 2026
+                </h1>
+            </div>
+            <select id="filtro-serie-long"
+                class="bg-blue-600 text-white p-3 rounded-xl font-bold shadow-lg outline-none cursor-pointer">
+                <option value="5">🎰 Máquinas (5 Dígitos)</option>
+                <option value="4">🎡 Ruletas (4 Dígitos)</option>
+                <option value="6">🖥️ PC Controller (6 Dígitos)</option>
+            </select>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+            <aside class="space-y-6">
+                <div class="glass-card p-6 border-t-4 border-blue-500">
+                    <h3 class="text-xs font-black text-slate-400 mb-4 uppercase tracking-widest">Filtros de Tiempo</h3>
+                    <div id="contenedor-meses"
+                        class="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto custom-scrollbar p-1"></div>
+
+                    <h3 class="text-xs font-black text-slate-400 my-4 uppercase tracking-widest">Tipos de Trabajo</h3>
+                    <div id="contenedor-trabajos" class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar p-1"></div>
+
+                    <button id="btn-procesar"
+                        class="w-full mt-6 bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-blue-600 transition-all flex items-center justify-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> PROCESAR ANÁLISIS
+                    </button>
+                </div>
+            </aside>
+
+            <div class="lg:col-span-3 glass-card p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-bold text-slate-700 uppercase text-xs tracking-widest">Incidencias por Periodo
+                        (2026)</h3>
+                    <select id="agrupacion-temporal"
+                        class="bg-slate-100 p-2 rounded-lg text-xs font-bold border cursor-pointer">
+                        <option value="mes">Mensual</option>
+                        <option value="trimestral">Trimestral</option>
+                    </select>
+                </div>
+                <div class="h-[350px]"><canvas id="chartComparativo"></canvas></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="glass-card p-6">
+                <h3 class="font-bold text-[10px] uppercase text-slate-400 mb-4 tracking-widest text-center">Efectividad
+                </h3>
+                <div class="h-[180px]"><canvas id="chartEfectividad"></canvas></div>
+            </div>
+            <div class="glass-card p-6">
+                <h3 class="font-bold text-[10px] uppercase text-slate-400 mb-4 tracking-widest text-center">Fallas por
+                    Modelo</h3>
+                <div class="h-[180px]"><canvas id="chartModelos"></canvas></div>
+            </div>
+            <div class="glass-card p-6">
+                <h3 class="font-bold text-[10px] uppercase text-slate-400 mb-4 tracking-widest text-center">Top Salas
+                </h3>
+                <div class="h-[180px]"><canvas id="chartSalas"></canvas></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            <div class="lg:col-span-1 glass-card p-6 border-l-8 border-rose-500">
+                <h3 class="font-bold text-rose-600 text-xs mb-4 uppercase flex items-center gap-2">
+                    <i data-lucide="award" class="w-4 h-4"></i> Top 10 Críticos
+                </h3>
+                <div id="ranking-list" class="space-y-2"></div>
+            </div>
+
+            <div class="lg:col-span-2 glass-card p-0 overflow-hidden min-h-[500px] flex flex-col">
+                <div class="bg-slate-900 p-4 flex justify-between items-center">
+                    <h3 id="titulo-historial" class="text-white font-bold text-xs uppercase">Seleccione una máquina</h3>
+                    <span id="stat-total-maquina"
+                        class="bg-blue-600 text-white px-3 py-1 rounded-full text-[10px] font-black hidden"></span>
+                </div>
+
+                <div id="placeholder-reportes"
+                    class="flex-grow flex flex-col items-center justify-center p-10 text-slate-400 italic">
+                    <i data-lucide="search" class="w-12 h-12 mb-4 opacity-20"></i>
+                    <p class="text-sm">Click en el ranking para ver el historial completo</p>
+                </div>
+
+                <div id="tabla-contenedor" class="hidden overflow-x-auto flex-grow custom-scrollbar">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-100 text-slate-500 sticky top-0 uppercase text-[9px] font-bold">
+                            <tr>
+                                <th class="px-4 py-3">Fecha</th>
+                                <th class="px-4 py-3">Sala</th>
+                                <th class="px-4 py-3">Diagnóstico</th>
+                                <th class="px-4 py-3 bg-blue-50 text-blue-700">Trabajo Realizado</th>
+                                <th class="px-4 py-3">Resul.</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-reportes-body" class="divide-y divide-slate-100 font-medium text-xs"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURACIÓN SUPABASE
+        const SUPABASE_URL = 'https://qobquktxvhlvtrpeopji.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvYnF1a3R4dmhsdnRycGVvcGppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU2OTc4NDYsImV4cCI6MjA2MTI3Mzg0Nn0.rnubNUWSWEomj5Xwvr65kZLK7Ig_bLC74ajFh9cksFc';
+
+        // CORRECCIÓN: Unificación de la variable de conexión
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let dataMaster = [];
+        let filteredData = [];
+        let activeCharts = {};
+        const mesesNombres = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+        function initUI() {
+            const mesCont = document.getElementById('contenedor-meses');
+            mesesNombres.forEach((m, i) => {
+                mesCont.innerHTML += `
+                    <label class="flex items-center gap-2 text-[10px] bg-slate-50 p-2 rounded-xl border border-slate-100 cursor-pointer hover:bg-white transition-all font-semibold shadow-sm">
+                        <input type="checkbox" value="${i}" class="check-mes" checked> ${m.substring(0, 3)}
+                    </label>`;
+            });
+            lucide.createIcons();
+        }
+
+        async function loadData() {
+            try {
+                const { data, error } = await _supabase
+                    .from('detalle')
+                    .select(`
+                        diag_ini, trab_realizado, resul, tipo_trabajo,
+                        maquinas!inner(serie, modelo),
+                        trabajos!inner(fecha, sala(sala_mincetur))
+                    `);
+
+                if (error) throw error;
+                dataMaster = data;
+
+                const tipos = [...new Set(dataMaster.map(d => d.tipo_trabajo).filter(Boolean))].sort();
+                const trabCont = document.getElementById('contenedor-trabajos');
+                trabCont.innerHTML = '';
+                tipos.forEach(t => {
+                    trabCont.innerHTML += `
+                        <label class="flex items-center gap-2 text-[10px] bg-slate-50 p-2 rounded-lg border border-slate-200 hover:border-blue-400 cursor-pointer transition-all font-bold text-slate-500 uppercase">
+                            <input type="checkbox" value="${t}" class="check-trabajo" checked> ${t}
+                        </label>`;
+                });
+                processData();
+            } catch (err) { console.error("Error:", err.message); }
+        }
+
+        function processData() {
+            const digitos = parseInt(document.getElementById('filtro-serie-long').value);
+            const mesesSel = Array.from(document.querySelectorAll('.check-mes:checked')).map(c => parseInt(c.value));
+            const trabsSel = Array.from(document.querySelectorAll('.check-trabajo:checked')).map(c => c.value);
+
+            filteredData = dataMaster.filter(item => {
+                const serie = String(item.maquinas?.serie || '');
+                const fecha = new Date(item.trabajos.fecha);
+                return serie.length === digitos && mesesSel.includes(fecha.getMonth()) && trabsSel.includes(item.tipo_trabajo);
+            });
+
+            renderCharts(filteredData);
+            renderRanking(filteredData);
+            document.getElementById('tabla-contenedor').classList.add('hidden');
+            document.getElementById('placeholder-reportes').classList.remove('hidden');
+        }
+
+        function renderRanking(data) {
+            const container = document.getElementById('ranking-list');
+            const counts = data.reduce((acc, it) => {
+                const s = it.maquinas?.serie;
+                acc[s] = (acc[s] || 0) + 1;
+                return acc;
+            }, {});
+
+            const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            container.innerHTML = sorted.map(([serie, total], i) => `
+                <div onclick="verDetalle('${serie}', this)" class="ranking-item flex justify-between items-center p-3 bg-slate-50 border border-transparent border-l-4 border-l-rose-500 rounded-xl cursor-pointer hover:bg-rose-50 transition-all">
+                    <span class="font-bold text-slate-700 italic text-xs">#${i + 1} SERIE ${serie}</span>
+                    <span class="bg-red-600 text-white px-2 py-0.5 rounded text-[9px] font-black tracking-tighter">${total} REGISTROS</span>
+                </div>`).join('');
+        }
+
+        function verDetalle(serie, element) {
+            document.querySelectorAll('.ranking-item').forEach(el => el.classList.remove('selected-item'));
+            element.classList.add('selected-item');
+
+            const reportes = filteredData.filter(it => it.maquinas?.serie === serie)
+                .sort((a, b) => new Date(b.trabajos.fecha) - new Date(a.trabajos.fecha));
+
+            document.getElementById('placeholder-reportes').classList.add('hidden');
+            document.getElementById('tabla-contenedor').classList.remove('hidden');
+            document.getElementById('titulo-historial').innerText = `HISTORIAL: SERIE ${serie}`;
+
+            const badge = document.getElementById('stat-total-maquina');
+            badge.innerText = `${reportes.length} REPORTE(S)`;
+            badge.classList.remove('hidden');
+
+            const body = document.getElementById('tabla-reportes-body');
+            body.innerHTML = reportes.map(h => {
+                const año = new Date(h.trabajos.fecha).getFullYear();
+                const labelFecha = año !== 2026 ? `${h.trabajos.fecha}` : h.trabajos.fecha;
+
+                return `
+                <tr class="hover:bg-blue-50/50 transition">
+                    <td class="px-4 py-4 font-bold text-blue-600 whitespace-nowrap">${labelFecha}</td>
+                    <td class="px-4 py-4 text-[9px] font-black uppercase text-slate-400">${h.trabajos.sala?.sala_mincetur || 'SALA S/N'}</td>
+                    <td class="px-4 py-4 text-[10px] italic text-slate-500 font-bold">${h.diag_ini || '-'}</td>
+                    <td class="px-4 py-4 text-xs font-semibold text-slate-800 bg-blue-50/20">${h.trab_realizado || '-'}</td>
+                    <td class="px-4 py-4 text-[9px] font-black uppercase text-green-600">${h.resul || '-'}</td>
+                </tr>`}).join('');
+        }
+
+        function renderCharts(data) {
+            const ctxLine = document.getElementById('chartComparativo').getContext('2d');
+            const modo = document.getElementById('agrupacion-temporal').value;
+            const statsTemporales = {};
+
+            data.forEach(it => {
+                const f = new Date(it.trabajos.fecha);
+                const etiqueta = (f.getFullYear() !== 2026) ? `${mesesNombres[f.getMonth()]} ${f.getFullYear()}` : mesesNombres[f.getMonth()];
+                statsTemporales[etiqueta] = (statsTemporales[etiqueta] || 0) + 1;
+            });
+            updateChart('trend', 'chartComparativo', 'line', Object.keys(statsTemporales), Object.values(statsTemporales), '#2563eb');
+
+            const efect = data.reduce((acc, it) => { acc[it.resul || 'PENDIENTE'] = (acc[it.resul || 'PENDIENTE'] || 0) + 1; return acc; }, {});
+            updateChart('efect', 'chartEfectividad', 'pie', Object.keys(efect), Object.values(efect), ['#10b981', '#f59e0b', '#ef4444']);
+
+            const models = data.reduce((acc, it) => { acc[it.maquinas?.modelo || 'OTRO'] = (acc[it.maquinas?.modelo || 'OTRO'] || 0) + 1; return acc; }, {});
+            updateChart('models', 'chartModelos', 'bar', Object.keys(models), Object.values(models), '#8b5cf6', true);
+
+            const salas = data.reduce((acc, it) => { acc[it.trabajos.sala?.sala_mincetur || 'S/N'] = (acc[it.trabajos.sala?.sala_mincetur || 'S/N'] || 0) + 1; return acc; }, {});
+            const topS = Object.entries(salas).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            updateChart('salas', 'chartSalas', 'bar', topS.map(s => s[0]), topS.map(s => s[1]), '#10b981', true);
+        }
+
+        function updateChart(id, canvasId, type, labels, data, colors, horizontal = false) {
+            if (activeCharts[id]) activeCharts[id].destroy();
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            activeCharts[id] = new Chart(ctx, {
+                type: type,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data, backgroundColor: colors, borderColor: Array.isArray(colors) ? '#fff' : colors,
+                        borderWidth: 1, borderRadius: 5, tension: 0.4, fill: type === 'line'
+                    }]
+                },
+                options: {
+                    indexAxis: horizontal ? 'y' : 'x', maintainAspectRatio: false,
+                    plugins: { legend: { display: type === 'pie', position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } } },
+                    scales: type !== 'pie' ? { y: { beginAtZero: true, grid: { borderDash: [5, 5] } }, x: { grid: { display: false } } } : {}
+                }
+            });
+        }
+
+        window.addEventListener('load', () => {
+            initUI();
+            loadData();
+            document.getElementById('btn-procesar').onclick = processData;
+            document.getElementById('filtro-serie-long').onchange = processData;
+        });
+    </script>
+</body>
+
+</html>
