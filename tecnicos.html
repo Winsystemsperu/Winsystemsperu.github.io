@@ -46,7 +46,7 @@
     <div class="max-w-[1800px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 relative overflow-hidden group">
             <div class="flex justify-between items-start mb-4">
-                <div><h3 class="text-slate-500 font-bold text-xs uppercase">Calidad (S1 vs S2)</h3><p class="text-xs text-slate-400">Meta: Reducir 15%</p></div>
+                <div><h3 class="text-slate-500 font-bold text-xs uppercase">Tasa de Fallas (S1 vs S2)</h3><p class="text-xs text-slate-400">Porcentaje: Visitas (90d) / Máquinas Instaladas</p></div>
                 <div class="p-2 bg-orange-50 text-orange-600 rounded"><i data-lucide="alert-triangle" class="w-5 h-5"></i></div>
             </div>
             <div class="flex items-center gap-8">
@@ -56,6 +56,7 @@
             </div>
             <div id="verdict-fail" class="mt-4 text-xs font-bold text-slate-400 border-t pt-2">---</div>
         </div>
+
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 relative overflow-hidden group">
             <div class="flex justify-between items-start mb-4">
                 <div><h3 class="text-slate-500 font-bold text-xs uppercase">Tiempo Promedio (S1 vs S2)</h3><p class="text-xs text-slate-400">Meta: Reducir 20%</p></div>
@@ -72,7 +73,7 @@
 
     <div class="max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-            <h3 class="font-bold text-slate-700 mb-4 text-sm flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-4 h-4"></i> Instalaciones vs Fallos</h3>
+            <h3 class="font-bold text-slate-700 mb-4 text-sm flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-4 h-4"></i> Total Máquinas Instaladas vs Visitas (Garantía)</h3>
             <div class="h-[250px] w-full"><canvas id="dualChart"></canvas></div>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
@@ -135,6 +136,20 @@
         </div>
     </div>
 
+    <div id="chart-modal" class="modal-backdrop fixed inset-0 z-[60] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col animate-[fadeIn_0.2s_ease-out] overflow-hidden">
+            <div id="chart-modal-header" class="p-5 flex justify-between items-center shrink-0 text-white">
+                <div>
+                    <h2 class="text-lg font-bold flex items-center gap-2" id="chart-modal-title">---</h2>
+                    <p class="text-xs opacity-80" id="chart-modal-subtitle">---</p>
+                </div>
+                <button onclick="document.getElementById('chart-modal').classList.add('hidden')" class="hover:bg-white/20 p-2 rounded-full transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="overflow-y-auto p-0 bg-slate-50" id="chart-modal-body">
+                </div>
+        </div>
+    </div>
+
     <script>
         const SUPABASE_URL = 'https://qobquktxvhlvtrpeopji.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvYnF1a3R4dmhsdnRycGVvcGppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU2OTc4NDYsImV4cCI6MjA2MTI3Mzg0Nn0.rnubNUWSWEomj5Xwvr65kZLK7Ig_bLC74ajFh9cksFc';
@@ -144,7 +159,10 @@
         let chartDual = null, chartHours = null, chartProd = null;
         let strategyStats = [], globalStats = [], hourStats = [], prodStats = [];
 
-        // --- TOOLTIPS ---
+        // VARIABLES GLOBALES PARA DRILLDOWN
+        let drilldownInstalls = Array.from({length: 12}, () => []);
+        let drilldownFails = Array.from({length: 12}, () => []);
+
         function showTooltip(event, text) {
             if(!text || text === '-') return;
             const t = document.getElementById('global-tooltip'); t.innerText=text; t.style.visibility='visible'; t.style.opacity='1';
@@ -158,75 +176,66 @@
             return `<div class="tooltip-trigger" onmouseenter="showTooltip(event, '${safeText}')" onmouseleave="hideTooltip()">${text}</div>`;
         }
 
-        // --- INICIO ---
         document.addEventListener('DOMContentLoaded', async () => {
             const year = document.getElementById('year-select').value;
             const { data } = await _supabase.rpc('get_active_techs_simple', { year_input: year });
             const sel = document.getElementById('tech-select');
             if(data) { sel.innerHTML = '<option value="">-- Seleccionar --</option>'; data.forEach(t => sel.innerHTML += `<option value="${t.tecnico}">${t.tecnico}</option>`); }
-            
-            // PRECARGA DE DATOS
-            const [kpi, graph, hours] = await Promise.all([
-                _supabase.rpc('get_tech_strategy_comparison', { year_input: year }),
-                _supabase.rpc('get_installation_stats', { year_input: year }),
-                _supabase.rpc('get_monthly_hours_trend', { year_input: year })
-            ]);
-            if(kpi.data) strategyStats = kpi.data;
-            if(graph.data) globalStats = graph.data;
-            if(hours.data) hourStats = hours.data;
         });
 
-        // --- CARGA ---
         async function loadInstallations() {
             const tech = document.getElementById('tech-select').value;
             const year = document.getElementById('year-select').value;
             if(!tech) return alert("Seleccione un técnico");
 
-            document.getElementById('main-body').innerHTML = '<tr><td colspan="8" class="p-10 text-center"><i data-lucide="loader" class="animate-spin inline mr-2 text-blue-600"></i> Cargando...</td></tr>';
+            document.getElementById('main-body').innerHTML = '<tr><td colspan="8" class="p-10 text-center"><i data-lucide="loader" class="animate-spin inline mr-2 text-blue-600"></i> Cargando datos...</td></tr>';
             lucide.createIcons();
 
-            // Cargar datos de productividad al seleccionar técnico
-            const { data: pStats } = await _supabase.rpc('get_tech_productivity_stats', { tech_name: tech, year_input: year });
-            prodStats = pStats || [];
+            try {
+                const [tableData, pStats, gStats, hStats, kpiStats] = await Promise.all([
+                    _supabase.rpc('get_tech_installations_list', { tech_name: tech, year_input: year }),
+                    _supabase.rpc('get_tech_productivity_stats', { tech_name: tech, year_input: year }),
+                    _supabase.rpc('get_installation_stats', { year_input: year }),
+                    _supabase.rpc('get_monthly_hours_trend', { year_input: year }),
+                    _supabase.rpc('get_tech_strategy_comparison', { year_input: year })
+                ]);
 
-            const { data } = await _supabase.rpc('get_tech_installations_list', { tech_name: tech, year_input: year });
+                prodStats = pStats.data || [];
+                globalStats = gStats.data || [];
+                hourStats = hStats.data || [];
+                strategyStats = kpiStats.data || [];
 
-            if(data && data.length > 0) {
-                document.getElementById('main-body').innerHTML = '';
-                document.getElementById('total-rows').innerText = data.length;
-                data.forEach(row => {
-                    const isFail = row.estado.includes('ASISTENCIA');
-                    const badge = isFail 
-                        ? `<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-[10px] font-bold border border-red-200">ASISTENCIA</span>`
-                        : `<span class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-[10px] font-bold border border-emerald-200">OK</span>`;
-                    let machId = row.id_maquina; if(!machId && row.serie.includes("ID:")) machId = row.serie.replace(/\D/g,'');
-                    const hours = `${row.hora_ini?row.hora_ini.slice(0,5):'-'} - ${row.hora_fin?row.hora_fin.slice(0,5):'-'}`;
+                const data = tableData.data;
+                if(data && data.length > 0) {
+                    document.getElementById('main-body').innerHTML = '';
+                    document.getElementById('total-rows').innerText = data.length;
+                    data.forEach(row => {
+                        const isFail = row.estado.includes('ASISTENCIA');
+                        const badge = isFail ? `<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-[10px] font-bold border border-red-200">ASISTENCIA</span>` : `<span class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-[10px] font-bold border border-emerald-200">OK</span>`;
+                        let machId = row.id_maquina; if(!machId && row.serie.includes("ID:")) machId = row.serie.replace(/\D/g,'');
+                        const hours = `${row.hora_ini?row.hora_ini.slice(0,5):'-'} - ${row.hora_fin?row.hora_fin.slice(0,5):'-'}`;
+                        document.getElementById('main-body').innerHTML += `<tr class="tr-row border-b border-slate-50" onclick="openHistory('${machId}', '${row.fecha}', '${row.serie}')"><td class="td-main font-bold text-blue-600">${row.serie}</td><td class="td-main font-mono text-xs text-slate-500">${row.fecha}</td><td class="td-main text-center text-xs font-mono">${hours}</td><td class="td-main font-bold text-slate-700 text-xs">${row.sala}</td><td class="td-main">${renderCellWithTooltip(row.diag_ini)}</td><td class="td-main">${renderCellWithTooltip(row.trab_realizado)}</td><td class="td-main">${renderCellWithTooltip(row.resultado)}</td><td class="td-main text-center">${badge}</td></tr>`;
+                    });
+                } else { 
+                    document.getElementById('main-body').innerHTML = '<tr><td colspan="8" class="p-10 text-center text-slate-400">Sin registros.</td></tr>'; 
+                    document.getElementById('total-rows').innerText = '0';
+                }
 
-                    document.getElementById('main-body').innerHTML += `
-                        <tr class="tr-row border-b border-slate-50" onclick="openHistory('${machId}', '${row.fecha}', '${row.serie}')">
-                            <td class="td-main font-bold text-blue-600">${row.serie}</td>
-                            <td class="td-main font-mono text-xs text-slate-500">${row.fecha}</td>
-                            <td class="td-main text-center text-xs font-mono">${hours}</td>
-                            <td class="td-main font-bold text-slate-700 text-xs">${row.sala}</td>
-                            <td class="td-main">${renderCellWithTooltip(row.diag_ini)}</td>
-                            <td class="td-main">${renderCellWithTooltip(row.trab_realizado)}</td>
-                            <td class="td-main">${renderCellWithTooltip(row.resultado)}</td>
-                            <td class="td-main text-center">${badge}</td>
-                        </tr>`;
-                });
-            } else { document.getElementById('main-body').innerHTML = '<tr><td colspan="8" class="p-10 text-center text-slate-400">Sin registros.</td></tr>'; }
-
-            updateKPIs(tech);
-            updateCharts(tech);
+                updateKPIs(tech.trim());
+                await updateCharts(tech.trim(), data, year); 
+                lucide.createIcons();
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Error cargando datos.");
+            }
         }
 
-        // CORRECCIÓN CRÍTICA: AQUÍ USAMOS LOS NOMBRES EXACTOS DEL SQL
         function updateKPIs(tech) {
-            const data = strategyStats.filter(d => d.tecnico === tech);
-            const s1 = data.find(d => d.semestre === 1) || { avg_horas: 0, total_instaladas: 0, total_fallos: 0 };
-            const s2 = data.find(d => d.semestre === 2) || { avg_horas: 0, total_instaladas: 0, total_fallos: 0 };
-
-            // Tiempo
+            const clean = (text) => text ? text.toString().trim().toUpperCase() : "";
+            const techClean = clean(tech);
+            const data = strategyStats.filter(d => clean(d.tecnico) === techClean);
+            const s1 = data.find(d => d.semestre === 1) || { avg_horas: 0 };
+            const s2 = data.find(d => d.semestre === 2) || { avg_horas: 0 };
             const t1 = Number(s1.avg_horas), t2 = Number(s2.avg_horas);
             document.getElementById('time-s1').innerText = t1.toFixed(1)+'h';
             document.getElementById('time-s2').innerText = t2.toFixed(1)+'h';
@@ -237,52 +246,161 @@
                 else if(imp>0) vTime.innerHTML = `<span class="text-blue-600 font-bold">Mejora ${imp.toFixed(1)}%</span>`;
                 else vTime.innerHTML = `<span class="text-red-500 font-bold">Subió ${Math.abs(imp).toFixed(1)}%</span>`;
             } else { vTime.innerText = "Sin datos."; }
-
-            // Calidad (USANDO total_instaladas y total_fallos)
-            const i1=Number(s1.total_instaladas), f1=Number(s1.total_fallos);
-            const i2=Number(s2.total_instaladas), f2=Number(s2.total_fallos);
-            
-            const r1 = i1>0 ? (f1/i1*100) : 0;
-            const r2 = i2>0 ? (f2/i2*100) : 0;
-            
-            document.getElementById('fail-s1').innerText = r1.toFixed(1)+'%';
-            document.getElementById('fail-d1').innerText = `${f1} de ${i1}`;
-            document.getElementById('fail-s2').innerText = r2.toFixed(1)+'%';
-            document.getElementById('fail-d2').innerText = `${f2} de ${i2}`;
-            
-            const vFail = document.getElementById('verdict-fail');
-            if(i1>0 && i2>0) {
-                const impQ = r1>0 ? ((r1-r2)/r1)*100 : 0;
-                if(impQ>=15) vFail.innerHTML = `<span class="text-emerald-600 font-bold">¡Meta Superada! Mejora ${impQ.toFixed(1)}%</span>`;
-                else if(r2<r1) vFail.innerHTML = `<span class="text-blue-600 font-bold">Mejora ${impQ.toFixed(1)}%</span>`;
-                else vFail.innerHTML = `<span class="text-red-500 font-bold">Empeoró.</span>`;
-            } else { vFail.innerText = "Sin datos."; }
         }
 
-        function updateCharts(tech) {
+        async function updateCharts(tech, rawData, selectedYear) {
             const months = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-            const dInst = new Array(12).fill(0), dFail = new Array(12).fill(0), dTime = new Array(12).fill(0), dSalas = new Array(12).fill(0), dRep = new Array(12).fill(0);
+            const dInst = new Array(12).fill(0); 
+            const dFail = new Array(12).fill(0);
+            const dTime = new Array(12).fill(0);
+            const dSalas = new Array(12).fill(0);
+            const dRep = new Array(12).fill(0);
+
+            // REINICIAMOS LAS CUBETAS DE DETALLE
+            drilldownInstalls = Array.from({length: 12}, () => []);
+            drilldownFails = Array.from({length: 12}, () => []);
+
+            console.clear();
+            console.group("🔎 LOGS DE AUDITORÍA: GARANTÍA 90 DÍAS - AÑO " + selectedYear);
+
+            if (rawData && rawData.length > 0) {
+                // 1. INSTALACIONES (TODAS LAS MÁQUINAS - SIN AGRUPAR)
+                // Se cuenta 1 por 1 para reflejar el volumen total instalado
+                rawData.forEach(row => {
+                    if (!row.estado.toUpperCase().includes('ASISTENCIA')) {
+                        const mIdx = parseInt(row.fecha.split('-')[1]) - 1;
+                        if (mIdx >= 0) {
+                            dInst[mIdx]++;
+                            // GUARDAMOS TODAS LAS MÁQUINAS INDIVIDUALMENTE
+                            drilldownInstalls[mIdx].push({
+                                serie: row.serie,
+                                sala: row.sala,
+                                fecha: row.fecha,
+                                tipo: 'Instalación'
+                            });
+                        }
+                    }
+                });
+
+                // 2. ESCANEO DE HISTORIAL (Con corrección de Crash)
+                const processedMachines = new Set();
+                
+                const historyPromises = rawData.map(async (row) => {
+                    let machId = row.id_maquina; 
+                    if(!machId && row.serie.includes("ID:")) machId = row.serie.replace(/\D/g,'');
+                    
+                    if (processedMachines.has(machId)) return null; 
+                    processedMachines.add(machId); 
+
+                    const { data: lifecycle } = await _supabase.rpc('get_machine_lifecycle', { 
+                        target_maquina_id: machId, 
+                        install_date: row.fecha 
+                    });
+                    return { id: machId, serie: row.serie, history: lifecycle || [], sala: row.sala };
+                });
+
+                const allResults = await Promise.all(historyPromises);
+                
+                allResults.forEach(res => {
+                    if(!res || !res.history || res.history.length === 0) return;
+                    const uniqueDaysVisited = new Set();
+
+                    res.history.forEach(hRow => {
+                        if (!hRow.fecha) return;
+
+                        // 1. FILTRO AÑO
+                        const yearOfVisit = hRow.fecha.split('-')[0];
+                        if (yearOfVisit !== selectedYear) return; 
+
+                        const mIdx = parseInt(hRow.fecha.split('-')[1]) - 1;
+                        if (mIdx < 0 || mIdx > 11) return;
+
+                        const type = hRow.tipo_trabajo ? hRow.tipo_trabajo.toUpperCase() : "";
+                        const diag = hRow.diag_ini ? hRow.diag_ini.toUpperCase() : "";
+
+                        // 2. NO ES INSTALACIÓN
+                        const isInstallation = type.includes('INSTAL') || diag.includes('INSTALACIÓN');
+                        
+                        // 3. REGLA 90 DÍAS
+                        if (!isInstallation && hRow.dias_desde_inst <= 90) {
+                            
+                            // 4. REGLA 1 VISITA/DÍA
+                            if (!uniqueDaysVisited.has(hRow.fecha)) {
+                                uniqueDaysVisited.add(hRow.fecha); 
+                                dFail[mIdx]++;
+                                
+                                // GUARDAMOS EL DETALLE
+                                drilldownFails[mIdx].push({
+                                    serie: res.serie,
+                                    sala: res.sala || 'Desconocida',
+                                    fecha: hRow.fecha,
+                                    tipo: hRow.tipo_trabajo || hRow.diag_ini,
+                                    dias: hRow.dias_desde_inst
+                                });
+
+                                console.log(`   ✅ [${months[mIdx]}] Visita en Garantía (${hRow.dias_desde_inst}d) - ${res.serie}: ${hRow.fecha} | ${hRow.tipo_trabajo}`);
+                            }
+                        }
+                    });
+                });
+                console.groupEnd();
+            }
+
+            // CALCULO KPI CALIDAD (EN PORCENTAJE)
+            let s1_Inst = 0, s1_Fail = 0; for(let i=0; i<6; i++) { s1_Inst += dInst[i]; s1_Fail += dFail[i]; }
+            let s2_Inst = 0, s2_Fail = 0; for(let i=6; i<12; i++) { s2_Inst += dInst[i]; s2_Fail += dFail[i]; }
             
-            // Llenar datos
-            globalStats.filter(d => d.tecnico === tech).forEach(d => { dInst[d.mes-1] = d.total_instaladas; dFail[d.mes-1] = d.total_asistencias; });
-            hourStats.filter(d => d.tecnico === tech).forEach(d => { dTime[d.mes-1] = d.avg_hours; });
+            // Fórmula: (Fallas / Instalaciones) * 100
+            const r1 = s1_Inst > 0 ? (s1_Fail / s1_Inst) * 100 : 0;
+            const r2 = s2_Inst > 0 ? (s2_Fail / s2_Inst) * 100 : 0;
+
+            document.getElementById('fail-s1').innerText = r1.toFixed(1) + '%';
+            document.getElementById('fail-d1').innerText = `${s1_Fail} Visitas / ${s1_Inst} Máq.`;
+            document.getElementById('fail-s2').innerText = r2.toFixed(1) + '%';
+            document.getElementById('fail-d2').innerText = `${s2_Fail} Visitas / ${s2_Inst} Máq.`;
+            
+            const vFail = document.getElementById('verdict-fail');
+            if(s1_Inst > 0 || s2_Inst > 0) { 
+                const diff = r1 - r2; 
+                if(r1 === 0 && r2 === 0) vFail.innerHTML = `<span class="text-slate-400 font-bold">Sin incidencias</span>`;
+                else if(diff > 5) vFail.innerHTML = `<span class="text-emerald-600 font-bold">¡Excelente! Bajó -${diff.toFixed(1)}%</span>`;
+                else if(diff > 0) vFail.innerHTML = `<span class="text-blue-600 font-bold">Mejora leve (-${diff.toFixed(1)}%)</span>`;
+                else if(diff < 0) vFail.innerHTML = `<span class="text-red-500 font-bold">Subió +${Math.abs(diff).toFixed(1)}%</span>`;
+                else vFail.innerHTML = `<span class="text-slate-500 font-bold">Se mantiene igual</span>`;
+            } else { vFail.innerText = "Sin datos."; }
+
+            // OTROS GRÁFICOS
+            const clean = (text) => text ? text.toString().trim().toUpperCase() : "";
+            const techClean = clean(tech);
+            hourStats.filter(d => clean(d.tecnico) === techClean).forEach(d => { dTime[d.mes-1] = d.avg_hours; });
             prodStats.forEach(d => { dSalas[d.mes-1] = d.salas_visitadas; dRep[d.mes-1] = d.maquinas_reparadas; });
 
             if(chartDual) chartDual.destroy();
             chartDual = new Chart(document.getElementById('dualChart'), {
                 type: 'line',
                 data: { labels: months, datasets: [
-                    { label: 'Instalaciones', data: dInst, borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.1)', borderWidth: 3, tension: 0.4, fill: true },
-                    { label: 'Fallos', data: dFail, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderWidth: 3, borderDash: [5,5], tension: 0.4, fill: false }
+                    { label: 'Máquinas Instaladas', data: dInst, borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.1)', borderWidth: 3, tension: 0.3, fill: true },
+                    { label: 'Visitas en Garantía (90 días)', data: dFail, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.05)', borderWidth: 3, borderDash: [5,5], tension: 0.1, pointRadius: 5, pointBackgroundColor: '#fff', pointBorderColor: '#ef4444', fill: false }
                 ]},
-                options: { responsive: true, maintainAspectRatio: false, scales: {y:{beginAtZero:true}} }
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+                    onClick: (e, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index; 
+                            const datasetIndex = elements[0].datasetIndex; 
+                            openDrilldownModal(index, datasetIndex, months[index]);
+                        }
+                    },
+                    plugins: { tooltip: { callbacks: { footer: (items) => 'Click para ver detalles' } } }
+                }
             });
 
             if(chartHours) chartHours.destroy();
             chartHours = new Chart(document.getElementById('hoursChart'), {
                 type: 'bar',
                 data: { labels: months, datasets: [{ label: 'Promedio Horas', data: dTime, backgroundColor: '#3b82f6', borderRadius: 4 }] },
-                options: { responsive: true, maintainAspectRatio: false, scales: {y:{beginAtZero:true, title:{display:true, text:'Horas'}}} }
+                options: { responsive: true, maintainAspectRatio: false, scales: {y:{beginAtZero:true}} }
             });
 
             if(chartProd) chartProd.destroy();
@@ -296,35 +414,67 @@
             });
         }
 
+        function openDrilldownModal(monthIndex, datasetIndex, monthName) {
+            const modal = document.getElementById('chart-modal');
+            const header = document.getElementById('chart-modal-header');
+            const title = document.getElementById('chart-modal-title');
+            const sub = document.getElementById('chart-modal-subtitle');
+            const body = document.getElementById('chart-modal-body');
+            
+            const isInstall = datasetIndex === 0;
+            const dataList = isInstall ? drilldownInstalls[monthIndex] : drilldownFails[monthIndex];
+            
+            header.className = `p-5 flex justify-between items-center shrink-0 text-white ${isInstall ? 'bg-blue-600' : 'bg-red-600'}`;
+            title.innerHTML = isInstall ? `<i data-lucide="archive" class="w-5 h-5"></i> Instalaciones de ${monthName}` : `<i data-lucide="alert-circle" class="w-5 h-5"></i> Fallas/Visitas de ${monthName}`;
+            sub.innerText = `${dataList.length} registros encontrados`;
+            
+            if(dataList.length === 0) {
+                body.innerHTML = `<div class="p-8 text-center text-slate-400">Sin datos registrados para este mes.</div>`;
+            } else {
+                let html = '';
+                dataList.forEach(item => {
+                    html += `
+                        <div class="p-4 border-b border-slate-100 hover:bg-slate-50 transition flex justify-between items-start">
+                            <div>
+                                <div class="font-bold text-slate-700 flex items-center gap-2">
+                                    ${item.serie} 
+                                    <span class="text-[10px] font-normal px-2 py-0.5 rounded-full ${isInstall ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}">
+                                        ${isInstall ? 'Instalada' : `Día +${item.dias}`}
+                                    </span>
+                                </div>
+                                <div class="text-xs text-slate-500 mt-1"><i data-lucide="map-pin" class="w-3 h-3 inline"></i> ${item.sala}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs font-mono text-slate-400">${item.fecha}</div>
+                                <div class="text-xs font-bold ${isInstall ? 'text-blue-600' : 'text-red-600'} mt-1 max-w-[150px] truncate text-right" title="${item.tipo}">
+                                    ${item.tipo}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                body.innerHTML = html;
+            }
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
         async function openHistory(machId, date, serie) {
             document.getElementById('detail-modal').classList.remove('hidden');
             document.getElementById('modal-serie').innerText = serie;
             document.getElementById('modal-fecha').innerText = date;
             const b1 = document.getElementById('body-warranty'), b2 = document.getElementById('body-history');
             b1.innerHTML='<tr><td colspan="7" class="p-6 text-center text-slate-400">Cargando...</td></tr>'; b2.innerHTML='';
-            
             const { data } = await _supabase.rpc('get_machine_lifecycle', { target_maquina_id: machId, install_date: date });
             b1.innerHTML=''; 
-            
             if(!data || data.length===0) { b1.innerHTML='<tr><td colspan="7" class="p-4 text-center text-emerald-600 font-bold bg-emerald-50 rounded">✨ Sin incidencias</td></tr>'; return; }
-            
             data.forEach(r => {
                 const isW = r.dias_desde_inst <= 90;
-                const html = `
-                    <tr class="border-b border-slate-100 hover:bg-slate-50">
-                        <td class="td-main font-mono text-xs">${r.fecha}</td>
-                        <td class="td-main font-bold text-xs">${r.tecnico}</td>
-                        <td class="td-main text-xs uppercase">${r.tipo_trabajo}</td>
-                        <td class="td-main">${renderCellWithTooltip(r.diag_ini)}</td>
-                        <td class="td-main">${renderCellWithTooltip(r.trab_realizado)}</td>
-                        <td class="td-main">${renderCellWithTooltip(r.resultado)}</td>
-                        <td class="td-main text-center"><span class="bg-white border px-2 rounded text-[10px]">${r.estado}</span></td>
-                    </tr>`;
+                const html = `<tr class="border-b border-slate-100 hover:bg-slate-50"><td class="td-main font-mono text-xs">${r.fecha}</td><td class="td-main font-bold text-xs">${r.tecnico}</td><td class="td-main text-xs uppercase">${r.tipo_trabajo}</td><td class="td-main">${renderCellWithTooltip(r.diag_ini)}</td><td class="td-main">${renderCellWithTooltip(r.trab_realizado)}</td><td class="td-main">${renderCellWithTooltip(r.resultado)}</td><td class="td-main text-center"><span class="bg-white border px-2 rounded text-[10px]">${r.estado}</span></td></tr>`;
                 if(isW) b1.innerHTML+=html; else b2.innerHTML+=html;
             });
             if(b1.innerHTML==='') b1.innerHTML='<tr><td colspan="7" class="p-4 text-center text-emerald-600 font-bold bg-emerald-50 rounded">✨ Sin incidencias en garantía</td></tr>';
         }
-
         function closeModal() { document.getElementById('detail-modal').classList.add('hidden'); }
     </script>
 </body>
