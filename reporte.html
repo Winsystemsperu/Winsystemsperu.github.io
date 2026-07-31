@@ -139,7 +139,6 @@
             color: #2563eb !important;
         }
 
-        /* Estilo para el scroll de la tabla con todos los registros */
         .table-scroll-container {
             max-height: 600px;
             overflow-y: auto;
@@ -149,9 +148,9 @@
             position: sticky;
             top: 0;
             z-index: 20;
+            background: #f9fafb;
         }
 
-        /* Estilo para filas alternadas */
         .table-row-even {
             background-color: #fafafa;
         }
@@ -161,6 +160,34 @@
         .table-row-even:hover,
         .table-row-odd:hover {
             background-color: #eff6ff !important;
+        }
+
+        /* Estilo para el buscador */
+        .search-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            outline: none;
+        }
+
+        .search-clear-btn {
+            transition: all 0.2s ease;
+        }
+        .search-clear-btn:hover {
+            color: #ef4444;
+            transform: scale(1.2);
+        }
+
+        .search-container {
+            background: white;
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .search-container:focus-within {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
         }
     </style>
 </head>
@@ -368,7 +395,7 @@
             </div>
         </div>
 
-        <!-- TABLA RESUMEN CON TODOS LOS REGISTROS -->
+        <!-- TABLA RESUMEN CON TODOS LOS REGISTROS Y BUSCADOR ENCIMA -->
         <div class="chart-container p-4">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
@@ -380,6 +407,27 @@
                     <span id="registros-total" class="text-xs text-gray-400"></span>
                 </div>
             </div>
+
+            <!-- BUSCADOR ENCIMA DE LA TABLA -->
+            <div class="search-container mb-3">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i data-lucide="search" class="w-4 h-4 text-gray-400"></i>
+                    </div>
+                    <input type="search" id="general-search"
+                        class="search-input block w-full p-2.5 pl-9 text-sm text-gray-900 border-0 bg-transparent focus:ring-0"
+                        placeholder="Buscar por código de reporte, serie, sala, técnico, estado, empresa...">
+                    <button id="clear-search" 
+                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-red-500 transition hidden"
+                        title="Limpiar búsqueda">
+                        <i data-lucide="x-circle" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                <div id="search-info" class="text-xs text-gray-500 mt-1 hidden px-1">
+                    <span id="search-results-count">0</span> resultados encontrados
+                </div>
+            </div>
+
             <div class="table-scroll-container border border-gray-200 rounded-lg">
                 <table class="min-w-full divide-y divide-gray-200" id="resumen-table">
                     <thead class="bg-gray-50">
@@ -408,6 +456,7 @@
 
         let chartInstances = {};
         let currentData = [];
+        let filteredData = [];
         let allTecnicos = [];
 
         // --- HELPERS ---
@@ -495,6 +544,8 @@
         async function initializePage() {
             document.getElementById('logout-button').addEventListener('click', logout);
             document.getElementById('apply-filters').addEventListener('click', applyFilters);
+            document.getElementById('general-search').addEventListener('input', applySearch);
+            document.getElementById('clear-search').addEventListener('click', clearSearch);
 
             setDefaultDates();
             await applyFilters();
@@ -526,6 +577,55 @@
             startDateInput.value = thirtyDaysAgo.toISOString().split('T')[0];
         }
 
+        // --- FUNCIONES DE BÚSQUEDA ---
+        function applySearch() {
+            const searchTerm = document.getElementById('general-search').value.toLowerCase().trim();
+            const clearBtn = document.getElementById('clear-search');
+            const searchInfo = document.getElementById('search-info');
+            const resultsCount = document.getElementById('search-results-count');
+
+            if (searchTerm) {
+                clearBtn.classList.remove('hidden');
+                
+                filteredData = currentData.filter(item => {
+                    const codigo = (item.trabajos?.codigo || '').toLowerCase();
+                    const serie = (item.maquinas?.serie || '').toLowerCase();
+                    const sala = (item.trabajos?.sala?.sala_mincetur || '').toLowerCase();
+                    const tecnico = (item.trabajos?.tecnicos?.usuario || '').toLowerCase();
+                    const estado = (item.estado || '').toLowerCase();
+                    const empresa = (item.trabajos?.sala?.empresa || '').toLowerCase();
+                    const tipoTrabajo = (item.tipo_trabajo || '').toLowerCase();
+
+                    return codigo.includes(searchTerm) ||
+                        serie.includes(searchTerm) ||
+                        sala.includes(searchTerm) ||
+                        tecnico.includes(searchTerm) ||
+                        estado.includes(searchTerm) ||
+                        empresa.includes(searchTerm) ||
+                        tipoTrabajo.includes(searchTerm);
+                });
+
+                searchInfo.classList.remove('hidden');
+                resultsCount.textContent = filteredData.length;
+                
+                updateTable(filteredData, true);
+            } else {
+                clearBtn.classList.add('hidden');
+                searchInfo.classList.add('hidden');
+                filteredData = currentData;
+                updateTable(currentData, false);
+            }
+        }
+
+        function clearSearch() {
+            document.getElementById('general-search').value = '';
+            document.getElementById('clear-search').classList.add('hidden');
+            document.getElementById('search-info').classList.add('hidden');
+            filteredData = currentData;
+            updateTable(currentData, false);
+            lucide.createIcons();
+        }
+
         // --- FETCH DATA ---
         async function applyFilters() {
             document.getElementById('loading-overlay').style.display = 'flex';
@@ -539,10 +639,17 @@
             try {
                 const data = await fetchData(startDate, endDate, tipoFilter, tipoTrabajoFilter, tecnicoFilter);
                 currentData = data;
+                filteredData = data;
+                
+                // Limpiar búsqueda al aplicar filtros
+                document.getElementById('general-search').value = '';
+                document.getElementById('clear-search').classList.add('hidden');
+                document.getElementById('search-info').classList.add('hidden');
+                
                 updateStats(data);
                 updateTecnicoDetail(data, tecnicoFilter);
                 updateCharts(data);
-                updateTable(data);
+                updateTable(data, false);
             } catch (error) {
                 console.error('Error:', error);
             } finally {
@@ -566,7 +673,7 @@
                         codigo,
                         fecha,
                         hora_inicio,
-                        sala!inner(sala_mincetur),
+                        sala!inner(sala_mincetur, empresa),
                         tecnicos(usuario)
                     )
                 `)
@@ -1000,17 +1107,23 @@
             });
         }
 
-        // --- UPDATE TABLE CON TODOS LOS REGISTROS ---
-        function updateTable(data) {
+        // --- UPDATE TABLE CON BUSCADOR ---
+        function updateTable(data, isSearch = false) {
             const tbody = document.getElementById('resumen-body');
             const totalRegistros = data.length;
 
-            // Actualizar contador
-            document.getElementById('registros-count').textContent = `${totalRegistros} registros`;
-            document.getElementById('registros-total').textContent = totalRegistros > 0 ? `Mostrando todos` : '';
+            if (isSearch) {
+                document.getElementById('registros-count').textContent = `${totalRegistros} resultados`;
+                document.getElementById('registros-total').textContent = `(de ${currentData.length} totales)`;
+            } else {
+                document.getElementById('registros-count').textContent = `${totalRegistros} registros`;
+                document.getElementById('registros-total').textContent = totalRegistros > 0 ? `Mostrando todos` : '';
+            }
 
             if (totalRegistros === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-gray-500">No se encontraron datos con los filtros seleccionados</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-gray-500">
+                    ${isSearch ? 'No se encontraron coincidencias para tu búsqueda' : 'No se encontraron datos con los filtros seleccionados'}
+                </td></tr>`;
                 return;
             }
 
@@ -1054,7 +1167,6 @@
 
             tbody.innerHTML = html;
             
-            // Re-inicializar los iconos de Lucide para el nuevo contenido
             setTimeout(() => {
                 lucide.createIcons();
             }, 50);
