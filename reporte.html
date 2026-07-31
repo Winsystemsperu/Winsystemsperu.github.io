@@ -120,7 +120,6 @@
             }
         }
 
-        /* Estilos para widescreen */
         .widescreen-container {
             max-width: 100%;
             padding: 1.5rem 2rem;
@@ -130,6 +129,15 @@
             .widescreen-container {
                 padding: 2rem 4rem;
             }
+        }
+
+        /* Tooltip para el PDF */
+        .pdf-link {
+            transition: all 0.2s ease;
+        }
+        .pdf-link:hover {
+            transform: scale(1.1);
+            color: #2563eb !important;
         }
     </style>
 </head>
@@ -337,7 +345,7 @@
             </div>
         </div>
 
-        <!-- TABLA RESUMEN -->
+        <!-- TABLA RESUMEN CON PDF -->
         <div class="chart-container p-4">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
@@ -966,7 +974,7 @@
             });
         }
 
-        // --- UPDATE TABLE ---
+        // --- UPDATE TABLE CON PDF ---
         function updateTable(data) {
             const tbody = document.getElementById('resumen-body');
             const maxRows = 50;
@@ -985,9 +993,23 @@
                                    estado === 'Pendiente' ? 'pendiente' : 'sin-estado';
                 const tipoTrabajo = item.tipo_trabajo || 'Sin tipo';
                 const horas = item.horas_estimadas || 0;
+                const idTrabajo = item.trabajos?.id_trabajo;
 
                 html += `<tr class="hover:bg-gray-50 transition-colors">
-                    <td class="px-3 py-2 text-xs font-medium text-gray-900">${item.trabajos?.codigo || 'N/A'}</td>
+                    <td class="px-3 py-2 text-xs">
+                        <div class="flex items-center gap-2">
+                            <span class="font-medium text-gray-900">${item.trabajos?.codigo || 'N/A'}</span>
+                            ${idTrabajo ? `
+                                <a href="./reporte_detalle.html?id=${idTrabajo}" 
+                                    target="_blank" 
+                                    title="Ver PDF del reporte"
+                                    class="pdf-link inline-flex items-center p-1 rounded-md text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition"
+                                    onclick="event.stopPropagation();">
+                                    <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                                </a>
+                            ` : ''}
+                        </div>
+                    </td>
                     <td class="px-3 py-2 text-xs text-gray-600">${formatDate(item.trabajos?.fecha)}</td>
                     <td class="px-3 py-2 text-xs font-mono text-gray-600">${item.maquinas?.serie || 'N/A'}</td>
                     <td class="px-3 py-2 text-xs text-gray-600">${item.trabajos?.sala?.sala_mincetur || 'N/A'}</td>
@@ -1005,6 +1027,11 @@
             }
 
             tbody.innerHTML = html;
+            
+            // Re-inicializar los iconos de Lucide para el nuevo contenido
+            setTimeout(() => {
+                lucide.createIcons();
+            }, 50);
         }
 
         // --- STARTUP ---
