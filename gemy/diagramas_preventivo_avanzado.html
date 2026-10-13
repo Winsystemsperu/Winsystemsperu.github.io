@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Gerencial - Mantenimiento Preventivo Avanzado</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #0f172a; 
+            --accent: #2563eb; 
+            --success: #16a34a; 
+            --preventive: #0d9488; 
+            --hardware: #6366f1; /* Indigo para hardware */
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #334155;
+        }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 0; }
+        
+        .navbar { background-color: var(--primary); color: white; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .navbar h1 { margin: 0; font-size: 20px; font-weight: 600; }
+        .navbar span { font-size: 13px; color: #cbd5e1; }
+
+        .kpi-container { display: flex; gap: 20px; padding: 30px 40px 10px; max-width: 1400px; margin: 0 auto; }
+        .kpi-card { background: var(--card-bg); padding: 20px; border-radius: 8px; flex: 1; border-left: 4px solid var(--preventive); display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .kpi-card i { font-size: 28px; color: var(--preventive); }
+        .kpi-data h3 { margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: 600;}
+        .kpi-data p { margin: 5px 0 0; font-size: 20px; font-weight: 700; color: var(--primary); }
+
+        .diagram-container { display: flex; flex-direction: column; gap: 25px; padding: 20px 40px 50px; max-width: 1400px; margin: 0 auto; }
+        .card { background: var(--card-bg); border-radius: 8px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); width: 100%; box-sizing: border-box; }
+        .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0; }
+        .card-header h2 { margin: 0; font-size: 18px; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+        
+        .mermaid { background: #f8fafc; padding: 20px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; justify-content: center; overflow-x: auto; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <div>
+            <h1><i class="fa-solid fa-microchip"></i> Ecosistema GEMY - Auditoría de Hardware y Mantenimiento Avanzado</h1>
+        </div>
+        <div>
+            <span>Autor: <strong>Guido Huarcaya</strong> | Módulo: Diagnóstico Preventivo y Rutas</span>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-container">
+        <div class="kpi-card" style="border-left-color: var(--accent);">
+            <i class="fa-solid fa-map-location-dot" style="color: var(--accent);"></i>
+            <div class="kpi-data">
+                <h3>Meta Operativa Diaria</h3>
+                <p>2 Salas Completas / Día</p>
+            </div>
+        </div>
+        <div class="kpi-card" style="border-left-color: var(--hardware);">
+            <i class="fa-solid fa-hard-drive" style="color: var(--hardware);"></i>
+            <div class="kpi-data">
+                <h3>Auditoría de Salud (SSDs)</h3>
+                <p>Cero Máquinas Lentas</p>
+            </div>
+        </div>
+        <div class="kpi-card" style="border-left-color: var(--success);">
+            <i class="fa-solid fa-oil-can" style="color: var(--success);"></i>
+            <div class="kpi-data">
+                <h3>Intervención Mecánica</h3>
+                <p>Lubricación y Desgaste</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="diagram-container">
+        
+        <!-- Flujo 1: El verdadero Checklist -->
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fa-solid fa-list-check" style="color: var(--hardware);"></i> 1. Protocolo de Diagnóstico de Salud de Máquina</h2>
+            </div>
+            <p style="font-size: 14px; color: #475569; margin-top: 0;">Un mantenimiento real no es solo limpiar polvo. La App GEMY exige un diagnóstico profundo de hardware, componentes móviles y almacenamiento para garantizar fluidez en el juego.</p>
+            <div class="mermaid">
+                %%{init: {'theme': 'base', 'themeVariables': { 'fontFamily': 'Inter'}}}%%
+                flowchart TD
+                    subgraph Intervencion ["Checklist App GEMY (Por Máquina)"]
+                        C1["1. Limpieza General\n(Soplado de polvo y limpieza de contactos)"]
+                        C2["2. Auditoría de Desgaste\n(Revisión visual de cables, fuentes y botones)"]
+                        C3["3. Mantenimiento Mecánico\n(Lubricación de piezas móviles y ruletas)"]
+                        C4["4. Diagnóstico de Almacenamiento\n(Test de salud SMART del SSD)"]
+                    end
+                    
+                    subgraph Decisión ["Análisis Técnico"]
+                        D1{"¿Desempeño del SSD\no piezas en riesgo?"}
+                    end
+                    
+                    subgraph Accion ["Ejecución Inmediata"]
+                        A1["Reemplazo Preventivo\n(Se cambia la pieza ANTES de que falle)"]
+                        A2["Máquina certificada\nal 100% de rendimiento"]
+                    end
+
+                    C1 --> C2 --> C3 --> C4 --> D1
+                    D1 -- "Riesgo de falla/Lentitud" --> A1
+                    D1 -- "Estado Óptimo" --> A2
+                    A1 --> A2
+
+                    style C1 fill:#f8fafc,stroke:#94a3b8,stroke-width:2px
+                    style C2 fill:#f8fafc,stroke:#94a3b8,stroke-width:2px
+                    style C3 fill:#e0f2fe,stroke:#008ee6,stroke-width:2px
+                    style C4 fill:#ede9fe,stroke:#6366f1,stroke-width:3px,color:#4338ca
+                    style D1 fill:#fef3c7,stroke:#d97706,stroke-width:2px
+                    style A1 fill:#fef08a,stroke:#ca8a04,stroke-width:2px,color:#854d0e
+                    style A2 fill:#dcfce7,stroke:#16a34a,stroke-width:3px,color:#14532d
+            </div>
+        </div>
+
+        <!-- Flujo 2: Ruteo Diario -->
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fa-solid fa-route" style="color: var(--accent);"></i> 2. Estrategia de Enrutamiento (Meta: 2 Salas por Día)</h2>
+            </div>
+            <p style="font-size: 14px; color: #475569; margin-top: 0;">Planificación operativa estructurada. El dashboard genera rutas eficientes para que los técnicos cubran el 100% del parque de máquinas de manera sistemática.</p>
+            <div class="mermaid">
+                %%{init: {'theme': 'base', 'themeVariables': { 'fontFamily': 'Inter'}}}%%
+                flowchart LR
+                    subgraph Sistema ["Planificador GEMY"]
+                        S1["Identifica salas con\nmantenimiento vencido"]
+                    end
+                    
+                    subgraph Manana ["Turno Mañana (08:00 - 13:00)"]
+                        M1["Ejecución en Sala A\n(Checklist completo a todas las máquinas)"]
+                    end
+                    
+                    subgraph Tarde ["Turno Tarde (14:00 - 18:00)"]
+                        T1["Ejecución en Sala B\n(Checklist completo a todas las máquinas)"]
+                    end
+                    
+                    subgraph Dashboard ["Control de Avance"]
+                        D1(("Actualización en tiempo real:\nAvance del Parque de Máquinas"))
+                    end
+
+                    S1 --> M1
+                    M1 --> T1
+                    M1 -. "Sincroniza App" .-> D1
+                    T1 -. "Sincroniza App" .-> D1
+
+                    style S1 fill:#e0f2fe,stroke:#008ee6,stroke-width:2px
+                    style M1 fill:#f8fafc,stroke:#94a3b8,stroke-width:2px
+                    style T1 fill:#f8fafc,stroke:#94a3b8,stroke-width:2px
+                    style D1 fill:#dcfce7,stroke:#16a34a,stroke-width:3px,color:#14532d
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+</body>
+</html>

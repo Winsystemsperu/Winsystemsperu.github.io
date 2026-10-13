@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Gerencial - GEMY Brain & Protocolos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #0f172a; 
+            --accent: #2563eb; 
+            --danger: #dc2626; 
+            --success: #16a34a; 
+            --knowledge: #0ea5e9; /* Cyan para conocimiento */
+            --protocol: #8b5cf6; /* Morado para protocolos */
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #334155;
+        }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 0; }
+        
+        .navbar { background-color: var(--primary); color: white; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .navbar h1 { margin: 0; font-size: 20px; font-weight: 600; }
+        .navbar span { font-size: 13px; color: #cbd5e1; }
+
+        .kpi-container { display: flex; gap: 20px; padding: 30px 40px 10px; max-width: 1400px; margin: 0 auto; }
+        .kpi-card { background: var(--card-bg); padding: 20px; border-radius: 8px; flex: 1; border-left: 4px solid var(--accent); display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .kpi-card i { font-size: 28px; color: var(--accent); }
+        .kpi-data h3 { margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: 600;}
+        .kpi-data p { margin: 5px 0 0; font-size: 20px; font-weight: 700; color: var(--primary); }
+
+        .diagram-container { display: flex; flex-direction: column; gap: 25px; padding: 20px 40px 50px; max-width: 1400px; margin: 0 auto; }
+        .card { background: var(--card-bg); border-radius: 8px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); width: 100%; box-sizing: border-box; }
+        .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0; }
+        .card-header h2 { margin: 0; font-size: 18px; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+        
+        .mermaid { background: #f8fafc; padding: 20px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; justify-content: center; overflow-x: auto; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <div>
+            <h1><i class="fa-solid fa-graduation-cap"></i> Ecosistema GEMY - Protocolos y Base de Conocimiento</h1>
+        </div>
+        <div>
+            <span>Autor: <strong>Guido Huarcaya</strong> | Módulo: Calidad de Servicio y GEMY Brain</span>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-container">
+        <div class="kpi-card" style="border-left-color: var(--protocol);">
+            <i class="fa-solid fa-clipboard-user" style="color: var(--protocol);"></i>
+            <div class="kpi-data">
+                <h3>Imagen Corporativa</h3>
+                <p>100% Estandarizada</p>
+            </div>
+        </div>
+        <div class="kpi-card" style="border-left-color: var(--success);">
+            <i class="fa-solid fa-shield-halved" style="color: var(--success);"></i>
+            <div class="kpi-data">
+                <h3>Prevención Legal</h3>
+                <p>Auditoría de Contadores</p>
+            </div>
+        </div>
+        <div class="kpi-card" style="border-left-color: var(--knowledge);">
+            <i class="fa-solid fa-brain" style="color: var(--knowledge);"></i>
+            <div class="kpi-data">
+                <h3>GEMY Brain (Wiki)</h3>
+                <p>Conocimiento en la Nube</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="diagram-container">
+        
+        <!-- Flujo 1: Protocolos de Atención (Checklist) -->
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fa-solid fa-list-check" style="color: var(--protocol);"></i> 1. Protocolo Obligatorio de Intervención (App GEMY)</h2>
+            </div>
+            <p style="font-size: 14px; color: #475569; margin-top: 0;">El técnico no puede iniciar el trabajo en la app sin cumplir los pasos de imagen corporativa y seguridad financiera (Toma de contadores).</p>
+            <div class="mermaid">
+                %%{init: {'theme': 'base', 'themeVariables': { 'fontFamily': 'Inter'}}}%%
+                flowchart TD
+                    subgraph Inicio ["Llegada a Sala"]
+                        I1["Técnico llega a máquina"] --> I2["Abre ticket en App GEMY"]
+                    end
+                    
+                    subgraph Protocolo ["Checklist Obligatorio en App"]
+                        P1["1. Speech de Presentación\n'Soy Guido, técnico de... vengo a diagnosticar...'"]
+                        P2["2. Advertencia Técnica\n'Aviso: Por favor extraiga sus contadores\nantes de empezar (Posible RAM Clear)'"]
+                        P3["3. Check en la App\n[X] Contadores extraídos por el casino"]
+                    end
+                    
+                    subgraph Trabajo ["Intervención"]
+                        T1["Se desbloquea módulo de reparación\nen la App"]
+                        T2["Técnico ejecuta el trabajo\ncon respaldo legal"]
+                    end
+
+                    I2 --> P1 --> P2 --> P3 --> T1 --> T2
+
+                    style I2 fill:#f8fafc,stroke:#94a3b8,stroke-width:2px
+                    style P1 fill:#ede9fe,stroke:#8b5cf6,stroke-width:2px
+                    style P2 fill:#fef3c7,stroke:#d97706,stroke-width:2px
+                    style P3 fill:#dcfce7,stroke:#16a34a,stroke-width:3px
+                    style T1 fill:#dbeafe,stroke:#2563eb,stroke-width:2px
+            </div>
+        </div>
+
+        <!-- Flujo 2: Base de Conocimiento (GEMY Brain) -->
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fa-solid fa-network-wired" style="color: var(--knowledge);"></i> 2. Base de Conocimiento Colaborativa (GEMY Brain)</h2>
+            </div>
+            <p style="font-size: 14px; color: #475569; margin-top: 0;">Biblioteca digital descentralizada. Un problema resuelto por un técnico alimenta la base de datos para que todos los demás (e incluso los técnicos nuevos) tengan la solución al instante.</p>
+            <div class="mermaid">
+                %%{init: {'theme': 'base', 'themeVariables': { 'fontFamily': 'Inter'}}}%%
+                flowchart LR
+                    subgraph Campo ["Técnicos en Campo"]
+                        T1["Técnico Junior\n(Enfrenta falla nueva)"]
+                        T2["Técnico Senior\n(Descubre nueva solución)"]
+                    end
+                    
+                    subgraph GemyBrain ["GEMY Brain (Wiki en Supabase)"]
+                        DB[("Biblioteca Central de Fallas\n- Manuales GoldClub/Win\n- Historial de Códigos de Error\n- Procedimientos de reinicio")]
+                    end
+                    
+                    subgraph Resolucion ["Impacto Operativo"]
+                        R1["Busca en su celular\nEncuentra guía paso a paso"]
+                        R2["Sube su experiencia a la app\n(Alimenta la IA y la Wiki)"]
+                        R3(("Reparación en tiempo récord\nSin llamar a supervisión"))
+                    end
+
+                    T1 -->|Consulta App| DB
+                    DB -->|Devuelve Solución| R1
+                    R1 --> R3
+                    
+                    T2 -->|Resuelve falla compleja| R2
+                    R2 -->|Actualiza DB| DB
+
+                    style T1 fill:#e0f2fe,stroke:#008ee6,stroke-width:2px
+                    style T2 fill:#dcfce7,stroke:#16a34a,stroke-width:2px
+                    style DB fill:#cffafe,stroke:#06b6d4,stroke-width:3px
+                    style R3 fill:#dcfce7,stroke:#16a34a,stroke-width:3px
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+</body>
+</html>

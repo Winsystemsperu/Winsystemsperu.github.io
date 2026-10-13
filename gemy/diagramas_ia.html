@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Gerencial - IA y HelpDesk GEMY</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #0f172a; 
+            --ai-purple: #8b5cf6;
+            --ai-dark: #4c1d95;
+            --accent: #2563eb; 
+            --success: #16a34a; 
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #334155;
+        }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 0; }
+        
+        .navbar { background-color: var(--primary); color: white; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .navbar h1 { margin: 0; font-size: 20px; font-weight: 600; }
+        .navbar span { font-size: 13px; color: #cbd5e1; }
+
+        .kpi-container { display: flex; gap: 20px; padding: 30px 40px 10px; max-width: 1400px; margin: 0 auto; }
+        .kpi-card { background: var(--card-bg); padding: 20px; border-radius: 8px; flex: 1; border-left: 4px solid var(--ai-purple); display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .kpi-card i { font-size: 28px; color: var(--ai-purple); }
+        .kpi-data h3 { margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: 600;}
+        .kpi-data p { margin: 5px 0 0; font-size: 20px; font-weight: 700; color: var(--primary); }
+
+        .diagram-container { display: flex; flex-direction: column; gap: 25px; padding: 20px 40px 50px; max-width: 1400px; margin: 0 auto; }
+        .card { background: var(--card-bg); border-radius: 8px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); width: 100%; box-sizing: border-box; }
+        .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0; }
+        .card-header h2 { margin: 0; font-size: 18px; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+        
+        .mermaid { background: #f8fafc; padding: 20px; border-radius: 6px; border: 1px dashed var(--ai-purple); display: flex; justify-content: center; overflow-x: auto; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <div>
+            <h1><i class="fa-solid fa-robot"></i> Ecosistema GEMY - Soporte Nivel 1 con IA y Centralita</h1>
+        </div>
+        <div>
+            <span>Autor: <strong>Guido Huarcaya</strong> | Módulo: HelpDesk e Inteligencia Artificial</span>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-container">
+        <div class="kpi-card">
+            <i class="fa-brands fa-whatsapp"></i>
+            <div class="kpi-data">
+                <h3>Contacto Unificado</h3>
+                <p>1 Solo Número Central</p>
+            </div>
+        </div>
+        <div class="kpi-card" style="border-left-color: var(--accent);">
+            <i class="fa-solid fa-people-arrows" style="color: var(--accent);"></i>
+            <div class="kpi-data">
+                <h3>Asignación Inteligente</h3>
+                <p>Cero Cuellos de Botella</p>
+            </div>
+        </div>
+        <div class="kpi-card" style="border-left-color: var(--success);">
+            <i class="fa-solid fa-moon" style="color: var(--success);"></i>
+            <div class="kpi-data">
+                <h3>Cobertura IA (Madrugada)</h3>
+                <p>Soporte 24/7 Activo</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="diagram-container">
+        
+        <!-- Flujo Centralita WhatsApp + IA -->
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fa-solid fa-microchip" style="color: var(--ai-purple);"></i> Arquitectura de Soporte: WhatsApp Central y Triage con IA</h2>
+            </div>
+            <p style="font-size: 14px; color: #475569; margin-top: 0;">Integración de API de WhatsApp para crear una centralita de soporte técnico. La Inteligencia Artificial actúa como primer filtro (Nivel 1) antes de derivar a técnicos humanos libres.</p>
+            <div class="mermaid">
+                %%{init: {'theme': 'base', 'themeVariables': { 'fontFamily': 'Inter'}}}%%
+                flowchart TD
+                    subgraph Sala ["Operación de Casino"]
+                        S1["Administrador reporta falla\n(WhatsApp)"]
+                    end
+                    
+                    subgraph GemyBot ["GEMY HelpDesk (Línea Única Corporativa)"]
+                        W1["Línea Central (Omnicanal)"]
+                        IA{"Filtro Inteligencia Artificial\n¿Problema Nivel 1? (Reset, limpieza)"}
+                    end
+                    
+                    subgraph IA_Accion ["Resolución Automatizada (Soporte 24/7)"]
+                        A1["IA envía manual o\ninstrucciones de reinicio"]
+                        A2(("Incidencia Resuelta\n(0 Hrs Hombre)"))
+                    end
+                    
+                    subgraph Router ["Enrutador Inteligente (Supabase)"]
+                        R1{"¿Técnico Libre?"}
+                        R2["Técnico 1 (Ocupado)"]
+                        R3["Técnico 2 (En ruta)"]
+                        R4["Técnico 3 (Libre)"]
+                    end
+                    
+                    subgraph Campo ["Asignación Humana"]
+                        T1["Asignación automática a Técnico 3"]
+                        T2(("Incidencia Atendida"))
+                    end
+
+                    S1 --> W1 --> IA
+                    
+                    %% Ruta IA
+                    IA -- "SÍ (Soporte Remoto/Madrugada)" --> A1 --> A2
+                    
+                    %% Ruta Humana
+                    IA -- "NO (Falla Física/Compleja)" --> R1
+                    R1 -. "Audita estados" .-> R2
+                    R1 -. "Audita estados" .-> R3
+                    R1 -. "Detecta disponibilidad" .-> R4
+                    
+                    R1 --> T1 --> T2
+
+                    style W1 fill:#dcfce7,stroke:#16a34a,stroke-width:2px
+                    style IA fill:#ede9fe,stroke:#8b5cf6,stroke-width:3px,color:#4c1d95
+                    style A1 fill:#ede9fe,stroke:#8b5cf6,stroke-width:2px,color:#4c1d95
+                    style A2 fill:#ede9fe,stroke:#8b5cf6,stroke-width:3px,color:#4c1d95
+                    style R1 fill:#dbeafe,stroke:#2563eb,stroke-width:2px
+                    style T1 fill:#e0f2fe,stroke:#008ee6,stroke-width:2px
+                    style R2 fill:#fee2e2,stroke:#dc2626,stroke-dasharray: 5 5
+                    style R3 fill:#fef3c7,stroke:#d97706,stroke-dasharray: 5 5
+                    style R4 fill:#dcfce7,stroke:#16a34a,stroke-width:2px
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Gerencial - Roadmap GEMY</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #0f172a; 
+            --accent: #2563eb; 
+            --taller: #d97706; 
+            --produccion: #059669; 
+            --campo: #4f46e5;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #334155;
+        }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 0; }
+        
+        .navbar { background-color: var(--primary); color: white; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .navbar h1 { margin: 0; font-size: 20px; font-weight: 600; }
+        .navbar span { font-size: 13px; color: #cbd5e1; }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 30px 40px; }
+
+        /* Matriz de Roles */
+        .section-title { font-size: 22px; color: var(--primary); border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
+        
+        .roles-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 50px; }
+        .role-card { background: var(--card-bg); border-radius: 10px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 5px solid; }
+        .role-card h3 { margin: 0 0 15px 0; font-size: 18px; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+        .role-card ul { margin: 0; padding-left: 20px; color: #475569; font-size: 14px; line-height: 1.6; }
+        .role-card ul li { margin-bottom: 8px; }
+
+        /* Roadmap Timeline */
+        .timeline { display: flex; gap: 20px; }
+        .phase-card { background: var(--card-bg); border-radius: 10px; padding: 25px; flex: 1; box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: relative; }
+        .phase-badge { display: inline-block; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; margin-bottom: 15px; }
+        .phase-card h3 { margin: 0 0 15px 0; font-size: 16px; color: var(--primary); }
+        .phase-card ul { margin: 0; padding-left: 20px; color: #475569; font-size: 14px; line-height: 1.6; }
+        
+        .badge-short { background: #dbeafe; color: #1d4ed8; }
+        .badge-med { background: #fef3c7; color: #b45309; }
+        .badge-long { background: #dcfce7; color: #15803d; }
+        
+        /* Presupuesto Inicial */
+        .budget-banner { background: #1e293b; color: white; padding: 20px 30px; border-radius: 10px; margin-top: 40px; display: flex; justify-content: space-between; align-items: center; }
+        .budget-banner h3 { margin: 0; font-size: 18px; color: #38bdf8; }
+        .budget-banner p { margin: 5px 0 0 0; font-size: 14px; color: #94a3b8; }
+        .budget-items { display: flex; gap: 15px; }
+        .b-item { background: rgba(255,255,255,0.1); padding: 8px 15px; border-radius: 6px; font-size: 13px; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <div>
+            <h1><i class="fa-solid fa-map"></i> Ecosistema GEMY - Plan Director y Roles</h1>
+        </div>
+        <div>
+            <span>Autor: <strong>Guido Huarcaya</strong> | Módulo: Roadmap de Implementación</span>
+        </div>
+    </div>
+
+    <div class="container">
+        
+        <!-- Matriz de Roles -->
+        <h2 class="section-title"><i class="fa-solid fa-sitemap"></i> Definición de Funciones por Área</h2>
+        <div class="roles-grid">
+            <div class="role-card" style="border-color: var(--taller);">
+                <h3><i class="fa-solid fa-microscope" style="color: var(--taller);"></i> Taller / Laboratorio</h3>
+                <ul>
+                    <li>Diagnóstico profundo y reparación de placas y componentes electrónicos.</li>
+                    <li>Control de calidad: Evaluación de repuestos retornados (Aprobación o Cuarentena).</li>
+                    <li>Gestión de garantías con proveedores externos.</li>
+                    <li>Abastecimiento técnico del Almacén Nodriza.</li>
+                </ul>
+            </div>
+            <div class="role-card" style="border-color: var(--produccion);">
+                <h3><i class="fa-solid fa-industry" style="color: var(--produccion);"></i> Producción</h3>
+                <ul>
+                    <li>Ensamblaje e integración de máquinas nuevas o <i>refurbished</i>.</li>
+                    <li>Carga de software, configuración de multijuegos y calibración inicial.</li>
+                    <li>Test de estrés antes de la salida a piso (Despacho a salas).</li>
+                    <li>Preparación de cableados y arneses a medida.</li>
+                </ul>
+            </div>
+            <div class="role-card" style="border-color: var(--campo);">
+                <h3><i class="fa-solid fa-user-gear" style="color: var(--campo);"></i> Técnicos de Campo</h3>
+                <ul>
+                    <li>Atención reactiva inmediata (Stock Satélite GEMY).</li>
+                    <li>Mantenimientos preventivos programados (2 salas/día).</li>
+                    <li>Diagnóstico de salud de hardware (SSDs, limpieza, lubricación).</li>
+                    <li>Atención al cliente y ejecución de protocolos de seguridad.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Roadmap -->
+        <h2 class="section-title"><i class="fa-solid fa-route"></i> Roadmap de Implementación por Fases</h2>
+        <div class="timeline">
+            
+            <div class="phase-card">
+                <span class="phase-badge badge-short">FASE 1: CORTO PLAZO (1 - 3 Meses)</span>
+                <h3>Estabilización Logística y Operativa</h3>
+                <ul>
+                    <li>Implementación del Stock Satélite (3 niveles de almacén).</li>
+                    <li>Filtro de retorno inteligente en SAP (Solo repuestos > $50).</li>
+                    <li>Cotización y compra del fondo fijo para preventivos (Coolers, SSDs, etc).</li>
+                    <li>Definición e imposición del Protocolo de Intervención en sala.</li>
+                </ul>
+            </div>
+
+            <div class="phase-card">
+                <span class="phase-badge badge-med">FASE 2: MEDIANO PLAZO (3 - 6 Meses)</span>
+                <h3>Prevención, SAP y Retención</h3>
+                <ul>
+                    <li>Lanzamiento del Algoritmo Preventivo (Rutas y horas valle).</li>
+                    <li>Automatización total de movimientos en SAP (Cero papel).</li>
+                    <li>Medición de KPIs de técnicos para ranking de productividad.</li>
+                    <li>Inicio del programa de Gamificación e incentivos mensuales.</li>
+                </ul>
+            </div>
+
+            <div class="phase-card">
+                <span class="phase-badge badge-long">FASE 3: LARGO PLAZO (6 - 12 Meses)</span>
+                <h3>Innovación y Automatización</h3>
+                <ul>
+                    <li>Despliegue del HelpDesk Omnicanal (WhatsApp centralizado).</li>
+                    <li>Soporte Nivel 1 mediante IA para turnos de madrugada.</li>
+                    <li>Generador de códigos automatizado con validación GPS y Finanzas.</li>
+                    <li>Consolidación de GEMY Brain (Wiki de conocimiento).</li>
+                </ul>
+            </div>
+
+        </div>
+
+        <!-- Presupuesto Inicial (Kick-off) -->
+        <div class="budget-banner">
+            <div>
+                <h3>Presupuesto Inicial (Kick-Off)</h3>
+                <p>Cotización prioritaria para arrancar Mantenimiento Preventivo Inmediato</p>
+            </div>
+            <div class="budget-items">
+                <div class="b-item">Coolers y Pasta Térmica</div>
+                <div class="b-item">Discos Sólidos (SSDs)</div>
+                <div class="b-item">Botoneras / Microswitches</div>
+                <div class="b-item">Fusibles y Portafusibles</div>
+                <div class="b-item">Lubricantes Dieléctricos</div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

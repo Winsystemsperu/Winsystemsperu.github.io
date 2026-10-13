@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Gerencial - Generador de Códigos GEMY</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #0f172a; 
+            --accent: #2563eb; 
+            --danger: #dc2626; 
+            --success: #16a34a; 
+            --warning: #f59e0b;
+            --finance: #059669; /* Verde billete */
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #334155;
+        }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 0; }
+        
+        .navbar { background-color: var(--primary); color: white; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .navbar h1 { margin: 0; font-size: 20px; font-weight: 600; }
+        .navbar span { font-size: 13px; color: #cbd5e1; }
+
+        .kpi-container { display: flex; gap: 20px; padding: 30px 40px 10px; max-width: 1400px; margin: 0 auto; }
+        .kpi-card { background: var(--card-bg); padding: 20px; border-radius: 8px; flex: 1; border-left: 4px solid var(--accent); display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .kpi-card i { font-size: 28px; color: var(--accent); }
+        .kpi-data h3 { margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: 600;}
+        .kpi-data p { margin: 5px 0 0; font-size: 20px; font-weight: 700; color: var(--primary); }
+
+        .diagram-container { display: flex; flex-direction: column; gap: 25px; padding: 20px 40px 50px; max-width: 1400px; margin: 0 auto; }
+        .card { background: var(--card-bg); border-radius: 8px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); width: 100%; box-sizing: border-box; }
+        .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0; }
+        .card-header h2 { margin: 0; font-size: 18px; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+        
+        .mermaid { background: #f8fafc; padding: 20px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; justify-content: center; overflow-x: auto; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <div>
+            <h1><i class="fa-solid fa-qrcode"></i> Ecosistema GEMY - Automatización y Seguridad de Códigos</h1>
+        </div>
+        <div>
+            <span>Autor: <strong>Guido Huarcaya</strong> | Módulo: Geo-Cercas y Filtro Financiero</span>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-container">
+        <div class="kpi-card" style="border-left-color: var(--accent);">
+            <i class="fa-solid fa-location-crosshairs" style="color: var(--accent);"></i>
+            <div class="kpi-data">
+                <h3>Verificación Física</h3>
+                <p>100% Precisión GPS</p>
+            </div>
+        </div>
+        <div class="kpi-card" style="border-left-color: var(--finance);">
+            <i class="fa-solid fa-file-invoice-dollar" style="color: var(--finance);"></i>
+            <div class="kpi-data">
+                <h3>Filtro de Morosidad</h3>
+                <p>Cero códigos con Deuda</p>
+            </div>
+        </div>
+        <div class="kpi-card" style="border-left-color: var(--danger);">
+            <i class="fa-solid fa-lock" style="color: var(--danger);"></i>
+            <div class="kpi-data">
+                <h3>Candado Anti-Fraude</h3>
+                <p>Bloqueo tras 1er intento</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="diagram-container">
+        
+        <!-- Flujo de Códigos -->
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fa-solid fa-shield-halved" style="color: var(--finance);"></i> Arquitectura de Generación de Códigos (Self-Service Seguro)</h2>
+            </div>
+            <p style="font-size: 14px; color: #475569; margin-top: 0;">Proceso automatizado sin intervención técnica. Protegido por triple validación: Geo-ubicación (GPS), Identidad de Hardware (QR/Serie) y Estado de Cuenta (Finanzas).</p>
+            <div class="mermaid">
+                %%{init: {'theme': 'base', 'themeVariables': { 'fontFamily': 'Inter'}}}%%
+                flowchart TD
+                    subgraph Sala ["1. Operación en Sala (Cliente)"]
+                        S1["Personal escanea QR de máquina"]
+                        S2["App GEMY captura GPS y Serie"]
+                    end
+                    
+                    subgraph Seguridad ["2. Motor de Reglas (Supabase)"]
+                        V1{"¿GPS coincide con la\ndirección de Sala?"}
+                        V2{"¿Serie corresponde\na máquina de esa Sala?"}
+                        F1{"¿Sala tiene DEUDA\n(Base Finanzas)?"}
+                        
+                        B1["BLOQUEO AUTOMÁTICO\nAlerta de Fraude"]
+                        B2["RECHAZO FINANCIERO\nMensaje: 'Contactar a Finanzas'"]
+                    end
+                    
+                    subgraph Servidor ["3. Emisión Centralizada"]
+                        P1["Envío de solicitud al\nServidor Central (Correo/API)"]
+                        P2["Servidor emite y envía\nrespuesta a Supabase"]
+                    end
+                    
+                    subgraph Entrega ["4. Entrega y Bloqueo Anti-Spam"]
+                        E1["Código se muestra\nen la App de Sala"]
+                        E2{"¿Solicita código\nnuevamente?"}
+                        B3["BLOQUEO DE BOTÓN\nMensaje: 'Contactar Soporte'"]
+                    end
+
+                    S1 --> S2 --> V1
+                    
+                    V1 -- "NO (Falso GPS)" --> B1
+                    V1 -- "SÍ" --> V2
+                    
+                    V2 -- "NO (QR Falso)" --> B1
+                    V2 -- "SÍ" --> F1
+                    
+                    F1 -- "SÍ (Moroso)" --> B2
+                    F1 -- "NO (Al día)" --> P1
+                    
+                    P1 --> P2 --> E1
+                    
+                    E1 --> E2
+                    E2 -- "SÍ (Intento de Spam)" --> B3
+                    E2 -- "NO" --> Fin(("Fin del proceso"))
+
+                    style S1 fill:#f8fafc,stroke:#94a3b8,stroke-width:2px
+                    style S2 fill:#dbeafe,stroke:#2563eb,stroke-width:2px
+                    style V1 fill:#fef3c7,stroke:#d97706,stroke-width:2px
+                    style V2 fill:#fef3c7,stroke:#d97706,stroke-width:2px
+                    style F1 fill:#dcfce7,stroke:#16a34a,stroke-width:3px
+                    style B1 fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#991b1b
+                    style B2 fill:#fee2e2,stroke:#dc2626,stroke-width:3px,color:#991b1b
+                    style B3 fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#991b1b
+                    style P2 fill:#e0f2fe,stroke:#008ee6,stroke-width:2px
+                    style E1 fill:#dcfce7,stroke:#16a34a,stroke-width:2px
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+</body>
+</html>
